@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { COURSE_MATERIALS } from '../config/courseMaterials'
 import type { Question } from '../config/courseMaterials'
 import { API_KEYS, checkAPIKey } from '../config/apiKeys'
+import axios from 'axios'
 
 // 添加CSS动画样式
 const globalStyles = `
@@ -264,7 +265,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
 
   const [learnedKnowledgePoints, setLearnedKnowledgePoints] = useState<Set<number>>(new Set())
   const [knowledgePointsList, setKnowledgePointsList] = useState<string[]>([])
-  const [showThinking, setShowThinking] = useState(false)
+  const [showThinking, setShowThinking] = useState(true)  // 永久开启思考显示
   const [thinkingContent, setThinkingContent] = useState<string>('')
   const [testQuestions, setTestQuestions] = useState<Question[]>([])
 
@@ -272,47 +273,85 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
   const [selectedModel, setSelectedModel] = useState<string>('qwen2.5')
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  const courseData = COURSE_MATERIALS[areaId as keyof typeof COURSE_MATERIALS]
+  // 动态获取课程数据
+  const [courseData, setCourseData] = useState<any>(null)
   const totalKnowledgePoints = courseData?.knowledgePointCount || 0
   const learningProgress = (learnedKnowledgePoints.size / totalKnowledgePoints) * 100
 
+  // 从后端API获取动态课程数据
   useEffect(() => {
-    if (isOpen && areaId) {
+    const fetchCourseData = async () => {
+      try {
+        console.log(`📚 Fetching course data: ${areaId}`)
+        const response = await axios.get(`http://127.0.0.1:8001/api/course-library/${areaId}`)
+        if (response.data) {
+          setCourseData(response.data)
+          console.log(`✅ Successfully loaded course: ${response.data.subject}`, response.data)
+        }
+      } catch (error) {
+        console.log(`⚠️ API fetch failed, trying static data: ${areaId}`)
+        // If API call fails, use static data as fallback
+        const defaultData = COURSE_MATERIALS[areaId as keyof typeof COURSE_MATERIALS]
+        if (defaultData) {
+          setCourseData(defaultData)
+          console.log(`📖 Using static course data`)
+        }
+      }
+    }
+    
+    if (areaId) {
+      fetchCourseData()
+    }
+  }, [areaId])
+
+  useEffect(() => {
+    if (isOpen && areaId && courseData) {
       initializeDialog()
     }
-  }, [isOpen, areaId])
+  }, [isOpen, areaId, courseData])
 
   const initializeDialog = async () => {
     setIsLoading(true)
     
     try {
-      // 让LLM生成知识点列表
-      const listPrompt = `你是一位经验丰富的${courseData?.subject || '计算机科学'}教授。请严格按照课程资料生成知识点列表。
+      // 从后端获取已学习的知识点
+      let restoredLearnedPoints: number[] = []
+      const gameStateResponse = await axios.get('http://127.0.0.1:8001/api/game-state')
+      if (gameStateResponse.data && gameStateResponse.data.areas[areaId]) {
+        const areaData = gameStateResponse.data.areas[areaId]
+        restoredLearnedPoints = areaData.learnedPoints || []
+        // 恢复已学习的知识点
+        setLearnedKnowledgePoints(new Set(restoredLearnedPoints))
+        console.log(`📚 Restored learning progress: ${areaId} - Learned ${restoredLearnedPoints.length} knowledge points`, restoredLearnedPoints)
+      }
+      
+      // Let LLM generate knowledge points list
+      const listPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}. Generate a knowledge points list based strictly on the course materials. Always answer in English only.
 
-【课程资料】：
-${courseData?.materials.join('\n') || '基础知识'}
+【Course Materials】:
+${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
 
-【任务】：根据上述课程资料，生成${totalKnowledgePoints}个知识点标题
+【Task】: Based on the above course materials, generate ${totalKnowledgePoints} knowledge point titles
 
-【要求】：
-1. 标题必须基于提供的课程资料内容
-2. 使用小学生能理解的简单词汇
-3. 按照学习难度从易到难排列
-4. 每个标题不超过8个字
-5. 严格按照格式输出
+【Requirements】:
+1. Titles must be based on the provided course materials
+2. Use professional and accurate computer science terminology, suitable for university level
+3. Arrange from easy to difficult by learning difficulty
+4. Each title should not exceed 8 words
+5. Strictly follow the output format
 
-【输出格式】（严格按此格式）：
-1. [知识点标题1]
-2. [知识点标题2]
-3. [知识点标题3]
-4. [知识点标题4]
-5. [知识点标题5]
+【Output Format】 (strictly follow this format):
+1. [Knowledge Point Title 1]
+2. [Knowledge Point Title 2]
+3. [Knowledge Point Title 3]
+4. [Knowledge Point Title 4]
+5. [Knowledge Point Title 5]
 
-请只输出上述格式，不要添加任何其他内容。`
+Please only output the above format without any additional content.`
 
       const response = await callRealLLMAPI(listPrompt, selectedModel)
       
-      // 解析知识点列表
+      // Parse knowledge points list
       const lines = response.split('\n').filter(line => line.trim())
       const points = lines.map(line => {
         const match = line.match(/\d+\.\s*(.+)/)
@@ -321,78 +360,90 @@ ${courseData?.materials.join('\n') || '基础知识'}
       
       setKnowledgePointsList(points)
 
+      const currentProgress = Math.round((restoredLearnedPoints.length / totalKnowledgePoints) * 100)
+      const progressMessage = restoredLearnedPoints.length > 0 
+        ? `\n\n📊 **Learning Progress Restored:** ${restoredLearnedPoints.length}/${totalKnowledgePoints} (${currentProgress}%)\n✅ You previously learned: ${restoredLearnedPoints.map(p => `Point ${p}`).join(', ')}` 
+        : ''
+
       const welcomeMessage: Message = {
         id: '1',
         role: 'assistant',
-        content: `🎓 **欢迎来到 ${courseData?.subject || areaId} 区域！**
+        content: `🔮 **Welcome to ${courseData?.subject || areaId} Magic Hall!**
 
-我是你的AI导师，将帮助你深入理解这个计算机科学主题。
+Young apprentice, I am a professor at the Magic Academy, and I will guide you to master this knowledge.
 
-**📚 课程信息：**
-• **难度等级：** ${courseData?.difficulty === 'easy' ? '初级' : courseData?.difficulty === 'medium' ? '中级' : '高级'}
-• **学科分类：** ${courseData?.category || '计算机科学'}
-• **知识点数量：** ${totalKnowledgePoints}个
+**📚 Course Information:**
+• **Difficulty Level:** ${courseData?.difficulty === 'easy' ? 'Beginner' : courseData?.difficulty === 'medium' ? 'Intermediate' : 'Advanced'}
+• **Subject Category:** ${courseData?.category || 'Computer Science'}
+• **Knowledge Points:** ${totalKnowledgePoints} points${progressMessage}
 
-�� **本区域的知识点列表：**
+📚 **Knowledge Points in This Area:**
 
 ${points.map((point, index) => `${index + 1}. ${point}`).join('\n')}
 
-💡 **使用方法：**
-• 输入数字（1-${totalKnowledgePoints}）来学习对应知识点
-• 学完20%的知识点后可以参加测试
-• 也可以直接跟我聊天，我会基于课程内容回答你的问题
+💡 **How to Use:**
+• Enter a number (1-${totalKnowledgePoints}) to learn the corresponding knowledge point
+• After learning 20% of the knowledge points, you can take the test
+• You can also chat with me directly, and I will answer your questions based on the course content
 
-请输入数字学习知识点，或者直接问我问题！`,
+Please enter a number to learn a knowledge point, or ask me a question directly!`,
         timestamp: new Date()
       }
       
       setMessages([welcomeMessage])
-      setTaskProgress(0)
+      setTaskProgress(currentProgress)
       setIsTestMode(false)
 
       setSelectedAnswer(null)
 
-      setLearnedKnowledgePoints(new Set())
+      // Don't clear restored learning progress!
+      // setLearnedKnowledgePoints(new Set())
       setTestQuestions([])
 
       setCorrectAnswers(0)
     } catch (error) {
-      console.error('初始化失败:', error)
-      // 使用默认知识点列表
-      const defaultPoints = Array.from({ length: totalKnowledgePoints }, (_, i) => `知识点${i + 1}`)
+      console.error('Initialization failed:', error)
+      // Use default knowledge points list
+      const defaultPoints = Array.from({ length: totalKnowledgePoints }, (_, i) => `Knowledge Point ${i + 1}`)
       setKnowledgePointsList(defaultPoints)
+      
+      const currentProgress = Math.round((restoredLearnedPoints.length / totalKnowledgePoints) * 100)
+      const progressMessage = restoredLearnedPoints.length > 0 
+        ? `\n\n📊 **Learning Progress Restored:** ${restoredLearnedPoints.length}/${totalKnowledgePoints} (${currentProgress}%)\n✅ You previously learned: ${restoredLearnedPoints.map(p => `Point ${p}`).join(', ')}` 
+        : ''
       
       const welcomeMessage: Message = {
         id: '1',
         role: 'assistant',
-        content: `🎓 **欢迎来到 ${courseData?.subject || areaId} 区域！**
+        content: `🔮 **Welcome to ${courseData?.subject || areaId} Magic Hall!**
 
-我是你的AI导师，将帮助你深入理解这个计算机科学主题。
+Young apprentice, I am a professor at the Magic Academy, and I will guide you to master this knowledge.
 
-**📚 课程信息：**
-• **难度等级：** ${courseData?.difficulty === 'easy' ? '初级' : courseData?.difficulty === 'medium' ? '中级' : '高级'}
-• **学科分类：** ${courseData?.category || '计算机科学'}
-• **知识点数量：** ${totalKnowledgePoints}个
+**📚 Course Information:**
+• **Difficulty Level:** ${courseData?.difficulty === 'easy' ? 'Beginner' : courseData?.difficulty === 'medium' ? 'Intermediate' : 'Advanced'}
+• **Subject Category:** ${courseData?.category || 'Computer Science'}
+• **Knowledge Points:** ${totalKnowledgePoints} points${progressMessage}
 
-📚 **本区域的知识点列表：**
+📚 **Knowledge Points in This Area:**
 
 ${defaultPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
 
-💡 **使用方法：**
-• 输入数字（1-${totalKnowledgePoints}）来学习对应知识点
-• 学完20%的知识点后可以参加测试
-• 也可以直接跟我聊天，我会基于课程内容回答你的问题
+💡 **How to Use:**
+• Enter a number (1-${totalKnowledgePoints}) to learn the corresponding knowledge point
+• After learning 20% of the knowledge points, you can take the test
+• You can also chat with me directly, and I will answer your questions based on the course content
 
-请输入数字学习知识点，或者直接问我问题！`,
+Please enter a number to learn a knowledge point, or ask me a question directly!`,
         timestamp: new Date()
       }
       setMessages([welcomeMessage])
-      setTaskProgress(0)
+      setTaskProgress(currentProgress)
       setIsTestMode(false)
 
       setSelectedAnswer(null)
 
-      setLearnedKnowledgePoints(new Set())
+      // Don't clear restored learning progress!
+      // setLearnedKnowledgePoints(new Set())
       setTestQuestions([])
 
       setCorrectAnswers(0)
@@ -430,23 +481,23 @@ ${defaultPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
         // 学习知识点
         await learnKnowledgePoint(knowledgePointNumber)
       } else if (isTestMode && testQuestions.length > 0) {
-        // 处理测试答案
+        // Handle test answer
         await handleTestAnswer(userInput)
-      } else if (userInput.toLowerCase() === '测试') {
-        // 开始测试
+      } else if (userInput.toLowerCase() === 'test' || userInput.toLowerCase() === '测试') {
+        // Start test
         await startTest()
       } else {
-        // 正常聊天 - 基于当前区域知识点
+        // Normal chat - based on current area knowledge points
         await handleChatMessage(userInput)
       }
     } catch (error) {
-      console.error('处理消息失败:', error)
+      console.error('Failed to process message:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `❌ **出错了**
+        content: `❌ **Error Occurred**
 
-抱歉，处理你的消息时出现了错误。请稍后再试。`,
+Sorry, an error occurred while processing your message. Please try again later.`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage])
@@ -456,63 +507,87 @@ ${defaultPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
   }
 
   const learnKnowledgePoint = async (pointNumber: number) => {
-    const pointTitle = knowledgePointsList[pointNumber - 1] || `知识点${pointNumber}`
+    const pointTitle = knowledgePointsList[pointNumber - 1] || `Knowledge Point ${pointNumber}`
     
-    // 让LLM生成知识点内容
-    const contentPrompt = `你是专业的${courseData?.subject || '计算机科学'}教授，需要讲解知识点"${pointTitle}"。
+    // Let LLM generate knowledge point content
+    // Only get current knowledge point materials, don't include other points
+    const currentPointMaterial = courseData?.materials[pointNumber - 1] || 'Fundamental Knowledge'
+    
+    const contentPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}, instructing a young apprentice on the knowledge point "${pointTitle}". Always answer in English only and format headings in bold (Markdown).
 
-【课程资料】：
-${courseData?.materials.join('\n') || '基础知识'}
+【Current Lesson Materials】:
+${currentPointMaterial}
 
-【教学要求】：
-1. 严格基于课程资料内容，不能编造
-2. 使用清晰易懂的术语，适合大学生理解
-3. 包含1-2个具体例子帮助理解
-4. 控制在100字以内，简洁明了
-5. 可以适当使用专业术语，但要解释清楚
+【Important Notice】:
+Only explain this ONE knowledge point, do not involve other knowledge points!
 
-【教学格式】：
-先解释概念，再举例说明，最后总结要点。
+【Teaching Requirements】:
+1. Strictly base your explanation on the provided materials; do not invent facts
+2. Explain only this knowledge point; do not mention other points
+3. Use precise yet friendly terminology; keep it accessible
+4. Blend subtle Magic Academy flavor (mentor voice, light metaphors) while maintaining rigor
+5. Include 1 concrete, real-world example (code/math when relevant)
+6. End with 1 short "Try it" prompt for the apprentice
+7. Keep within 150 words, concise and vivid
 
-【输出要求】：
-直接输出教学内容，不要添加标题或前缀。`
+【Recommended Structure】 (use bold labels):
+• **Essence**: one-sentence plain definition
+• **Magic Analogy**: a brief, imaginative comparison (one sentence)
+• **Example**: a clear, minimal example
+• **Key Spell**: a distilled rule/formula/checklist (one line)
+• **Try it**: one mini task (one line)
+
+【Output Requirements】:
+Write a single paragraph or short bullet list following the structure. No titles or prefixes.`
 
     const content = await callRealLLMAPI(contentPrompt, selectedModel)
     
-    setLearnedKnowledgePoints(prev => new Set([...prev, pointNumber]))
+    // Update learned knowledge points
+    const newLearnedPoints = new Set([...learnedKnowledgePoints, pointNumber])
+    setLearnedKnowledgePoints(newLearnedPoints)
+    
+    // Call backend API to update learning progress
+    try {
+      await axios.post(`http://127.0.0.1:8001/api/update-learning-progress/${areaId}`, {
+        learnedPoints: Array.from(newLearnedPoints)
+      })
+    } catch (error) {
+      console.error('Failed to update learning progress:', error)
+    }
     
     const learnMessage: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: `📖 **知识点 ${pointNumber}：${pointTitle}**
+      content: `📖 **Knowledge Point ${pointNumber}: ${pointTitle}**
 
 ${content}
 
 ---
 
-✅ **学习完成！**
-• 当前学习进度：${learnedKnowledgePoints.size + 1}/${totalKnowledgePoints} (${Math.round(((learnedKnowledgePoints.size + 1) / totalKnowledgePoints) * 100)}%)
+✅ **Learning Complete!**
+• Current Learning Progress: ${newLearnedPoints.size}/${totalKnowledgePoints} (${Math.round((newLearnedPoints.size / totalKnowledgePoints) * 100)}%)
 
-${(learnedKnowledgePoints.size + 1) / totalKnowledgePoints >= 0.2 ? '🎉 **恭喜！** 你已经学完了20%的知识点，可以参加测试了！' : '💡 继续学习其他知识点吧！'}`,
+${newLearnedPoints.size / totalKnowledgePoints >= 0.2 ? '🎉 **Congratulations!** You have completed 20% of the knowledge points and can now take the test!' : '💡 Continue learning other knowledge points!'}`,
       timestamp: new Date()
     }
     
     setMessages(prev => [...prev, learnMessage])
-    setTaskProgress(Math.min(90, ((learnedKnowledgePoints.size + 1) / totalKnowledgePoints) * 100))
+    setTaskProgress(Math.min(90, (newLearnedPoints.size / totalKnowledgePoints) * 100))
     setThinkingContent('')
   }
 
   const handleTestAnswer = async (userInput: string) => {
     const answerString = userInput.trim().toUpperCase()
     
-    // 检查是否是5个字母的批量答案
-    if (answerString.length === 5 && testQuestions.length === 5) {
+    // 检查是否是批量答案（长度等于题目数量）
+    const questionCount = testQuestions.length
+    if (answerString.length === questionCount && questionCount > 0) {
       // 批量处理答案
       const userAnswers = answerString.split('')
       const answerNumbers: number[] = []
       
       // 验证每个答案都是ABCD
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < questionCount; i++) {
         const letter = userAnswers[i]
         let answerNumber = -1
         switch (letter) {
@@ -524,13 +599,14 @@ ${(learnedKnowledgePoints.size + 1) / totalKnowledgePoints >= 0.2 ? '🎉 **恭�
         }
         
         if (answerNumber === -1) {
+          const exampleAnswer = Array(questionCount).fill('A').join('')
           const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: `❌ **输入错误**
+            content: `❌ **Input Error**
 
-请输入5个字母的答案组合，每个字母必须是A、B、C或D。
-例如：ABCDA`,
+Please enter a ${questionCount}-letter answer combination, each letter must be A, B, C, or D.
+Example: ${exampleAnswer}`,
             timestamp: new Date()
           }
           setMessages(prev => [...prev, errorMessage])
@@ -539,11 +615,11 @@ ${(learnedKnowledgePoints.size + 1) / totalKnowledgePoints >= 0.2 ? '🎉 **恭�
         answerNumbers.push(answerNumber)
       }
       
-      // 计算正确答案数
+      // Calculate correct answer count
       let correctCount = 0
       const results: { question: Question, userAnswer: number, isCorrect: boolean }[] = []
       
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < questionCount; i++) {
         const question = testQuestions[i]
         const userAnswer = answerNumbers[i]
         const isCorrect = userAnswer === question.correctAnswer
@@ -558,50 +634,52 @@ ${(learnedKnowledgePoints.size + 1) / totalKnowledgePoints >= 0.2 ? '🎉 **恭�
       
       setCorrectAnswers(correctCount)
       
-      // 显示详细结果
+      // Display detailed results
       const detailedResults = results.map((result, index) => {
         const { question, userAnswer, isCorrect } = result
-        return `**第${index + 1}题：** ${isCorrect ? '✅ 正确' : '❌ 错误'}
-题目：${question.question}
-你的答案：${['A', 'B', 'C', 'D'][userAnswer]}. ${question.options[userAnswer]}
-正确答案：${['A', 'B', 'C', 'D'][question.correctAnswer]}. ${question.options[question.correctAnswer]}
-解释：${question.explanation}`
+        return `**Question ${index + 1}:** ${isCorrect ? '✅ Correct' : '❌ Wrong'}
+Question: ${question.question}
+Your Answer: ${['A', 'B', 'C', 'D'][userAnswer]}. ${question.options[userAnswer]}
+Correct Answer: ${['A', 'B', 'C', 'D'][question.correctAnswer]}. ${question.options[question.correctAnswer]}
+Explanation: ${question.explanation}`
       }).join('\n\n')
       
-      const finalScore = (correctCount / 5) * 100
+      const finalScore = (correctCount / questionCount) * 100
       
       const resultMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `📊 **测试结果详情**
+        content: `📊 **Test Results Details**
 
 ${detailedResults}
 
-**📋 总结：**
-正确题数：${correctCount}/5
-正确率：${finalScore}%`,
+**📋 Summary:**
+Correct Answers: ${correctCount}/${questionCount}
+Accuracy: ${finalScore.toFixed(1)}%`,
         timestamp: new Date()
       }
       
       setMessages(prev => [...prev, resultMessage])
       
-      // 判断是否通过测试
-      if (finalScore >= 20) {
+      // Check if test is passed (accuracy >= 80%)
+      const passThreshold = 80  // Requires 80% accuracy
+      if (finalScore >= passThreshold) {
         setTaskProgress(100)
         const completeMessage: Message = {
           id: (Date.now() + 2).toString(),
           role: 'assistant',
-          content: `🎉 **测试通过！恭喜你！**
+          content: `🎉 **Test Passed! Congratulations!**
 
-✅ 你已经达到了20%的正确率，可以完成这个区域的学习了！
+✅ You answered ${correctCount}/${questionCount} questions correctly with an accuracy of ${finalScore.toFixed(1)}%!
+🌟 You have reached the 80% passing standard!
 
-点击"完成任务"按钮继续下一个区域的探索。`,
+Click the "Complete Task" button to continue exploring the next Magic Hall.`,
           timestamp: new Date()
         }
         setMessages(prev => [...prev, completeMessage])
         setIsTestMode(false)
         
-        // 调用完成回调
+        // Call completion callback
         setTimeout(() => {
           onComplete()
         }, 1000)
@@ -609,12 +687,14 @@ ${detailedResults}
         const failMessage: Message = {
           id: (Date.now() + 2).toString(),
           role: 'assistant',
-          content: `😔 **测试未通过**
+          content: `😔 **Test Failed**
 
-❌ 你需要达到20%的正确率才能完成区域学习。
-建议重新学习知识点后再次测试。
+❌ Your accuracy is ${finalScore.toFixed(1)}%, you need to reach 80% to pass.
+It is recommended to review the knowledge points and take the test again.
 
-请继续学习相关知识点，或者重新开始测试。`,
+📊 Need to answer correctly: ${Math.ceil(questionCount * 0.8)}/${questionCount} questions
+
+Please continue learning the related knowledge points, or restart the test.`,
           timestamp: new Date()
         }
         setMessages(prev => [...prev, failMessage])
@@ -624,17 +704,36 @@ ${detailedResults}
       return
     }
     
-    // 如果不是批量答案，显示错误信息
+    // If not batch answer, show error message
+    const exampleAnswer = Array(questionCount).fill('A').join('')
     const errorMessage: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: `❌ **输入格式错误**
+      content: `❌ **Input Format Error**
 
-请输入5个字母的答案组合，例如：ABCDA
-（第1题选A，第2题选B，第3题选C，第4题选D，第5题选A）`,
+Please enter a ${questionCount}-letter answer combination, for example: ${exampleAnswer}
+(Enter the corresponding A/B/C/D letter for each question in order)`,
       timestamp: new Date()
     }
     setMessages(prev => [...prev, errorMessage])
+  }
+
+  const generateFallbackQuestion = (questionNum: number, pointTitle: string, pointContent: string): Question => {
+    // Extract key information from knowledge point content to generate simple question
+    console.log(`🔄 Generating fallback question ${questionNum} - ${pointTitle}`)
+    
+    return {
+      id: `q${questionNum}`,
+      question: `Regarding "${pointTitle}", which description is most accurate?`,
+      options: [
+        'This is an important concept mentioned in the course',
+        'This is not within the scope of this course',
+        'This is an outdated technology',
+        'This is only theoretical knowledge with no practical application'
+      ],
+      correctAnswer: 0,
+      explanation: `According to the course content, ${pointTitle} is an important knowledge point in this course.`
+    }
   }
 
   const startTest = async () => {
@@ -642,20 +741,20 @@ ${detailedResults}
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `⚠️ **无法开始测试**
+        content: `⚠️ **Cannot Start Test**
 
-你需要先学完20%的知识点才能参加测试。
+You need to complete 20% of the knowledge points before taking the test.
 
-**当前进度：** ${learnedKnowledgePoints.size}/${totalKnowledgePoints} (${Math.round((learnedKnowledgePoints.size / totalKnowledgePoints) * 100)}%)
+**Current Progress:** ${learnedKnowledgePoints.size}/${totalKnowledgePoints} (${Math.round((learnedKnowledgePoints.size / totalKnowledgePoints) * 100)}%)
 
-请继续学习更多知识点！`,
+Please continue learning more knowledge points!`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage])
       return
     }
 
-    // 开始测试，生成5个题目
+    // Start test, generate 5 questions
     setIsTestMode(true)
 
     setSelectedAnswer(null)
@@ -664,96 +763,187 @@ ${detailedResults}
     const testMessage: Message = {
       id: Date.now().toString(),
       role: 'assistant',
-      content: `🧪 **开始测试！**
+      content: `🧪 **Starting Test!**
 
-我将为你生成5道涵盖本区域知识点的题目。
-每道题答完后会显示正确答案和解析。
-答对1道题（20%）即可完成区域学习！
+I will generate questions covering the knowledge points in this area.
+After answering each question, the correct answer and explanation will be displayed.
+You need to reach 80% accuracy to pass!
 
-准备好了吗？让我开始生成题目...`,
+Are you ready? Let me start generating questions...`,
       timestamp: new Date()
     }
     
     setMessages(prev => [...prev, testMessage])
     
-    // 一次性生成5道题目
+    // Generate all questions at once
     await generateAllQuestions()
   }
 
   const generateAllQuestions = async () => {
-    // 显示思考过程
-    if (showThinking) {
-      setThinkingContent(`🎯 正在生成5道测试题目...\n🔍 分析所有学习过的知识点...\n❓ 设计综合性测试题目...\n📝 生成题目、选项和解析...`)
-    }
-
-    // 一次性生成5道题目
-    const questions: Question[] = []
+    // Only generate questions for learned knowledge points
     const learnedPoints = Array.from(learnedKnowledgePoints)
+    const totalQuestions = learnedPoints.length  // Generate questions based on learned points
     
-    for (let i = 0; i < 5; i++) {
-      // 为每道题随机选择一个知识点
-      const randomPointNumber = learnedPoints[Math.floor(Math.random() * learnedPoints.length)]
-      const pointTitle = knowledgePointsList[randomPointNumber - 1] || `知识点${randomPointNumber}`
-      
-      // 生成默认题目（跳过LLM验证，直接使用高质量默认题目）
-      let question: Question
-      if (pointTitle.includes('网络') || pointTitle.includes('协议') || pointTitle.includes('TCP') || pointTitle.includes('HTTP')) {
-        question = {
-          id: `q${i + 1}`,
-          question: 'TCP协议相比UDP协议的主要优势是什么？',
-          options: ['传输速度更快', '提供可靠的数据传输', '占用带宽更少', '支持广播传输'],
-          correctAnswer: 1,
-          explanation: 'TCP是面向连接的协议，提供可靠的数据传输服务，包括错误检测、重传机制等。'
-        }
-      } else if (pointTitle.includes('算法') || pointTitle.includes('数据结构') || pointTitle.includes('栈') || pointTitle.includes('队列')) {
-        question = {
-          id: `q${i + 1}`,
-          question: '以下哪种数据结构遵循"后进先出"(LIFO)原则？',
-          options: ['队列', '栈', '链表', '数组'],
-          correctAnswer: 1,
-          explanation: '栈是一种后进先出(LIFO)的数据结构，最后压入的元素最先弹出。'
-        }
-      } else if (pointTitle.includes('进程') || pointTitle.includes('线程') || pointTitle.includes('操作系统') || pointTitle.includes('死锁')) {
-        question = {
-          id: `q${i + 1}`,
-          question: '死锁产生的必要条件不包括以下哪一项？',
-          options: ['互斥条件', '占有等待', '可抢占', '循环等待'],
-          correctAnswer: 2,
-          explanation: '死锁的四个必要条件是：互斥、占有等待、非抢占、循环等待。可抢占不是死锁的必要条件。'
-        }
-      } else if (pointTitle.includes('数据库') || pointTitle.includes('SQL') || pointTitle.includes('事务') || pointTitle.includes('ACID')) {
-        question = {
-          id: `q${i + 1}`,
-          question: '数据库事务的ACID特性中，"I"代表什么？',
-          options: ['原子性(Atomicity)', '一致性(Consistency)', '隔离性(Isolation)', '持久性(Durability)'],
-          correctAnswer: 2,
-          explanation: 'ACID中的I代表隔离性(Isolation)，确保并发事务的执行不会相互干扰。'
-        }
-      } else {
-        question = {
-          id: `q${i + 1}`,
-          question: '敏捷开发方法的核心思想是什么？',
-          options: ['详细的文档规范', '严格的流程控制', '迭代开发和持续交付', '大型团队协作'],
-          correctAnswer: 2,
-          explanation: '敏捷开发强调迭代开发、持续交付、快速响应变化和团队协作。'
-        }
+    if (totalQuestions === 0) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `⚠️ **Cannot Generate Test**\n\nYou haven't learned any knowledge points yet. Please study first before taking the test.`,
+        timestamp: new Date()
       }
-      
-      questions.push(question)
+      setMessages(prev => [...prev, errorMessage])
+      setIsTestMode(false)
+      return
     }
     
-    // 设置生成的题目
+    // Display progress message (progress bar style)
+    const progressMessage: Message = {
+      id: 'progress-msg',
+      role: 'assistant',
+      content: `⏳ **Generating test questions...**\n\n${'▓'.repeat(0)}${'░'.repeat(totalQuestions)} 0/${totalQuestions}`,
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, progressMessage])
+
+    // Generate questions
+    const questions: Question[] = []
+    
+    console.log(`🎯 Generating test questions - Learned ${totalQuestions} knowledge points, will generate ${totalQuestions} questions`)
+    
+    // Only generate questions for learned points, ensure no duplication
+    for (let i = 0; i < totalQuestions; i++) {
+      // Get learned knowledge point (in learning order)
+      const pointNumber = learnedPoints[i]
+      const pointTitle = knowledgePointsList[pointNumber - 1] || `Knowledge Point ${pointNumber}`
+      const pointContent = courseData?.materials[pointNumber - 1] || ''
+      
+      console.log(`📝 Question ${i + 1}/${totalQuestions} - Knowledge Point ${pointNumber}: ${pointTitle}`)
+      
+      // 更新进度条
+      const completed = i
+      const remaining = totalQuestions - completed
+      const progressBar = '▓'.repeat(completed) + '░'.repeat(remaining)
+      setMessages(prev => prev.map(msg => 
+        msg.id === 'progress-msg' 
+          ? { ...msg, content: `⏳ **Generating test questions...**\n\n${progressBar} ${completed}/${totalQuestions}` }
+          : msg
+      ))
+      
+      // Use LLM to generate questions based on actual course content (disable thinking display)
+      const questionPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}, designing test questions for apprentices. Always answer in English only.
+
+【Knowledge Point to Test】:
+${pointContent}
+
+【Important Requirements】:
+1. Question must be a concise problem, no more than 30 words
+2. Do not directly copy the knowledge point content as the question
+3. Extract a key concept from the knowledge point to ask about
+4. 4 options should be short and clear, each no more than 20 words
+5. Only one correct answer, the other 3 should be misleading but clearly wrong
+
+【Question Angle Examples】:
+Knowledge Point: Python is an interpreted language, created by Guido van Rossum in 1991, emphasizes code readability...
+
+Can ask from different angles:
+- Concept Understanding: What type of programming language is Python?
+- Historical Background: Who created Python?
+- Design Philosophy: What does Python's design philosophy emphasize?
+- Application Scenarios: What fields is Python suitable for?
+- Syntax Features: How does Python organize code blocks?
+
+【Wrong Example】 (directly copying):
+Question: Python is an interpreted language, created by Guido van Rossum in 1991... ❌
+
+【Correct Examples】 (extracting questions):
+Question: What type of programming language is Python? ✅
+Question: How does Python organize code blocks? ✅
+Question: What fields is Python primarily applied to? ✅
+
+【Output Format】 (strictly follow this format):
+Question: [A concise question, no more than 30 words]
+A. [Option A, no more than 20 words]
+B. [Option B, no more than 20 words]
+C. [Option C, no more than 20 words]
+D. [Option D, no more than 20 words]
+Answer: [A/B/C/D]
+Explanation: [Brief explanation of why this answer is correct, no more than 50 words]
+
+Please only output the above format without any additional content.`
+
+      try {
+        // Disable thinking display during question generation, only show progress bar
+        const response = await callRealLLMAPI(questionPrompt, selectedModel, true)
+        console.log(`📥 LLM Response (Question ${i + 1}/${totalQuestions}):`, response)
+        
+        // Parse LLM response
+        const questionMatch = response.match(/Question[：:]\s*(.+?)(?=\n[A-D]\.)/si)
+        const optionAMatch = response.match(/A\.\s*(.+?)(?=\n[B-D]\.|$)/s)
+        const optionBMatch = response.match(/B\.\s*(.+?)(?=\n[C-D]\.|$)/s)
+        const optionCMatch = response.match(/C\.\s*(.+?)(?=\n[D]\.|$)/s)
+        const optionDMatch = response.match(/D\.\s*(.+?)(?=\n(?:Answer|答案)|$)/si)
+        const answerMatch = response.match(/(?:Answer|答案)[：:]\s*([A-D])/i)
+        const explanationMatch = response.match(/(?:Explanation|解析)[：:]\s*(.+?)$/si)
+        
+        if (questionMatch && optionAMatch && optionBMatch && optionCMatch && optionDMatch && answerMatch && explanationMatch) {
+          const answerLetter = answerMatch[1].toUpperCase()
+          const correctAnswerIndex = answerLetter.charCodeAt(0) - 'A'.charCodeAt(0)
+          
+          const question: Question = {
+          id: `q${i + 1}`,
+            question: questionMatch[1].trim(),
+            options: [
+              optionAMatch[1].trim(),
+              optionBMatch[1].trim(),
+              optionCMatch[1].trim(),
+              optionDMatch[1].trim()
+            ],
+            correctAnswer: correctAnswerIndex,
+            explanation: explanationMatch[1].trim()
+          }
+          
+          console.log(`✅ Question ${i + 1} generated successfully:`, question)
+          questions.push(question)
+      } else {
+          console.warn(`⚠️ Question ${i + 1} parsing failed, using fallback question`)
+          // Use fallback question
+          questions.push(generateFallbackQuestion(i + 1, pointTitle, pointContent))
+        }
+      } catch (error) {
+        console.error(`❌ Question ${i + 1} generation failed:`, error)
+        // Use fallback question
+        questions.push(generateFallbackQuestion(i + 1, pointTitle, pointContent))
+      }
+    }
+    
+    // Set generated questions
     setTestQuestions(questions)
 
-
+    // Display completion progress
+    const progressBar = '▓'.repeat(totalQuestions)
+    setMessages(prev => prev.map(msg => 
+      msg.id === 'progress-msg' 
+        ? { ...msg, content: `✅ **Questions Generated!**\n\n${progressBar} ${totalQuestions}/${totalQuestions}` }
+        : msg
+    ))
     
-    // 显示所有题目
+    // Wait 0.5 seconds then remove progress message and display questions
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Remove progress message
+    setMessages(prev => prev.filter(msg => msg.id !== 'progress-msg'))
+    
+    // Display all questions
+    const answerFormat = Array(totalQuestions).fill('A').join('')  // Generate example of corresponding length
+    const learnedPointsStr = learnedPoints.join(', ')
     const allQuestionsMessage: Message = {
       id: Date.now().toString(),
       role: 'assistant',
-      content: `📝 **测试题目（共5题）**
+      content: `📝 **Test Questions (Total: ${totalQuestions})**
 
-${questions.map((q, index) => `**第${index + 1}题：**
+Based on your learned knowledge points: ${learnedPointsStr}
+
+${questions.map((q, index) => `**Question ${index + 1}:**
 ${q.question}
 
 A. ${q.options[0]}
@@ -761,53 +951,32 @@ B. ${q.options[1]}
 C. ${q.options[2]}
 D. ${q.options[3]}`).join('\n\n')}
 
-**📋 答题方式：**
-请一次性提交你的答案，格式如：ABCDA
-（例如：如果你的答案是第1题选A，第2题选B，第3题选C，第4题选D，第5题选A，请输入"ABCDA"）`,
+**📋 How to Answer:**
+Please submit all your answers at once, format: ${answerFormat}
+(For example: Enter ${totalQuestions} letters in order corresponding to each question)`,
       timestamp: new Date()
     }
     
     setMessages(prev => [...prev, allQuestionsMessage])
-    setThinkingContent('')
   }
 
   const generateNextQuestion = async (retryCount = 0) => {
-    // 最多重试2次，避免过度重试
+    // Max 2 retries to avoid excessive retrying
     if (retryCount >= 2) {
-      console.error('题目生成失败，使用高质量默认题目')
+      console.error('Question generation failed, using fallback question')
       
-      // 根据知识点生成高质量的默认题目
+      // Generate fallback question based on knowledge points
       const learnedPoints = Array.from(learnedKnowledgePoints)
       const randomPointNumber = learnedPoints[Math.floor(Math.random() * learnedPoints.length)]
-      const pointTitle = knowledgePointsList[randomPointNumber - 1] || `知识点${randomPointNumber}`
+      const pointTitle = knowledgePointsList[randomPointNumber - 1] || `Knowledge Point ${randomPointNumber}`
+      const pointContent = courseData?.materials[randomPointNumber - 1] || ''
       
-      // 生成不同类型的默认题目
-      let defaultQuestion: Question
-      if (pointTitle.includes('网络') || pointTitle.includes('协议')) {
-        defaultQuestion = {
-          id: Date.now().toString(),
-          question: 'TCP协议的主要特点是什么？',
-          options: ['无连接', '可靠传输', '不可靠传输', '广播通信'],
-          correctAnswer: 1, // B. 可靠传输
-          explanation: 'TCP是传输控制协议，提供可靠的数据传输服务。'
-        }
-      } else if (pointTitle.includes('算法') || pointTitle.includes('数据结构')) {
-        defaultQuestion = {
-          id: Date.now().toString(),
-          question: '栈的数据结构特点是什么？',
-          options: ['先进先出', '后进先出', '随机访问', '双向访问'],
-          correctAnswer: 1, // B. 后进先出
-          explanation: '栈是一种后进先出(LIFO)的数据结构。'
-        }
-      } else {
-        defaultQuestion = {
-          id: Date.now().toString(),
-          question: `关于"${pointTitle}"，下列说法正确的是：`,
-          options: ['选项A', '选项B', '选项C', '选项D'],
-          correctAnswer: 0,
-          explanation: '这是默认的解释。'
-        }
-      }
+      // Use fallback question generation function
+      const defaultQuestion: Question = generateFallbackQuestion(
+        getCurrentQuestionNumber(), 
+        pointTitle, 
+        pointContent
+      )
       
       
       setSelectedAnswer(null)
@@ -816,18 +985,18 @@ D. ${q.options[3]}`).join('\n\n')}
       const testMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `📝 **第${getCurrentQuestionNumber()}题**
+        content: `📝 **Question ${getCurrentQuestionNumber()}**
 
-**题目：**
+**Question:**
 ${defaultQuestion.question}
 
-**选项：**
+**Options:**
 A. ${defaultQuestion.options[0]}
 B. ${defaultQuestion.options[1]}
 C. ${defaultQuestion.options[2]}
 D. ${defaultQuestion.options[3]}
 
-请选择正确答案（回复A、B、C或D）：`,
+Please select the correct answer (reply A, B, C, or D):`,
         timestamp: new Date()
       }
 
@@ -836,79 +1005,79 @@ D. ${defaultQuestion.options[3]}
       return
     }
 
-    // 随机选择一个已学习的知识点
+    // Randomly select a learned knowledge point
     const learnedPoints = Array.from(learnedKnowledgePoints)
     const randomPointNumber = learnedPoints[Math.floor(Math.random() * learnedPoints.length)]
-    const pointTitle = knowledgePointsList[randomPointNumber - 1] || `知识点${randomPointNumber}`
+    const pointTitle = knowledgePointsList[randomPointNumber - 1] || `Knowledge Point ${randomPointNumber}`
 
-    // 显示思考过程
+    // Display thinking process
     if (showThinking) {
-      setThinkingContent(`🎯 正在为知识点"${pointTitle}"生成测试题目...\n🔍 分析知识点内容...\n❓ 设计题目和选项...\n📝 生成正确答案和解析...`)
+      setThinkingContent(`🎯 Generating test question for knowledge point "${pointTitle}"...\n🔍 Analyzing knowledge point content...\n❓ Designing question and options...\n📝 Generating correct answer and explanation...`)
     }
 
-    // 让LLM生成选择题
-    const questionPrompt = `你是经验丰富的计算机科学教授，需要为知识点"${pointTitle}"生成一道高质量选择题。
+    // Let LLM generate multiple choice question
+    const questionPrompt = `You are a professor at the Magic Academy, designing a technical test question about "${pointTitle}" for magic apprentices. Always answer in English only.
 
-【课程资料】：
-${courseData?.materials.join('\n') || '基础知识'}
+【Course Materials】:
+${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
 
-【题目要求】：
-1. 题目必须严格基于课程资料内容
-2. 语言适合小学生理解
-3. 4个选项中只有1个正确答案
-4. 如果是数学题，必须仔细计算确保答案正确
-5. 选项不能重复，要有适当迷惑性
+【Question Requirements】:
+1. Question must be strictly based on course material content
+2. Use professional computer science terminology, suitable for university level
+3. Only 1 correct answer among 4 options
+4. If it's a math question, carefully calculate to ensure the answer is correct
+5. Options cannot be duplicated, must have appropriate misleading elements
 
-【数学题特殊要求】：
-- 题目中不能直接给出答案或暗示答案
-- 选项只能包含算式，不能包含等号和结果
-- 确保只有一个正确答案
-- 其他选项必须是错误答案，不能是正确答案
+【Special Requirements for Math Questions】:
+- Question cannot directly give away or hint at the answer
+- Options should only contain expressions, not equals signs and results
+- Ensure only one correct answer
+- Other options must be wrong answers, cannot be correct
 
-【质量检查】：
-- 数学题：请三次检查计算结果和选项唯一性
-- 常识题：确保逻辑合理
-- 解析必须与正确答案一致
+【Quality Check】:
+- Math questions: Check calculation results and option uniqueness three times
+- General knowledge questions: Ensure logical coherence
+- Explanation must be consistent with the correct answer
 
-【JSON格式】（严格按此格式输出，不要添加任何其他内容）：
+【JSON Format】 (Strictly output in this format, do not add any other content):
 {
-  "question": "题目内容（简洁明了）",
-  "options": ["选项1", "选项2", "选项3", "选项4"],
+  "question": "Question content (concise and clear)",
+  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
   "correctAnswer": 0,
-  "explanation": "简短解析（与正确答案一致）"
+  "explanation": "Brief explanation (consistent with correct answer)"
 }
 
-【数学题示例】（参考格式）：
+【Math Question Example】 (Reference format):
 {
-  "question": "下列哪个算式的结果是6？",
+  "question": "Which expression equals 6?",
   "options": ["2×3", "1×5", "3×2", "2×4"],
   "correctAnswer": 0,
-  "explanation": "2×3=6，其他算式的结果都不是6"
+  "explanation": "2×3=6, other expressions do not equal 6"
 }
 
-【重要提醒】：
-- correctAnswer是数字：0=第一个选项，1=第二个选项，2=第三个选项，3=第四个选项
-- 只输出JSON，不要添加任何其他文字、说明或解释
-- 确保所有标点符号正确
-- 不要换行，保持JSON格式完整`
+【Important Reminders】:
+- correctAnswer is a number: 0=first option, 1=second option, 2=third option, 3=fourth option
+- Only output JSON, do not add any other text, explanations or descriptions
+- Ensure all punctuation is correct
+- Do not add line breaks, keep JSON format intact`
 
     const response = await callRealLLMAPI(questionPrompt, selectedModel)
     
     try {
-      // 解析JSON - 增加容错性
+      // Parse JSON - Increase fault tolerance
       const cleanResponse = response.trim()
-      console.log('LLM原始响应:', cleanResponse)
+      console.log('LLM raw response:', cleanResponse)
       
-      // 尝试多种JSON提取方式
+      // Try multiple JSON extraction methods
       let jsonMatch = cleanResponse.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
-        // 如果没找到完整JSON，尝试找到JSON开始
+        // If complete JSON not found, try to find JSON start
         const startIndex = cleanResponse.indexOf('{')
         if (startIndex !== -1) {
           const partialJson = cleanResponse.substring(startIndex)
-          // 尝试补全JSON
+          // Try to complete JSON
           if (!partialJson.includes('}')) {
-            // 如果缺少结束括号，尝试补全
+            // If missing closing bracket, try to complete
             const completedJson = partialJson + '}'
             try {
               const testData = JSON.parse(completedJson)
@@ -991,23 +1160,24 @@ D. ${questionData.options[3]}
   }
 
   const handleChatMessage = async (userInput: string) => {
-    const chatPrompt = `你是一位耐心的${courseData?.subject || '计算机科学'}教授。请基于课程资料准确回答学生问题。
+    const chatPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}, guiding a curious magic apprentice. Answer the apprentice's question strictly based on the course materials. Always answer in English only.
 
-【课程资料】：
-${courseData?.materials.join('\n') || '基础知识'}
+【Course Materials】:
+${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
 
-【学生问题】：${userInput}
+【Apprentice Question】: ${userInput}
 
-【回答要求】：
-1. 只能基于提供的课程资料回答
-2. 使用小学生能理解的简单语言
-3. 回答要准确、具体，避免模糊表述
-4. 如果问题超出课程范围，请说"这个问题超出了我们当前的学习内容"
-5. 回答要简洁，不超过100字
-6. 可以用简单的例子帮助理解
+【Answer Requirements】:
+1. Base your answer only on the provided course materials
+2. Use professional yet clear terminology appropriate for university-level learners
+3. You may incorporate subtle Magic Academy flavor, but keep it rigorous
+4. Be accurate and specific; avoid vague statements
+5. If the question is out of scope, say: "This question is beyond the scope of this course, young apprentice."
+6. Keep it concise within 150 words
+7. Use concrete examples when helpful
 
-【回答格式】：
-直接回答问题，不要添加前缀或后缀。`
+【Output Format】:
+Answer directly without any prefix or suffix.`
 
     const response = await callRealLLMAPI(chatPrompt, selectedModel)
     
@@ -1021,14 +1191,14 @@ ${courseData?.materials.join('\n') || '基础知识'}
     setMessages(prev => [...prev, chatMessage])
   }
 
-  const callRealLLMAPI = async (userInput: string, model: string = 'qwen2.5'): Promise<string> => {
+  const callRealLLMAPI = async (userInput: string, model: string = 'qwen2.5', skipThinking: boolean = false): Promise<string> => {
     try {
       switch (model) {
         case 'claude-3.5':
           // 检查API密钥是否配置
           if (!checkAPIKey('claude-3.5')) {
             console.warn('Claude API密钥未配置，回退到本地模型')
-            return await callLocalModel(userInput, 'qwen2.5')
+            return await callLocalModel(userInput, 'qwen2.5', skipThinking)
           }
           
           // Claude 3.5 Sonnet API
@@ -1057,19 +1227,17 @@ ${courseData?.materials.join('\n') || '基础知识'}
           } else {
             console.error('Claude API调用失败:', claudeResponse.status)
             // 回退到本地模型
-            return await callLocalModel(userInput)
+            return await callLocalModel(userInput, 'qwen2.5', skipThinking)
           }
           break
 
         case 'qwen2.5':
-        case 'deepseek-r1':
-        case 'ollama-mistral':
         case 'ollama-llama2':
-          return await callLocalModel(userInput, model)
+          return await callLocalModel(userInput, model, skipThinking)
           break
 
         default:
-          return await callLocalModel(userInput, 'qwen2.5')
+          return await callLocalModel(userInput, 'qwen2.5', skipThinking)
       }
     } catch (error) {
       console.error('API调用失败:', error)
@@ -1078,14 +1246,12 @@ ${courseData?.materials.join('\n') || '基础知识'}
     }
   }
 
-  const callLocalModel = async (userInput: string, model: string = 'qwen2.5'): Promise<string> => {
-    const ollamaModel = model === 'qwen2.5' ? 'qwen2.5:7b' : 
-                       model === 'deepseek-r1' ? 'deepseek-r1:8b' :
-                       model.includes('mistral') ? 'mistral' : 'llama2'
+  const callLocalModel = async (userInput: string, model: string = 'qwen2.5', skipThinking: boolean = false): Promise<string> => {
+    const ollamaModel = model === 'qwen2.5' ? 'qwen2.5:7b' : 'llama2'
     
-    // 开始流式输出思考过程
-    if (showThinking) {
-      setThinkingContent('🤔 正在思考...\n')
+    // Start streaming thinking content (hidden during question generation)
+    if (showThinking && !skipThinking) {
+      setThinkingContent('🤔 Thinking...\n')
     }
     
     const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
@@ -1127,8 +1293,8 @@ ${courseData?.materials.join('\n') || '基础知识'}
               if (data.response) {
                 fullResponse += data.response
                 
-                // 实时更新思考过程
-                if (showThinking) {
+                // 实时更新思考过程（出题时不显示）
+                if (showThinking && !skipThinking) {
                   setThinkingContent(prev => prev + data.response)
                 }
               }
@@ -1152,11 +1318,6 @@ ${courseData?.materials.join('\n') || '基础知识'}
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
     
     const responses = {
-      'ollama-mistral': [
-        `作为Mistral 7B模型，我认为：${userInput} 这个话题很有趣。让我从技术角度来分析一下...`,
-        `根据我的理解，${userInput} 涉及到几个关键概念。首先...`,
-        `这是一个很有深度的问题。作为AI助手，我想分享一些见解：${userInput}...`
-      ],
       'ollama-llama2': [
         `Llama2模型认为：${userInput} 是一个值得深入探讨的话题。`,
         `从我的角度来看，${userInput} 有以下几个层面...`,
@@ -1174,13 +1335,13 @@ ${courseData?.materials.join('\n') || '基础知识'}
       ]
     }
     
-    const modelResponses = responses[model as keyof typeof responses] || responses['ollama-mistral']
+    const modelResponses = responses[model as keyof typeof responses] || responses['ollama-llama2']
     return modelResponses[Math.floor(Math.random() * modelResponses.length)]
   }
 
   const getCurrentQuestionNumber = () => {
     // 计算当前是第几题（基于测试开始后的用户回答数量）
-    const testStartIndex = messages.findIndex(msg => msg.content.includes('开始测试！'))
+    const testStartIndex = messages.findIndex(msg => msg.content.includes('Starting Test!'))
     if (testStartIndex === -1) return 1
     
     const testMessages = messages.slice(testStartIndex)
@@ -1190,7 +1351,7 @@ ${courseData?.materials.join('\n') || '基础知识'}
   }
 
   const getErrorAnalysis = () => {
-    return `你答错了${5 - correctAnswers}道题。建议重新学习相关知识点，特别是那些你答错的题目内容。`
+    return `You answered ${5 - correctAnswers} questions wrong. It is recommended to re-study the relevant knowledge points, especially those you got wrong.`
   }
 
   const validateQuestion = (questionData: any): boolean => {
@@ -1364,8 +1525,24 @@ ${courseData?.materials.join('\n') || '基础知识'}
             exit={{ scale: 0.8, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {!courseData ? (
+              // 加载课程数据中
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center', 
+                justifyContent: 'center',
+                minHeight: '400px',
+                color: 'white',
+                gap: '16px'
+              }}>
+                <div style={{ fontSize: '48px' }}>📚</div>
+                <div style={{ fontSize: '18px' }}>Loading course data...</div>
+              </div>
+            ) : (
+              <>
             <DialogHeader>
-              <DialogTitle>{areaId} 学习区域</DialogTitle>
+                  <DialogTitle>{courseData.subject || areaId} Magic Hall</DialogTitle>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <select
                   value={selectedModel}
@@ -1380,26 +1557,11 @@ ${courseData?.materials.join('\n') || '基础知识'}
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="qwen2.5">🤖 Qwen2.5 (本地)</option>
-                  <option value="deepseek-r1">🧠 DeepSeek R1 (本地)</option>
-                  <option value="claude-3.5">🌐 Claude 3.5 (联网)</option>
-                  <option value="ollama-mistral">📚 Mistral (本地)</option>
+                  <option value="qwen2.5">🤖 Qwen2.5 (Local)</option>
+                  <option value="claude-3.5">🌐 Claude 3.5 (Online)</option>
+                  
                 </select>
-                <button
-                  onClick={() => setShowThinking(!showThinking)}
-                  style={{
-                    background: showThinking ? '#4CAF50' : '#666',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {showThinking ? '🧠 隐藏思考' : '🧠 显示思考'}
-                </button>
+                {/* Removed Thinking Display indicator */}
                 <CloseButton onClick={onClose}>×</CloseButton>
               </div>
             </DialogHeader>
@@ -1409,11 +1571,11 @@ ${courseData?.materials.join('\n') || '基础知识'}
             </ProgressBar>
 
             <div style={{ marginTop: '8px', fontSize: '12px', color: '#888' }}>
-              学习进度：{learnedKnowledgePoints.size}/{totalKnowledgePoints} ({Math.round(learningProgress)}%)
+              Learning Progress: {learnedKnowledgePoints.size}/{totalKnowledgePoints} ({Math.round(learningProgress)}%)
               {learningProgress >= 40 && !isTestMode && (
                 <div style={{ marginTop: '8px' }}>
                   <SendButton onClick={startTest} style={{ background: '#FF9800', fontSize: '12px', padding: '6px 12px' }}>
-                    🧪 开始测试
+                    🧪 Start Test
                   </SendButton>
                 </div>
               )}
@@ -1490,7 +1652,7 @@ ${courseData?.materials.join('\n') || '基础知识'}
                     <MessageContent $isUser={false}>
                       <LoadingIndicator>
                         <Spinner />
-                        正在思考中...
+                        Thinking...
                       </LoadingIndicator>
                     </MessageContent>
                   </div>
@@ -1523,7 +1685,7 @@ ${courseData?.materials.join('\n') || '基础知识'}
                           gap: '8px'
                         }}>
                           <span style={{ fontSize: '16px' }}>🧠</span>
-                          <span>AI思考过程</span>
+                          <span>AI Thinking Process</span>
                           <div style={{
                             width: '8px',
                             height: '8px',
@@ -1559,14 +1721,14 @@ ${courseData?.materials.join('\n') || '基础知识'}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={isTestMode ? "请输入A、B、C或D选择答案..." : "输入数字学习知识点，或直接问我问题，或输入'测试'参加测试..."}
+                placeholder={isTestMode ? "Please enter A, B, C, or D for the answer..." : "Enter a number to learn a knowledge point, ask me a question directly, or enter 'test' to take the test..."}
                 disabled={isLoading}
               />
               <SendButton
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
               >
-                发送
+                Send
               </SendButton>
             </InputContainer>
 
@@ -1578,7 +1740,7 @@ ${courseData?.materials.join('\n') || '基础知识'}
                   style={{ background: '#FF9800' }}
                   disabled={isLoading}
                 >
-                  🎯 开始小测试
+                  🎯 Start Small Test
                 </SendButton>
               </div>
             )}
@@ -1594,18 +1756,20 @@ ${courseData?.materials.join('\n') || '基础知识'}
                 textAlign: 'center'
               }}>
                 <div style={{ color: '#FF9800', fontWeight: 'bold', marginBottom: '8px' }}>
-                  🧪 小测试时间
+                  🧪 Small Test Time
                 </div>
                 <div style={{ color: '#ffffff', fontSize: '14px' }}>
-                  请回答小老师的问题。答对了就可以完成学习哦！
+                  Answer the professor's questions to complete this Magic Hall!
                 </div>
               </div>
             )}
 
             {taskProgress === 100 && selectedAnswer !== null && (
               <CompleteButton onClick={handleComplete}>
-                🎓 完成学习
+                🎓 Complete Learning
               </CompleteButton>
+            )}
+              </>
             )}
           </DialogContent>
         </DialogOverlay>

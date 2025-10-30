@@ -1,0 +1,82 @@
+# Course Meta Information
+Course Name: Physics Fundamentals
+Category: Physics
+Difficulty: medium
+Description: Core concepts across mechanics, thermodynamics, waves, electromagnetism, optics, and modern physics
+
+# Course Content
+
+## Chapter 1: Mechanics Basics
+
+### 1. Scalars and Vectors
+### 2. Kinematics in One Dimension
+### 3. Kinematics in Two Dimensions (Projectile Motion)
+### 4. Newton’s Laws of Motion
+### 5. Free-Body Diagrams and Equilibrium
+### 6. Friction: Static and Kinetic
+### 7. Work and Kinetic Energy Theorem
+### 8. Potential Energy and Energy Conservation
+### 9. Power and Efficiency
+### 10. Momentum and Impulse
+### 11. Elastic and Inelastic Collisions
+### 12. Center of Mass and Motion of System
+### 13. Uniform Circular Motion and Centripetal Force
+
+## Chapter 2: Rotational Dynamics
+
+### 14. Angular Kinematics
+### 15. Torque and Rotational Equilibrium
+### 16. Moment of Inertia
+### 17. Rotational Kinetic Energy and Work
+### 18. Angular Momentum and Its Conservation
+
+## Chapter 3: Gravitation and Fluids
+
+### 19. Newton’s Law of Universal Gravitation
+### 20. Gravitational Potential Energy and Orbits
+### 21. Hydrostatic Pressure and Pascal’s Principle
+### 22. Archimedes’ Principle and Buoyancy
+### 23. Fluid Continuity Equation and Bernoulli’s Principle
+
+## Chapter 4: Thermodynamics
+
+### 24. Temperature Scales and Thermal Expansion
+### 25. Heat, Specific Heat, and Calorimetry
+### 26. Phase Changes and Latent Heat
+### 27. Ideal Gas Law and Kinetic Theory
+### 28. First Law of Thermodynamics
+### 29. Heat Engines, Efficiency, and Second Law
+
+## Chapter 5: Waves and Oscillations
+
+### 30. Simple Harmonic Motion (SHM)
+### 31. Energy in SHM and Damped Motion
+### 32. Wave Parameters: Speed, Frequency, Wavelength
+### 33. Interference, Diffraction, and Superposition
+### 34. Standing Waves and Resonance
+
+## Chapter 6: Electricity and Magnetism
+
+### 35. Electric Charge and Coulomb’s Law
+### 36. Electric Field and Electric Potential
+### 37. Capacitance and Dielectrics
+### 38. Current, Resistance, and Ohm’s Law
+### 39. DC Circuits: Series and Parallel
+### 40. Magnetic Fields and Forces
+### 41. Ampère’s Law and Biot–Savart Law (Conceptual)
+### 42. Electromagnetic Induction and Faraday’s Law
+### 43. Inductors, RL Circuits, and Energy in Magnetic Fields
+
+## Chapter 7: Optics
+
+### 44. Reflection, Refraction, and Snell’s Law
+### 45. Lenses, Mirrors, and Image Formation
+### 46. Optical Instruments (Microscope, Telescope)
+### 47. Polarization and Brewster’s Angle
+
+## Chapter 8: Modern Physics
+
+### 48. Photoelectric Effect and Photon Model
+### 49. Atomic Spectra and Bohr Model (Concepts)
+### 50. Nuclear Reactions: Fission and Fusion Basics
+

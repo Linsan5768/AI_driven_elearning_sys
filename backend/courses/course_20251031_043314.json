@@ -1,0 +1,26 @@
+{
+  "subject": "Python编程入门",
+  "materials": [
+    "1. Python简介: Python是一种解释型、面向对象、动态类型的高级编程语言。由Guido van Rossum于1991年创建，以简洁优雅的语法著称。Python广泛应用于Web开发、数据分析、人工智能、自动化脚本等领域。其设计哲学强调代码可读性，使用空格缩进来组织代码块。",
+    "2. 变量与赋值: Python中使用等号（=）进行赋值，变量名在左，值在右。变量不需要提前声明类型，Python会自动推断。例如：`name = \"Alice\"` 创建一个字符串变量，`age = 25` 创建一个整数变量。变量名应该有意义，遵循小写字母和下划线的命名规范，如 `student_count`。",
+    "3. 基本数据类型: Python主要数据类型包括：整数（int）如 `42`，浮点数（float）如 `3.14`，字符串（str）如 `\"Hello\"`，布尔值（bool）如 `True` 或 `False`。可以使用 `type()` 函数查看数据类型。类型之间可以相互转换，如 `int(\"123\")` 将字符串转换为整数。",
+    "4. 字符串操作: 字符串是字符的序列，用单引号或双引号包围。可以用加号连接字符串：`\"Hello\" + \" World\"`。用方括号访问字符：`s[0]` 获取第一个字符。常用方法包括 `upper()` 转大写、`lower()` 转小写、`split()` 分割、`strip()` 去除空格等。",
+    "5. 列表操作: 列表用方括号定义，可以包含不同类型的元素：`[1, \"two\", 3.0]`。通过索引访问元素（从0开始）：`lst[0]`。常用操作包括 `append()` 添加元素、`pop()` 删除元素、`len()` 获取长度、切片 `lst[1:3]` 获取子列表。",
+    "6. 条件语句: if语句根据条件执行不同代码。语法：`if 条件: 执行语句`。可以添加 `elif` 处理多个条件，`else` 处理其他情况。例如：判断年龄 `if age >= 18: print(\"成年\")` 。注意Python使用缩进表示代码块，通常缩进4个空格。",
+    "7. for循环: for循环用于遍历序列（列表、字符串、范围等）。语法：`for item in sequence:`。例如：`for i in range(5):` 循环5次，i从0到4。`for char in \"Hello\":` 遍历字符串的每个字符。可以用 `break` 提前退出循环，用 `continue` 跳过当前迭代。",
+    "8. while循环: while循环在条件为真时重复执行。语法：`while 条件:`。例如：`while count < 10: count += 1` 执行直到count达到10。要注意避免无限循环，确保条件最终会变为假。while循环适合不确定循环次数的场景。",
+    "9. 列表推导式: 列表推导式是创建列表的简洁方式，语法：`[表达式 for 变量 in 序列 if 条件]`。例如：`[x**2 for x in range(10)]` 生成0到9的平方数列表。`[x for x in range(20) if x % 2 == 0]` 生成0到19的偶数列表。比传统for循环更pythonic。",
+    "10. 异常处理: 异常是程序运行时发生的错误。用 `try-except` 捕获和处理异常，防止程序崩溃。语法：`try: 可能出错的代码 except 异常类型: 处理代码`。例如：`try: x = 1/0 except ZeroDivisionError: print(\"除数不能为零\")`。可以用 `finally` 添加无论是否异常都执行的代码。",
+    "11. 函数定义: 用 `def` 关键字定义函数，语法：`def 函数名(参数): 函数体 return 返回值`。例如：`def greet(name): return f\"Hello, {name}!\"` 定义一个问候函数。函数可以有默认参数：`def power(x, n=2):` n默认为2。函数使代码模块化、可复用。",
+    "12. 参数传递: Python函数支持位置参数、关键字参数、可变参数。位置参数按顺序传递：`func(1, 2)`。关键字参数指定参数名：`func(x=1, y=2)`。`*args` 接收任意数量的位置参数（元组），`**kwargs` 接收任意数量的关键字参数（字典）。",
+    "13. Lambda函数: Lambda是匿名函数，用于简单操作。语法：`lambda 参数: 表达式`。例如：`square = lambda x: x**2` 定义平方函数。常与 `map()`、`filter()`、`sorted()` 等函数配合使用。`list(map(lambda x: x*2, [1,2,3]))` 将列表每个元素乘2。",
+    "14. 模块导入: 模块是包含Python代码的文件。用 `import` 导入模块：`import math` 导入数学模块。用 `from...import` 导入特定函数：`from math import sqrt`。用 `as` 给模块起别名：`import numpy as np`。Python标准库包含丰富的模块如 os、sys、datetime、random等。",
+    "15. 文件操作: 用 `open()` 函数打开文件，模式包括 'r'（读）、'w'（写）、'a'（追加）。推荐使用 `with` 语句自动关闭文件：`with open('file.txt', 'r') as f: content = f.read()`。读取方法有 `read()` 读全部、`readline()` 读一行、`readlines()` 读所有行。写入用 `write()` 方法。"
+  ],
+  "difficulty": "easy",
+  "category": "编程语言",
+  "id": "course_20251031_043314",
+  "fileName": "Python编程入门.txt",
+  "generatedAt": "2025-10-31T04:33:14.648937",
+  "knowledgePointCount": 15
+}

@@ -3,6 +3,7 @@ import styled from '@emotion/styled'
 import { motion, AnimatePresence } from 'framer-motion'
 import GameMap from './components/GameMap'
 import AreaView from './components/AreaView'
+import TeacherPortal from './components/TeacherPortal'
 import axios from 'axios'
 
 const AppContainer = styled.div`
@@ -25,6 +26,7 @@ function App() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<string>('Checking connection...')
+  const [mode, setMode] = useState<'student' | 'teacher'>('teacher') // Initial interface is teacher portal
 
   useEffect(() => {
     checkBackendStatus()
@@ -140,6 +142,26 @@ function App() {
     )
   }
 
+  // 教师模式
+  if (mode === 'teacher') {
+    return (
+      <AppContainer>
+        <TeacherPortal 
+          onSwitchToStudent={() => {
+            setMode('student')
+            // Refresh game state when switching back to student view
+            fetchGameState()
+          }} 
+          onCourseApplied={() => {
+            // 课程应用成功后刷新游戏状态
+            fetchGameState()
+          }}
+        />
+      </AppContainer>
+    )
+  }
+
+  // 学生模式
   return (
     <AppContainer>
       <AnimatePresence mode="wait">
@@ -150,7 +172,42 @@ function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
+            style={{ width: '100%', height: '100%', position: 'relative' }}
           >
+            {/* 教师模式切换按钮 */}
+            <div style={{
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              zIndex: 1000
+            }}>
+              <button
+                onClick={() => setMode('teacher')}
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(102, 126, 234, 0.9)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '25px',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                🧙‍♂️ Teacher Portal
+              </button>
+            </div>
             <GameMap />
           </motion.div>
         ) : (
