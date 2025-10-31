@@ -1,23 +1,23 @@
-// API密钥配置
-// 注意：在生产环境中，这些密钥应该通过环境变量管理
+// API key configuration
+// Note: In production, these keys should be managed via environment variables
 
 export const API_KEYS = {
-  // Claude API密钥 (从 https://console.anthropic.com/ 获取)
+  // Claude API key (get from https://console.anthropic.com/)
   CLAUDE_API_KEY: 'your_claude_api_key_here',
   
-  // OpenAI API密钥 (可选)
+  // OpenAI API key (optional)
   OPENAI_API_KEY: 'your_openai_api_key_here',
   
-  // Google AI API密钥 (可选)
+  // Google AI API key (optional)
   GOOGLE_AI_API_KEY: 'your_google_ai_api_key_here',
   
-  // Hugging Face API密钥 (可选)
+  // Hugging Face API key (optional)
   HUGGINGFACE_API_KEY: 'your_huggingface_api_key_here'
 }
 
-// 模型配置
+// Model configuration
 export const MODEL_CONFIG = {
-  // 本地模型 (无需API密钥)
+  // Local models (no API key required)
   LOCAL_MODELS: {
     'qwen2.5': 'qwen2.5:7b',
     'deepseek-r1': 'deepseek-r1:8b',
@@ -25,7 +25,7 @@ export const MODEL_CONFIG = {
     'llama2': 'llama2'
   },
   
-  // 联网模型 (需要API密钥)
+  // Online models (API key required)
   CLOUD_MODELS: {
     'claude-3.5': 'claude-3-5-sonnet-20241022',
     'gpt-4o': 'gpt-4o',
@@ -33,7 +33,7 @@ export const MODEL_CONFIG = {
   }
 }
 
-// 检查API密钥是否配置
+// Check whether API key is configured
 export const checkAPIKey = (model: string): boolean => {
   switch (model) {
     case 'claude-3.5':
@@ -43,7 +43,7 @@ export const checkAPIKey = (model: string): boolean => {
     case 'gemini-1.5':
       return API_KEYS.GOOGLE_AI_API_KEY !== 'your_google_ai_api_key_here'
     default:
-      return true // 本地模型不需要API密钥
+      return true // Local models do not require an API key
   }
 }
 

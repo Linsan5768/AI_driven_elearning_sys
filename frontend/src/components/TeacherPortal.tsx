@@ -207,7 +207,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
   const [statusMessage, setStatusMessage] = useState('')
   const [replaceExisting, setReplaceExisting] = useState(true) // Default: replace existing courses
   const [isDragging, setIsDragging] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
+  const [showHistory, setShowHistory] = useState(true)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -355,7 +355,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
       
       setStatusMessage('✅ Map reset! All course areas cleared')
       
-      // 通知App刷新游戏状态
+      // Notify App to refresh game state
       if (onCourseApplied) {
         onCourseApplied()
       }
@@ -383,7 +383,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
       const mode = replaceExisting ? 'Replaced' : 'Added'
       setStatusMessage(`✅ Success! ${mode} "${course.subject}" to game map with ${response.data.chapter_count} areas`)
       
-      // 通知App刷新游戏状态
+      // Notify App to refresh game state
       if (onCourseApplied) {
         onCourseApplied()
       }
@@ -408,22 +408,18 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           🧙‍♂️ Computer Magic Academy - Teacher Portal
         </Title>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button
-            onClick={() => setShowHistory(!showHistory)}
+          <div
             style={{
               padding: '10px 20px',
-              background: showHistory ? '#4CAF50' : '#667eea',
-              border: 'none',
+              background: '#4CAF50',
               borderRadius: '8px',
               color: 'white',
               fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s'
+              fontWeight: '600'
             }}
           >
-            📚 {showHistory ? 'Hide' : 'Show'} Course History ({courses.length})
-          </button>
+            📚 Course History ({courses.length})
+          </div>
           <button
             onClick={handleResetMap}
             style={{
@@ -449,7 +445,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
       </Header>
 
       <ContentArea>
-        {/* PDF上传区域 */}
+        {/* PDF upload section */}
         <Card
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -516,7 +512,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           )}
         </Card>
 
-        {/* 生成的课程预览 */}
+        {/* Generated course preview */}
         {generatedCourse && (
           <Card
             initial={{ opacity: 0, y: 20 }}
@@ -524,7 +520,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, color: '#333' }}>✨ 生成的课程内容</h2>
+              <h2 style={{ margin: 0, color: '#333' }}>✨ Generated Course Content</h2>
               <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                 <label style={{ 
                   display: 'flex', 
@@ -637,8 +633,8 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           </Card>
         )}
 
-        {/* 历史课程列表 */}
-        {showHistory && courses.length > 0 && (
+        {/* Historical courses list */}
+        {courses.length > 0 && (
           <Card
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

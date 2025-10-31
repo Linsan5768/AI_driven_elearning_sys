@@ -17,8 +17,8 @@ const AppContainer = styled.div`
   overflow: hidden;
 `
 
-const API_BASE_URL = 'http://127.0.0.1:8001/api'  // 更新为新的端口
-const BACKEND_URL = 'http://127.0.0.1:8001'  // 更新为新的端口
+const API_BASE_URL = 'http://127.0.0.1:8001/api'  // Updated backend port
+const BACKEND_URL = 'http://127.0.0.1:8001'  // Updated backend port
 
 function App() {
   const [gameState, setGameState] = useState<any>(null)
@@ -80,7 +80,7 @@ function App() {
     }
   }
 
-  // 这个函数现在由GameMap组件内部处理
+  // This function is now handled inside GameMap component
   // const handleAreaClick = (areaId: string) => {
   //   setSelectedArea(areaId)
   //   setCurrentView('area')
@@ -142,7 +142,7 @@ function App() {
     )
   }
 
-  // 教师模式
+  // Teacher mode
   if (mode === 'teacher') {
     return (
       <AppContainer>
@@ -153,7 +153,7 @@ function App() {
             fetchGameState()
           }} 
           onCourseApplied={() => {
-            // 课程应用成功后刷新游戏状态
+            // Refresh game state after course applied successfully
             fetchGameState()
           }}
         />
@@ -161,7 +161,7 @@ function App() {
     )
   }
 
-  // 学生模式
+  // Student mode
   return (
     <AppContainer>
       <AnimatePresence mode="wait">
@@ -174,7 +174,7 @@ function App() {
             transition={{ duration: 0.5 }}
             style={{ width: '100%', height: '100%', position: 'relative' }}
           >
-            {/* 教师模式切换按钮 */}
+            {/* Teacher mode switch button */}
             <div style={{
               position: 'fixed',
               top: '20px',

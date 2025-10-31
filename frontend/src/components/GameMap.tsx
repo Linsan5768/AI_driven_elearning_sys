@@ -28,8 +28,8 @@ const AreaContainer = styled(motion.div)<{
   position: absolute;
   left: ${props => props.$x}px;
   top: ${props => props.$y}px;
-  width: 150px;
-  height: 150px;
+  width: 170px; /* slightly larger */
+  height: 170px; /* slightly larger */
   transform: translate(-50%, -50%);
 `
 
@@ -45,14 +45,41 @@ const AreaButton = styled(motion.button)<{
   border: none;
   background: none;
   cursor: ${props => props.$isAccessible ? 'pointer' : 'not-allowed'};
-  opacity: ${props => props.$isAccessible ? 1 : 0.5};
+  /* Do not reduce opacity for locked areas */
+  opacity: 1;
   z-index: ${props => props.$isCurrent ? 2 : 1};
   transition: all 0.3s ease;
   filter: ${props => {
     if (props.$isCurrent) return 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) brightness(1.1)'
-    if (props.$completed) return 'drop-shadow(0 4px 12px rgba(0,0,0,0.4)) brightness(0.9) saturate(0.7)'
+    if (!props.$isAccessible) return 'drop-shadow(0 4px 12px rgba(0,0,0,0.4)) saturate(0.35) brightness(0.95)'
+    if (props.$completed) return 'drop-shadow(0 4px 12px rgba(0,0,0,0.4)) brightness(0.95) saturate(0.8)'
     return 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))'
   }};
+
+  /* Locked mask overlay */
+  &::after {
+    content: '';
+    display: ${props => props.$isAccessible ? 'none' : 'block'};
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(rgba(0,0,0,0.0), rgba(0,0,0,0.0)) center/100% 100% no-repeat;
+    pointer-events: none;
+  }
+
+  /* Lock badge */
+  &::before {
+    content: '';
+    display: ${props => props.$isAccessible ? 'none' : 'block'};
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff"><path d="M12 1a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm-3 8V6a3 3 0 016 0v3H9z"/></svg>') center/cover no-repeat;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+    opacity: 0.9;
+    pointer-events: none;
+  }
 
   img {
     width: 100%;
@@ -67,7 +94,8 @@ const AreaButton = styled(motion.button)<{
     transform: scale(1.05) translateY(-5px);
     filter: ${props => {
       if (props.$isCurrent) return 'drop-shadow(0 0 25px rgba(255, 215, 0, 1)) brightness(1.2)'
-      if (props.$completed) return 'drop-shadow(0 6px 16px rgba(0,0,0,0.5)) brightness(1) saturate(0.8)'
+      if (!props.$isAccessible) return 'drop-shadow(0 6px 16px rgba(0,0,0,0.5)) saturate(0.35) brightness(0.98)'
+      if (props.$completed) return 'drop-shadow(0 6px 16px rgba(0,0,0,0.5)) brightness(1) saturate(0.9)'
       return 'drop-shadow(0 6px 16px rgba(0,0,0,0.5)) brightness(1.1)'
     }};
   }
@@ -79,12 +107,12 @@ const AreaButton = styled(motion.button)<{
 
 const AreaLabel = styled.span<{ $completed: boolean; $isCurrent: boolean }>`
   position: absolute;
-  bottom: -25px;
+  bottom: -28px;
   left: 50%;
   transform: translateX(-50%);
   color: #ffffff;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: bold;
   font-family: 'Arial', sans-serif;
   pointer-events: none;
@@ -98,11 +126,11 @@ const AreaLabel = styled.span<{ $completed: boolean; $isCurrent: boolean }>`
 
 const ProgressBarContainer = styled.div`
   position: absolute;
-  top: -35px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
-  width: 120px;
-  height: 18px;
+  width: 136px;
+  height: 20px;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 9px;
   border: 2px solid rgba(255, 255, 255, 0.4);
@@ -154,10 +182,10 @@ const ProgressText = styled.div`
 
 const TestCompleteBadge = styled.div<{ $completed: boolean }>`
   position: absolute;
-  /* Align vertically with the progress bar center: top = -35 + 9 - (badgeH/2) = -36px */
-  top: -36px;
-  /* Place immediately to the right of the 120px progress bar: 60px + 6px gap + 10px (badge half) */
-  left: calc(50% + 76px);
+  /* Align vertically with the progress bar (20px height): top = -40 + 10 - 10 = -40px */
+  top: -40px;
+  /* Place immediately to the right of the 136px bar: 68px + 10px gap */
+  left: calc(50% + 85px);
   transform: translateX(-50%);
   width: 20px;
   height: 20px;
@@ -262,13 +290,13 @@ const PathSVG = styled.svg<{ $active: boolean }>`
 
 const Character = styled(motion.div)`
   position: absolute;
-  width: 96px;
-  height: 96px;
+  width: 112px;
+  height: 112px;
   transform-style: flat;
   z-index: 3;
   cursor: pointer;
-  margin-left: -48px;
-  margin-top: -48px;
+  margin-left: -56px;
+  margin-top: -56px;
   filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
   transition: all 0.3s ease;
 
@@ -452,10 +480,19 @@ const GameMap: React.FC = () => {
   }
 
   const getCharacterSprite = (direction: string, isWalking: boolean = false): string => {
-    // If character is moving, show walking animation; otherwise show idle stance
+    // Updated student sprites: use new idle + walking GIFs
     if (isWalking) {
-      return `/character/full_body_wizard_walk_${direction}.gif`
+      // Map 8 directions to 4 available walking directions
+      const mapToCardinal = (dir: string) => {
+        if (dir.includes('east')) return 'east'
+        if (dir.includes('west')) return 'west'
+        if (dir.includes('north')) return 'north'
+        return 'south'
+      }
+      const d = mapToCardinal(direction)
+      return `/character/A_young_wizard_student_is_holding_a_magic_wand._walking-8-frames_${d}.gif`
     }
+    // Idle: always use the classic default idle sprite
     return `/character/wizard_idle.gif`
   }
 
@@ -523,7 +560,7 @@ const GameMap: React.FC = () => {
   }
 
   const handleDialogClose = async () => {
-    // 关闭对话框时也刷新游戏状态，以显示最新的学习进度
+    // Refresh game state when closing the dialog to show the latest learning progress
     await refreshGameState()
     setIsDialogOpen(false)
     setSelectedAreaId('')
@@ -566,28 +603,28 @@ const GameMap: React.FC = () => {
                 const isHighlighted = shouldHighlightPath(id, targetId)
                 const isCompleted = isPathCompleted(id, targetId)
                 
-                // 获取起点和终点坐标
+                // Get start and end coordinates
                 const startX = area.position.x
                 const startY = area.position.y
                 const endX = targetArea.position.x
                 const endY = targetArea.position.y
                 
-                // 计算路径长度和角度
+                // Calculate path length and angle
                 const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2))
                 const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI
                 
-                // 使用图片作为路径（从区域中心点连接）
+                // Use an image as the path (connect from area center)
                 return (
                   <div
                     key={`${id}-${targetId}`}
                     style={{
                       position: 'absolute',
                       left: startX,
-                      top: startY - 30, // 向上偏移路径高度的一半，使路径中心线对齐区域中心
+                      top: startY - 30, // Shift up by half the path height to align the center line
                       width: length,
-                      height: 60, // 路径图片高度
+                      height: 60, // Path image height
                       transformOrigin: '0 50%',
-                      transform: `rotate(${angle}deg)`, // 只旋转，不需要额外偏移
+                      transform: `rotate(${angle}deg)`, // Only rotate, no extra offset
                       pointerEvents: 'none',
                       zIndex: 0,
                       opacity: isCompleted ? 0.7 : (isHighlighted ? 1 : 0.8),
@@ -639,16 +676,16 @@ const GameMap: React.FC = () => {
                 transition: { duration: 0.1 }
               } : undefined}
             >
-              {/* 学习进度和测试状态 - 只在非起点区域显示 */}
+              {/* Learning progress and test status - only show for non-start areas */}
               {id !== 'start' && (
                 <>
-                  {/* 学习进度条 */}
+                  {/* Learning progress bar */}
                   <ProgressBarContainer>
                     <ProgressBarFill $progress={area.learningProgress || 0} />
                     <ProgressText>{Math.round(area.learningProgress || 0)}%</ProgressText>
                   </ProgressBarContainer>
                   
-                  {/* 测试完成标记 */}
+                  {/* Test completion badge */}
                   <TestCompleteBadge $completed={area.completed} />
                 </>
               )}
@@ -657,7 +694,7 @@ const GameMap: React.FC = () => {
                 src={getCastleImage(area.castle_type)} 
                 alt={`Castle ${id}`}
                 onError={(e) => {
-                  // 如果图片加载失败，使用备用图片
+                  // If image fails to load, use a fallback image
                   e.currentTarget.src = '/castles/castle1.png'
                 }}
               />

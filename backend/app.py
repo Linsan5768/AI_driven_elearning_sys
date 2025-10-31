@@ -969,7 +969,9 @@ def apply_course_to_game():
                 'position': position,
                 'connections': [],  # 初始为空，下一个循环会连接
                 'level': previous_level + 1,
-                'castle_type': random.randint(1, 5),
+                # If you added more castle images (castle6.png, castle7.png, ...),
+                # increase the upper bound accordingly (default supports 1..10)
+                'castle_type': random.randint(1, 10),
                 'name': area_name,  # 添加名称
                 'learningProgress': 0,  # 学习进度初始化为0%
                 'learnedPoints': []  # 已学习的知识点列表

@@ -5,8 +5,9 @@ import { COURSE_MATERIALS } from '../config/courseMaterials'
 import type { Question } from '../config/courseMaterials'
 import { API_KEYS, checkAPIKey } from '../config/apiKeys'
 import axios from 'axios'
+import BattleScene from './BattleScene'
 
-// 添加CSS动画样式
+// Add CSS animation styles
 const globalStyles = `
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -18,12 +19,51 @@ const globalStyles = `
     51%, 100% { opacity: 0; }
   }
 `
+const AvatarCircle = styled.div<{ side: 'left' | 'right'; src: string }>`
+  position: fixed;
+  top: 50%;
+  ${props => props.side === 'left' ? 'left: 12%;' : 'right: 12%;'}
+  transform: translateY(-50%);
+  width: 384px; /* 3x */
+  height: 384px; /* 3x */
+  pointer-events: none; /* do not block dialog */
+  z-index: 1000;
 
-// 注入全局样式
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url(${props => props.src});
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: pixelated;
+  }
+`
+
+// Inject global styles
 if (typeof document !== 'undefined') {
   const style = document.createElement('style')
   style.textContent = globalStyles
   document.head.appendChild(style)
+}
+
+// Load MathJax v3 once for TeX rendering (\\( ... \\), \\[ ... \\])
+if (typeof window !== 'undefined' && !(window as any)._mathjaxLoaded) {
+  ;(window as any).MathJax = {
+    tex: {
+      inlineMath: [['\\(', '\\)'], ['$', '$']],
+      displayMath: [['\\[', '\\]'], ['$$', '$$']]
+    },
+    options: {
+      skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+    }
+  }
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.async = true
+  script.onload = () => { (window as any)._mathjaxLoaded = true }
+  document.head.appendChild(script)
 }
 
 interface Message {
@@ -239,11 +279,12 @@ const Spinner = styled.div`
 
 const ProgressBar = styled.div`
   width: 100%;
-  height: 8px;
+  height: 12px;
   background: #333;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  border-radius: 6px;
+  margin-bottom: 12px;
   overflow: hidden;
+  position: relative;
 `
 
 const ProgressFill = styled.div<{ $progress: number }>`
@@ -253,11 +294,23 @@ const ProgressFill = styled.div<{ $progress: number }>`
   transition: width 0.3s ease;
 `
 
+const ProgressLabel = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: #ddd;
+  pointer-events: none;
+`
+
 // 使用配置文件中的课程资料
 
 const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComplete }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
+  const [isUserTyping, setIsUserTyping] = useState(false)
+  const typingTimerRef = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [taskProgress, setTaskProgress] = useState(0)
   const [isTestMode, setIsTestMode] = useState(false)
@@ -273,12 +326,23 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
   const [selectedModel, setSelectedModel] = useState<string>('qwen2.5')
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  // 动态获取课程数据
+  // Re-typeset math whenever messages update
+  useEffect(() => {
+    const mj = (window as any).MathJax
+    if (mj && chatContainerRef.current) {
+      mj.typesetPromise ? mj.typesetPromise([chatContainerRef.current]) : mj.typeset?.()
+    }
+  }, [messages])
+
+  // Learned knowledge points (IDs)
   const [courseData, setCourseData] = useState<any>(null)
+  
+  // Battle scene state control
+  const [showBattleScene, setShowBattleScene] = useState(false)
   const totalKnowledgePoints = courseData?.knowledgePointCount || 0
   const learningProgress = (learnedKnowledgePoints.size / totalKnowledgePoints) * 100
 
-  // 从后端API获取动态课程数据
+  // Fetch dynamic course data from backend API
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
@@ -306,21 +370,28 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
 
   useEffect(() => {
     if (isOpen && areaId && courseData) {
+      // Clear previous session UI immediately to avoid showing stale records
+      setMessages([])
+      setThinkingContent('')
+      setIsTestMode(false)
+      setSelectedAnswer(null)
       initializeDialog()
     }
   }, [isOpen, areaId, courseData])
 
   const initializeDialog = async () => {
     setIsLoading(true)
+    // Prevent showing previous records while loading new content
+    setMessages([])
     
     try {
-      // 从后端获取已学习的知识点
+      // Fetch learned points from backend
       let restoredLearnedPoints: number[] = []
       const gameStateResponse = await axios.get('http://127.0.0.1:8001/api/game-state')
       if (gameStateResponse.data && gameStateResponse.data.areas[areaId]) {
         const areaData = gameStateResponse.data.areas[areaId]
         restoredLearnedPoints = areaData.learnedPoints || []
-        // 恢复已学习的知识点
+        // Restore learned points
         setLearnedKnowledgePoints(new Set(restoredLearnedPoints))
         console.log(`📚 Restored learning progress: ${areaId} - Learned ${restoredLearnedPoints.length} knowledge points`, restoredLearnedPoints)
       }
@@ -407,9 +478,11 @@ Please enter a number to learn a knowledge point, or ask me a question directly!
       const defaultPoints = Array.from({ length: totalKnowledgePoints }, (_, i) => `Knowledge Point ${i + 1}`)
       setKnowledgePointsList(defaultPoints)
       
-      const currentProgress = Math.round((restoredLearnedPoints.length / totalKnowledgePoints) * 100)
-      const progressMessage = restoredLearnedPoints.length > 0 
-        ? `\n\n📊 **Learning Progress Restored:** ${restoredLearnedPoints.length}/${totalKnowledgePoints} (${currentProgress}%)\n✅ You previously learned: ${restoredLearnedPoints.map(p => `Point ${p}`).join(', ')}` 
+      // Use the current learnedKnowledgePoints state instead of restoredLearnedPoints
+      const learnedPointsArray = Array.from(learnedKnowledgePoints)
+      const currentProgress = Math.round((learnedPointsArray.length / totalKnowledgePoints) * 100)
+      const progressMessage = learnedPointsArray.length > 0 
+        ? `\n\n📊 **Learning Progress Restored:** ${learnedPointsArray.length}/${totalKnowledgePoints} (${currentProgress}%)\n✅ You previously learned: ${learnedPointsArray.map((p: number) => `Point ${p}`).join(', ')}` 
         : ''
       
       const welcomeMessage: Message = {
@@ -754,43 +827,69 @@ Please continue learning more knowledge points!`,
       return
     }
 
-    // Start test, generate 5 questions
-    setIsTestMode(true)
+    // Open battle scene instead of in-dialog test
+    setShowBattleScene(true)
+  }
 
-    setSelectedAnswer(null)
+  const handleBattleComplete = async (passed: boolean, score: number) => {
+    // Close battle scene
+    setShowBattleScene(false)
 
-    
-    const testMessage: Message = {
+    if (passed) {
+      // Mark area as completed
+      try {
+        await fetch(`http://127.0.0.1:8001/api/complete-area/${areaId}`, {
+          method: 'POST'
+        })
+
+        const successMessage: Message = {
       id: Date.now().toString(),
       role: 'assistant',
-      content: `🧪 **Starting Test!**
+          content: `🎉 **Battle Victory!**
 
-I will generate questions covering the knowledge points in this area.
-After answering each question, the correct answer and explanation will be displayed.
-You need to reach 80% accuracy to pass!
+Congratulations! You achieved ${score.toFixed(1)}% accuracy in the magic battle!
 
-Are you ready? Let me start generating questions...`,
+✨ The professor recognizes your mastery of the magic!
+✨ The next area has been unlocked!
+
+You may now proceed to the next Magic Hall or review what you've learned here.`,
       timestamp: new Date()
     }
-    
-    setMessages(prev => [...prev, testMessage])
-    
-    // Generate all questions at once
-    await generateAllQuestions()
+        setMessages(prev => [...prev, successMessage])
+        
+        // Call the onComplete callback to notify parent component
+        onComplete()
+      } catch (error) {
+        console.error('Failed to complete area:', error)
+      }
+    } else {
+      const failMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `💔 **Battle Result**
+
+You achieved ${score.toFixed(1)}% accuracy, but you need at least 80% to proceed.
+
+📚 Don't be discouraged! Review the knowledge points and try again.
+💪 You can retake the test after reviewing the materials.`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, failMessage])
+    }
   }
 
   const generateAllQuestions = async () => {
     // Only generate questions for learned knowledge points
     const learnedPoints = Array.from(learnedKnowledgePoints)
     const totalQuestions = learnedPoints.length  // Generate questions based on learned points
-    
+
     if (totalQuestions === 0) {
       const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
+      id: Date.now().toString(),
+      role: 'assistant',
         content: `⚠️ **Cannot Generate Test**\n\nYou haven't learned any knowledge points yet. Please study first before taking the test.`,
-        timestamp: new Date()
-      }
+      timestamp: new Date()
+    }
       setMessages(prev => [...prev, errorMessage])
       setIsTestMode(false)
       return
@@ -1511,14 +1610,39 @@ Answer directly without any prefix or suffix.`
   }
 
   return (
+    <>
+      {/* Battle Scene - renders on top of everything */}
+      {showBattleScene && (
+        <BattleScene
+          areaId={areaId}
+          courseData={courseData}
+          learnedKnowledgePoints={learnedKnowledgePoints}
+          modelType={selectedModel}
+          onClose={() => setShowBattleScene(false)}
+          onBattleComplete={handleBattleComplete}
+        />
+      )}
+
     <AnimatePresence>
       {isOpen && (
         <DialogOverlay
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
         >
+            {/* Avatars on both sides of dialog */}
+            <AvatarCircle
+              side="left"
+              src={isUserTyping 
+                ? '/character/A_young_wizard_student_is_holding_a_magic_wand._breathing-idle_south-east.gif'
+                : '/character/wizard_idle.gif'}
+            />
+            <AvatarCircle
+              side="right"
+              src={isLoading 
+                ? '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south-west.gif'
+                : '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south.gif'}
+            />
           <DialogContent
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -1568,18 +1692,10 @@ Answer directly without any prefix or suffix.`
 
             <ProgressBar>
               <ProgressFill $progress={learningProgress} />
+              <ProgressLabel>
+                Learning Progress: {learnedKnowledgePoints.size}/{totalKnowledgePoints} ({Math.round(learningProgress)}%)
+              </ProgressLabel>
             </ProgressBar>
-
-            <div style={{ marginTop: '8px', fontSize: '12px', color: '#888' }}>
-              Learning Progress: {learnedKnowledgePoints.size}/{totalKnowledgePoints} ({Math.round(learningProgress)}%)
-              {learningProgress >= 40 && !isTestMode && (
-                <div style={{ marginTop: '8px' }}>
-                  <SendButton onClick={startTest} style={{ background: '#FF9800', fontSize: '12px', padding: '6px 12px' }}>
-                    🧪 Start Test
-                  </SendButton>
-                </div>
-              )}
-            </div>
 
             <ChatContainer ref={chatContainerRef}>
               {messages.map((message) => (
@@ -1719,7 +1835,13 @@ Answer directly without any prefix or suffix.`
             <InputContainer>
               <MessageInput
                 value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setInputMessage(v)
+                  if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+                  setIsUserTyping(!!v)
+                  typingTimerRef.current = setTimeout(() => setIsUserTyping(false), 1200)
+                }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder={isTestMode ? "Please enter A, B, C, or D for the answer..." : "Enter a number to learn a knowledge point, ask me a question directly, or enter 'test' to take the test..."}
                 disabled={isLoading}
@@ -1732,15 +1854,15 @@ Answer directly without any prefix or suffix.`
               </SendButton>
             </InputContainer>
 
-            {/* 开始测试按钮 */}
-            {!isTestMode && messages.length >= 2 && (
+            {/* 开始测试按钮：仅当学习进度≥20%时显示 */}
+            {!isTestMode && totalKnowledgePoints > 0 && (learnedKnowledgePoints.size / totalKnowledgePoints) >= 0.2 && (
               <div style={{ marginTop: '16px', textAlign: 'center' }}>
                 <SendButton
                   onClick={startTest}
                   style={{ background: '#FF9800' }}
                   disabled={isLoading}
                 >
-                  🎯 Start Small Test
+                  Start Magic Duel
                 </SendButton>
               </div>
             )}
@@ -1775,6 +1897,7 @@ Answer directly without any prefix or suffix.`
         </DialogOverlay>
       )}
     </AnimatePresence>
+    </>
   )
 }
 

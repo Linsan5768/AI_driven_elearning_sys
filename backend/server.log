@@ -9,99 +9,97 @@ Starting game server on port 8001...
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 140-951-846
-127.0.0.1 - - [31/Oct/2025 02:45:31] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:31] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:31] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:31] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:31] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:31] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:37] "POST /api/upload-pdf HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:37] "OPTIONS /api/generate-course HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:37] "POST /api/generate-course HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:38] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:45:38] "[35m[1mPOST /api/apply-course-to-game HTTP/1.1[0m" 500 -
-127.0.0.1 - - [31/Oct/2025 02:46:01] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:01] "[35m[1mPOST /api/apply-course-to-game HTTP/1.1[0m" 500 -
-127.0.0.1 - - [31/Oct/2025 02:46:04] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:04] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:04] "GET /api/game-state HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:23] "POST /api/upload-pdf HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:23] "OPTIONS /api/generate-course HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:16] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:16] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:17] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:17] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:21] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:21] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:57] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:57] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:57] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:59] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:47:59] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:48:01] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:48:01] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:48:01] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:48:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:48:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:48:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:08] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:08] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:08] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:08] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:49:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:07] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:07] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:28] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:28] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:44] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:51:44] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:22] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:22] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:38] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:38] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:56] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:52:56] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:10] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:11] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:48] "GET /api/course-library/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:54] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:59] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:53:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:54:21] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:54:21] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:44] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:44] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:46] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:46] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:46] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:48] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 20:55:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:02:27] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:02:27] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:19:52] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:19:52] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:19:52] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
 Starting game server on port 8001...
-📥 原始文件名: 小学数学基础.txt
-🔒 处理后文件名: 20251031_024537_course.txt
-💾 保存路径: uploads/20251031_024537_course.txt
-
-============================================================
-📤 文件上传成功: 20251031_024537_course.txt
-============================================================
-📄 读取文本文件: uploads/20251031_024537_course.txt
-✅ 文本读取成功，长度: 2162 字符
-
-✅ 文本提取成功!
-📄 文本长度: 2162 字符
-📝 前500字符预览:
-# 课程元信息
-课程名称: 小学数学基础
-类别: 数学基础
-难度: easy
-描述: 涵盖小学阶段重要的数学知识点，包括基础运算、几何图形、应用题等核心内容
-
-# 课程内容
-
-## 第一章: 数的认识与运算
-
-### 1. 整数的认识
-整数包括自然数和负整数。自然数从0开始，1、2、3、4等都是自然数。我们可以用数轴来表示整数，正数在0的右边，负数在0的左边。整数在日常生活中有很多应用，比如温度计上的温度、海拔高度等都用整数表示。
-
-### 2. 加法和减法
-加法是把两个或多个数合并在一起，用加号"+"表示。减法是从一个数中去掉另一个数，用减号"-"表示。加法和减法是互逆运算，比如5+3=8，那么8-3=5。掌握加减法可以帮助我们解决许多生活中的问题，比如买东西找钱、计算距离等。
-
-### 3. 乘法口诀表
-乘法是相同数连续相加的简便运算。乘法口诀表也叫九九乘法表，从一一得一到九九八十一，共81句口诀。熟练掌握乘法口诀是学好数学的基础，可以帮助我们快速进行乘法计算。背诵口诀时要理解含义，比如三五十五表示3个5相加等于15。
-
-### 4. 除法的意义
-除法是把一个数平均分成若干份，求每
-============================================================
-
-🤖 开始生成课程，文本长度: 2162
-
-============================================================
-🔍 开始分析文件内容
-📄 文件名: 小学数学基础.txt
-📏 总字符数: 2162
-📝 内容预览:
-# 课程元信息
-课程名称: 小学数学基础
-类别: 数学基础
-难度: easy
-描述: 涵盖小学阶段重要的数学知识点，包括基础运算、几何图形、应用题等核心内容
-
-# 课程内容
-
-## 第一章: 数的认识与运算
-
-### 1. 整数的认识
-整数包括自然数和负整数。自然数从0开始，1、2、3、4等都是自然数。我们可以用数轴来表示整数，正数在0的右边，负数在0的左边。整数在日常生活中有很多应用，比如温度计上的温度、海拔高度等都用整数表示。
-
-### 2. 加法和减法
-加法是把两个或多个数合并在一起，用加号"+"表示。减法是从一个数中去掉另一个数，用减号"-"表示。加法和减法是互逆运算，比如5+3=8，
-============================================================
-
-✨ 检测到结构化TXT格式，使用专用解析器...
-✅ 解析成功!
-   - 课程名称: 小学数学基础
-   - 类别: 数学基础
-   - 难度: easy
-   - 知识点数: 15
-
-📚 提取的详细知识点数: 15
-✅ 课程生成成功: 小学数学基础
-📚 知识点数量: 15
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
 
 ============================================================
 🎮 将课程应用到游戏地图
-📚 课程: 小学数学基础
+📚 课程: Physics Fundamentals
 🔄 替换模式: True
 ============================================================
 
@@ -118,26 +116,72 @@ Starting game server on port 8001...
 
 ✅ 地图已清空，开始添加新课程
 
-📖 检测到 3 个章节:
-   - 第一章: 5 个知识点
-   - 第二章: 5 个知识点
-   - 第三章: 5 个知识点
-✅ 创建区域: area2 - 小学数学基础：第一章
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
    连接: start → area2
    知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
 
-❌ 应用课程失败:
-Traceback (most recent call last):
-  File "/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py", line 814, in apply_course_to_game
-    position = calculate_new_position(previous_area_id, 0, 1)  # 总是单分支
-  File "/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py", line 44, in calculate_new_position
-    current_pos = game_state['areas'][current_area_id]['position']
-KeyError: 'area2'
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
 
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📊 更新学习进度: area2 - 1/5 (20.0%)
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
 
 ============================================================
 🎮 将课程应用到游戏地图
-📚 课程: 小学数学基础
+📚 课程: Physics Fundamentals
 🔄 替换模式: True
 ============================================================
 
@@ -148,106 +192,143 @@ KeyError: 'area2'
 ============================================================
 
 ✅ 地图重置成功!
-   删除区域数: 0
-   清空课程数: 1
+   删除区域数: 10
+   清空课程数: 10
 ============================================================
 
 ✅ 地图已清空，开始添加新课程
 
-📖 检测到 3 个章节:
-   - 第一章: 5 个知识点
-   - 第二章: 5 个知识点
-   - 第三章: 5 个知识点
-✅ 创建区域: area2 - 小学数学基础：第一章
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
    连接: start → area2
    知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
 
-❌ 应用课程失败:
-Traceback (most recent call last):
-  File "/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py", line 814, in apply_course_to_game
-    position = calculate_new_position(previous_area_id, 0, 1)  # 总是单分支
-  File "/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py", line 44, in calculate_new_position
-    current_pos = game_state['areas'][current_area_id]['position']
-KeyError: 'area2'
-
-📥 原始文件名: 小学数学基础.txt
-🔒 处理后文件名: 20251031_024623_course.txt
-💾 保存路径: uploads/20251031_024623_course.txt
-
-============================================================
-📤 文件上传成功: 20251031_024623_course.txt
-============================================================
-📄 读取文本文件: uploads/20251031_024623_course.txt
-✅ 文本读取成功，长度: 2162 字符
-
-✅ 文本提取成功!
-📄 文本长度: 2162 字符
-📝 前500字符预览:
-# 课程元信息
-课程名称: 小学数学基础
-类别: 数学基础
-难度: easy
-描述: 涵盖小学阶段重要的数学知识点，包括基础运算、几何图形、应用题等核心内容
-
-# 课程内容
-
-## 第一章: 数的认识与运算
-
-### 1. 整数的认识
-整数包括自然数和负整数。自然数从0开始，1、2、3、4等都是自然数。我们可以用数轴来表示整数，正数在0的右边，负数在0的左边。整数在日常生活中有很多应用，比如温度计上的温度、海拔高度等都用整数表示。
-
-### 2. 加法和减法
-加法是把两个或多个数合并在一起，用加号"+"表示。减法是从一个数中去掉另一个数，用减号"-"表示。加法和减法是互逆运算，比如5+3=8，那么8-3=5。掌握加减法可以帮助我们解决许多生活中的问题，比如买东西找钱、计算距离等。
-
-### 3. 乘法口诀表
-乘法是相同数连续相加的简便运算。乘法口诀表也叫九九乘法表，从一一得一到九九八十一，共81句口诀。熟练掌握乘法口诀是学好数学的基础，可以帮助我们快速进行乘法计算。背诵口诀时要理解含义，比如三五十五表示3个5相加等于15。
-
-### 4. 除法的意义
-除法是把一个数平均分成若干份，求每
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
 ============================================================
 
-🤖 开始生成课程，文本长度: 2162
-
-============================================================
-🔍 开始分析文件内容
-📄 文件名: 小学数学基础.txt
-📏 总字符数: 2162
-127.0.0.1 - - [31/Oct/2025 02:46:23] "POST /api/generate-course HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:24] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
-127.0.0.1 - - [31/Oct/2025 02:46:24] "[35m[1mPOST /api/apply-course-to-game HTTP/1.1[0m" 500 -
+📊 更新学习进度: area2 - 1/5 (20.0%)
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+📊 更新学习进度: area2 - 2/5 (40.0%)
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 21:34:41] "[33mPOST /api/complete-area/area2 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [31/Oct/2025 21:34:41] "[33mPOST /api/complete-area/area2 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [31/Oct/2025 21:37:59] "GET /api/course-library/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:37:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:37:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:00] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:07] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:07] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:07] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:07] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:09] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:09] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:09] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:11] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:11] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:13] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:13] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:20] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:38:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:45:50] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:45:50] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:45:50] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:46:03] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:26] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:26] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:26] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:26] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:33] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:33] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:49:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:51:01] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:51:01] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:51:01] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:53:46] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:53:46] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:54:02] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:54:02] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
  * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
-📝 内容预览:
-# 课程元信息
-课程名称: 小学数学基础
-类别: 数学基础
-难度: easy
-描述: 涵盖小学阶段重要的数学知识点，包括基础运算、几何图形、应用题等核心内容
-
-# 课程内容
-
-## 第一章: 数的认识与运算
-
-### 1. 整数的认识
-整数包括自然数和负整数。自然数从0开始，1、2、3、4等都是自然数。我们可以用数轴来表示整数，正数在0的右边，负数在0的左边。整数在日常生活中有很多应用，比如温度计上的温度、海拔高度等都用整数表示。
-
-### 2. 加法和减法
-加法是把两个或多个数合并在一起，用加号"+"表示。减法是从一个数中去掉另一个数，用减号"-"表示。加法和减法是互逆运算，比如5+3=8，
-============================================================
-
-✨ 检测到结构化TXT格式，使用专用解析器...
-✅ 解析成功!
-   - 课程名称: 小学数学基础
-   - 类别: 数学基础
-   - 难度: easy
-   - 知识点数: 15
-
-📚 提取的详细知识点数: 15
-✅ 课程生成成功: 小学数学基础
-📚 知识点数量: 15
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
 
 ============================================================
 🎮 将课程应用到游戏地图
-📚 课程: 小学数学基础
+📚 课程: Physics Fundamentals
 🔄 替换模式: True
 ============================================================
 
@@ -259,31 +340,2810 @@ KeyError: 'area2'
 
 ✅ 地图重置成功!
    删除区域数: 0
-   清空课程数: 1
+   清空课程数: 0
 ============================================================
 
 ✅ 地图已清空，开始添加新课程
 
-📖 检测到 3 个章节:
-   - 第一章: 5 个知识点
-   - 第二章: 5 个知识点
-   - 第三章: 5 个知识点
-✅ 创建区域: area2 - 小学数学基础：第一章
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
    连接: start → area2
    知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
 
-❌ 应用课程失败:
-Traceback (most recent call last):
-  File "/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py", line 814, in apply_course_to_game
-    position = calculate_new_position(previous_area_id, 0, 1)  # 总是单分支
-  File "/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py", line 44, in calculate_new_position
-    current_pos = game_state['areas'][current_area_id]['position']
-KeyError: 'area2'
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📊 更新学习进度: area2 - 1/5 (20.0%)
+📊 更新学习进度: area2 - 2/5 (40.0%)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 21:56:31] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:34] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:34] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:34] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:34] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:38] "POST /api/reset-game-map HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:38] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:42] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:42] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:42] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:44] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:56:46] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=800, y=1000
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=1300
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=1300
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2600, y=1600
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2600, y=1000
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=3200, y=1300
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=3800, y=1300
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=3800, y=700
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=3500, y=700
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=500, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1100, y=700
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=800, y=700
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=1400, y=700
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2000, y=700
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=2000, y=100
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=2000, y=700
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=2600, y=700
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=2600, y=1300
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
 
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 140-951-846
-/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
-  warnings.warn('resource_tracker: There appear to be %d '
-/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
-  warnings.warn('resource_tracker: There appear to be %d '
+127.0.0.1 - - [31/Oct/2025 21:59:41] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:41] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:42] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:46] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:46] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:46] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:46] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:46] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:46] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:49] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:49] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:49] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=100
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=700
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=700
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2000, y=1300
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2600, y=1300
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=2600, y=700
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=2600, y=1300
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=3200, y=1300
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=3800, y=1600
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 21:59:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:56] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:56] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:56] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 21:59:56] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:00:02] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:00:02] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:00:02] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:00:05] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:00:05] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:00:05] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=-200
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=-200
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2000, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=1400, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=800, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=800, y=-200
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=1400, y=-200
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=2000, y=-200
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 22:02:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:08] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:08] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:08] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:08] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:10] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:10] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:02:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:55] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:55] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:55] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:55] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:57] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:57] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:57] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:59] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:03:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:00] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:00] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:00] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:01] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:09] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:19] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:19] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:19] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:19] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:22] "POST /api/reset-game-map HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:25] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=800, y=-200
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=-200
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=-200
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2600, y=-200
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2600, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=2600, y=1000
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=3200, y=1000
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=3200, y=1600
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=3200, y=2200
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=800, y=1000
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=800, y=1600
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=800, y=2200
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=800, y=2800
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=1400, y=2800
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=1400, y=3400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=2000, y=3400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=2600, y=3400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=3200, y=3400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=-200
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=-200
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2000, y=-800
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2600, y=-800
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=2600, y=-1400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=2000, y=-1400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=2000, y=-2000
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=1400, y=-2000
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+127.0.0.1 - - [31/Oct/2025 22:04:25] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:04:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:15] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:15] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:20] "POST /api/reset-game-map HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:27] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:27] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:29] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:29] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:05:29] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:15] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:15] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:18] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:18] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:06:21] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=-200
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=-200
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2000, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2600, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=2600, y=1000
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=2600, y=1600
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=3200, y=1600
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=3200, y=1000
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=800, y=-200
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=800, y=-800
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=800, y=-1400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=800, y=-2000
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=800, y=-2600
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=800, y=-3200
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=1400, y=-3200
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=2000, y=-3200
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=2000, y=-3800
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=-200
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=-200
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2000, y=-800
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2600, y=-800
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=3200, y=-800
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=3200, y=-1400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=3200, y=-2000
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=2600, y=-2000
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 22:07:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:13] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:13] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:16] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:16] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:07:18] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=800, y=1000
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=1400, y=1000
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2000, y=1000
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=2000, y=1600
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=2000, y=2200
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=2600, y=2200
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=2600, y=1600
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=3200, y=1600
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=3200, y=2200
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 22:08:14] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:14] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:14] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:14] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:14] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:14] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:17] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:17] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:17] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:19] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:19] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:08:19] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=800, y=-200
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=800, y=-800
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=200, y=-800
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=200, y=-200
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=-400, y=-200
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=-400, y=-800
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=-400, y=-1400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=-1000, y=-1400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=-1000, y=-800
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 22:08:52] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 22:09:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:07] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:07] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:07] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:07] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:10] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:10] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:20] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:51] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:09:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:11] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:11] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:30] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:30] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:34] "GET /api/course-library/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:40] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:42] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:42] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:42] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:42] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:42] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:42] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:45] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:45] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:45] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:47] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:47] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:47] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:51] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:10:52] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:15] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:15] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:17] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:17] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:17] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:23] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:38] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:38] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:11:38] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:12:22] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:12:22] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:12:54] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:12:54] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:13:14] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:13:14] "GET /api/courses HTTP/1.1" 200 -
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📥 原始文件名: Python编程入门.txt
+🔒 处理后文件名: 20251031_221355_Python.txt
+💾 保存路径: uploads/20251031_221355_Python.txt
+
+============================================================
+📤 文件上传成功: 20251031_221355_Python.txt
+============================================================
+📄 读取文本文件: uploads/20251031_221355_Python.txt
+✅ 文本读取成功，长度: 2612 字符
+
+✅ 文本提取成功!
+127.0.0.1 - - [31/Oct/2025 22:13:55] "POST /api/upload-pdf HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:13:55] "OPTIONS /api/generate-course HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:13:55] "POST /api/generate-course HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:13:55] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:43] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:43] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:43] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:45] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:45] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:45] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:49] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:14:49] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:00] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:05] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:05] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:09] "OPTIONS /api/courses/course_20251031_221355 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:09] "DELETE /api/courses/course_20251031_221355 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:09] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:12] "POST /api/reset-game-map HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:13] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:13] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:16] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:51] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:51] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:56] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:56] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:56] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:56] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:56] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:15:56] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:15] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+📄 文本长度: 2612 字符
+📝 前500字符预览:
+# 课程元信息
+课程名称: Python编程入门
+类别: 编程语言
+难度: easy
+描述: Python语言基础语法和核心概念
+
+# 课程内容
+
+## 第一章: Python基础
+
+### 1. Python简介
+Python是一种解释型、面向对象、动态类型的高级编程语言。由Guido van Rossum于1991年创建，以简洁优雅的语法著称。Python广泛应用于Web开发、数据分析、人工智能、自动化脚本等领域。其设计哲学强调代码可读性，使用空格缩进来组织代码块。
+
+### 2. 变量与赋值
+Python中使用等号（=）进行赋值，变量名在左，值在右。变量不需要提前声明类型，Python会自动推断。例如：`name = "Alice"` 创建一个字符串变量，`age = 25` 创建一个整数变量。变量名应该有意义，遵循小写字母和下划线的命名规范，如 `student_count`。
+
+### 3. 基本数据类型
+Python主要数据类型包括：整数（int）如 `42`，浮点数（float）如 `3.14`，字符串（str）如 `"Hello"`，布尔值（bool）如 `True` 
+============================================================
+
+🤖 开始生成课程，文本长度: 2612
+
+============================================================
+🔍 开始分析文件内容
+📄 文件名: Python编程入门.txt
+📏 总字符数: 2612
+📝 内容预览:
+# 课程元信息
+课程名称: Python编程入门
+类别: 编程语言
+难度: easy
+描述: Python语言基础语法和核心概念
+
+# 课程内容
+
+## 第一章: Python基础
+
+### 1. Python简介
+Python是一种解释型、面向对象、动态类型的高级编程语言。由Guido van Rossum于1991年创建，以简洁优雅的语法著称。Python广泛应用于Web开发、数据分析、人工智能、自动化脚本等领域。其设计哲学强调代码可读性，使用空格缩进来组织代码块。
+
+### 2. 变量与赋值
+Python中使用等号（=）进行赋值，变量名在左，值在右。变量不需要提前声明类型，Python会
+============================================================
+
+✨ 检测到结构化TXT格式，使用专用解析器...
+✅ 解析成功!
+   - 课程名称: Python编程入门
+   - 类别: 编程语言
+   - 难度: easy
+   - 知识点数: 15
+
+📚 提取的详细知识点数: 15
+✅ 课程生成成功: Python编程入门
+📚 知识点数量: 15
+💾 课程已保存: courses/course_20251031_221355.json
+📚 成功加载 2 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Python编程入门
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 3 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+✅ 创建区域: area2 - Python编程入门: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Python编程入门: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Python编程入门: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 3
+   总区域数: 4
+============================================================
+
+📚 成功加载 2 个课程
+📚 成功加载 2 个课程
+🗑️  课程已删除: course_20251031_221355
+📚 成功加载 1 个课程
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 3
+   清空课程数: 3
+============================================================
+
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5127.0.0.1 - - [31/Oct/2025 22:19:15] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:21] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:19:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:40:51] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:40:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:40:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:46:50] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:46:53] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:46:53] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:46:53] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:46:57] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:24] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:24] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:32] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:47:32] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:51:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:51:06] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:51:06] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:51:06] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:51:17] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:51:17] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:17] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:17] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:17] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:17] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:20] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:20] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:20] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:25] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:52:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:58] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:58] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:58] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:58] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:53:59] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:54:02] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:54:02] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:55:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:55:29] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:55:29] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:55:29] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:55:50] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:55:50] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:56:32] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:56:32] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+📊 更新学习进度: area2 - 1/5 (20.0%)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 22:59:14] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:59:14] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:59:31] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 22:59:31] "[33mPOST /api/update-learning-progress/area2 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [31/Oct/2025 23:01:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:27] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:27] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:27] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:27] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:28] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:28] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:31] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:31] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:31] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:35] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:35] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:53] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:01:53] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:02:52] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:02:52] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 23:03:01] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:03:01] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:04:59] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:04:59] "[33mPOST /api/update-learning-progress/area2 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [31/Oct/2025 23:05:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:10] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:10] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:12] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:12] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:18] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:18] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:05:57] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:06:46] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:06:46] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:06:46] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 23:08:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:28] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:28] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:28] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:28] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:29] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:29] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:29] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:32] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:32] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:32] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:36] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:08:36] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:09:27] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:09:27] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:11:43] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:11:43] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:11:45] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:11:45] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:11:45] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:18] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:18] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:22] "GET /api/course-library/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:44] "OPTIONS /api/update-learning-progress/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:18:44] "POST /api/update-learning-progress/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:19:09] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:19:10] "GET /api/course-library/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:19:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:19:10] "GET /api/game-state HTTP/1.1" 200 -
+ * Detected change in '/Users/lin/Uni/2025S2/ELEC5620/demo/backend/app.py', reloading
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+📊 更新学习进度: area3 - 1/5 (20.0%)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-951-846
+127.0.0.1 - - [31/Oct/2025 23:20:03] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:05] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:05] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:05] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:05] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:05] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:05] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:08] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:08] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:08] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:11] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:11] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:11] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:15] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:15] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:34] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:34] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:48] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:48] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:50] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:50] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:20:50] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:21:28] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:21:28] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:21:48] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:21:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:21:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:22:53] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:22:53] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:05] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:05] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:05] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:14] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:14] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:14] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:24] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:43] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:44] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:23:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:21] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:21] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:23] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:23] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:25] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:28] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:45] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:45] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:50] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:51] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:53] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:54] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:54] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:25:54] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:06] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:24] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:24] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:24] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:26] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:26] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:26] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:28] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:31] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:31] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:48] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:26:48] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:27:10] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:27:10] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:27:12] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:27:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:27:12] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:27:22] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:10] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:10] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:41] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:42] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:42] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:28:42] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:29:06] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:29:06] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:30:34] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:30:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:30:34] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:24] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:24] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:39] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:39] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:39] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:57] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:31:57] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+Starting game server on port 8001...
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 0
+   清空课程数: 0
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+📊 更新学习进度: area2 - 2/5 (40.0%)
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+📚 成功加载 1 个课程
+📚 成功加载 1 个课程
+
+============================================================
+🎮 将课程应用到游戏地图
+📚 课程: Physics Fundamentals
+🔄 替换模式: True
+============================================================
+
+⚠️  替换模式：清除现有地图...
+
+============================================================
+🔄 重置游戏地图
+============================================================
+
+✅ 地图重置成功!
+   删除区域数: 10
+   清空课程数: 10
+============================================================
+
+✅ 地图已清空，开始添加新课程
+
+📖 检测到 10 个章节:
+   - Chapter 1: 5 个知识点
+   - Chapter 2: 5 个知识点
+   - Chapter 3: 5 个知识点
+   - Chapter 4: 5 个知识点
+   - Chapter 5: 5 个知识点
+   - Chapter 6: 5 个知识点
+   - Chapter 7: 5 个知识点
+   - Chapter 8: 5 个知识点
+   - Chapter 9: 5 个知识点
+   - Chapter 10: 5 个知识点
+✅ 创建区域: area2 - Physics Fundamentals: Chapter 1
+   位置: x=800, y=400
+   连接: start → area2
+   知识点数: 5
+✅ 创建区域: area3 - Physics Fundamentals: Chapter 2
+   位置: x=1400, y=400
+   连接: area2 → area3
+   知识点数: 5
+✅ 创建区域: area4 - Physics Fundamentals: Chapter 3
+   位置: x=2000, y=400
+   连接: area3 → area4
+   知识点数: 5
+✅ 创建区域: area5 - Physics Fundamentals: Chapter 4
+   位置: x=2600, y=400
+   连接: area4 → area5
+   知识点数: 5
+✅ 创建区域: area6 - Physics Fundamentals: Chapter 5
+   位置: x=3200, y=400
+   连接: area5 → area6
+   知识点数: 5
+✅ 创建区域: area7 - Physics Fundamentals: Chapter 6
+   位置: x=3800, y=400
+   连接: area6 → area7
+   知识点数: 5
+✅ 创建区域: area8 - Physics Fundamentals: Chapter 7
+   位置: x=4400, y=400
+   连接: area7 → area8
+   知识点数: 5
+✅ 创建区域: area9 - Physics Fundamentals: Chapter 8
+   位置: x=5000, y=400
+   连接: area8 → area9
+   知识点数: 5
+✅ 创建区域: area10 - Physics Fundamentals: Chapter 9
+   位置: x=5600, y=400
+   连接: area9 → area10
+   知识点数: 5
+✅ 创建区域: area11 - Physics Fundamentals: Chapter 10
+   位置: x=6200, y=400
+   连接: area10 → area11
+   知识点数: 5
+
+✅ 成功将课程应用到游戏地图!
+   新增区域数: 10
+   总区域数: 11
+============================================================
+
+📊 更新学习进度: area2 - 1/5 (20.0%)
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+✅ 完成区域: area2
+🔓 已解锁下一个区域: area3
+📊 更新学习进度: area2 - 2/5 (40.0%)
+✅ 完成区域: area2
+127.0.0.1 - - [31/Oct/2025 23:32:54] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:32:54] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:33:44] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:33:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:33:44] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:34:47] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:34:47] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:37:32] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:37:32] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:39:12] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:39:12] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:13] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:13] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:13] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:37] "POST /api/upload-pdf HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:37] "OPTIONS /api/generate-course HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:37] "POST /api/generate-course HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:37] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:52] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:52] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:52] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:54] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:54] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:40:54] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:41:08] "GET /api/course-library/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:41:08] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:41:40] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:41:40] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:42:16] "OPTIONS /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:42:16] "POST /api/update-learning-progress/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:43:40] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:43:40] "POST /api/complete-area/area2 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:43:48] "GET /api/course-library/area3 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:43:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:43:48] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:43:51] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:02] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:02] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:04] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:58] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:58] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:58] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:48:58] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:02] "OPTIONS /api/courses/course_20251031_234037 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:02] "DELETE /api/courses/course_20251031_234037 HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:02] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:21] "OPTIONS /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:21] "POST /api/apply-course-to-game HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:21] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:23] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:55] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:55] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:55] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:55] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:58] "POST /api/reset-game-map HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:49:58] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:50:02] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:50:02] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:50:02] "GET /api/game-state HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:50:06] "GET /api/courses HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2025 23:50:06] "GET /api/courses HTTP/1.1" 200 -
