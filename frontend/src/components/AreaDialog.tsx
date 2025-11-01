@@ -1633,15 +1633,15 @@ Answer directly without any prefix or suffix.`
             {/* Avatars on both sides of dialog */}
             <AvatarCircle
               side="left"
-              src={isUserTyping 
-                ? '/character/A_young_wizard_student_is_holding_a_magic_wand._breathing-idle_south-east.gif'
-                : '/character/wizard_idle.gif'}
+              src={isLoading 
+                ? '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south.gif'
+                : '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south.gif'}
             />
             <AvatarCircle
               side="right"
-              src={isLoading 
-                ? '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south-west.gif'
-                : '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south.gif'}
+              src={isUserTyping 
+                ? '/character/A_young_wizard_student_is_holding_a_magic_wand._breathing-idle_south-east.gif'
+                : '/character/wizard_idle.gif'}
             />
           <DialogContent
             initial={{ scale: 0.8, opacity: 0 }}

@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/Users/lin/Uni/2025S2/ELEC5620/demo/backend/venv"
+VIRTUAL_ENV="/Users/leaf/Documents/GitHub/ELEC5620_group112/backend/venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

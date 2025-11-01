@@ -6,7 +6,7 @@ import axios from 'axios'
 const PortalContainer = styled.div`
   width: 100vw;
   height: 100vh;
-  background-image: url('/game-background.png');
+  background-image: url('/teacher.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -194,11 +194,12 @@ interface CourseData {
 interface TeacherPortalProps {
   onSwitchToStudent: () => void
   onCourseApplied?: () => void
+  onLogout: () => void
 }
 
 const API_BASE_URL = 'http://127.0.0.1:8001/api'
 
-const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCourseApplied }) => {
+const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCourseApplied, onLogout }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -438,9 +439,12 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           >
             🔄 Reset Map
           </button>
-          <SwitchButton onClick={onSwitchToStudent}>
-            Switch to Student View 🎓
-          </SwitchButton>
+        <SwitchButton onClick={onSwitchToStudent}>
+          Switch to Student View
+        </SwitchButton>
+        <SwitchButton onClick={onLogout}>
+          Back to Landing
+        </SwitchButton>
         </div>
       </Header>
 
@@ -694,4 +698,3 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
 }
 
 export default TeacherPortal
-
