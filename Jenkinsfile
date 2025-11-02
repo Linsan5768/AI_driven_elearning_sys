@@ -53,26 +53,31 @@ pipeline {
                     // Test Nginx configuration and verify build artifacts
                     // Note: Upstream hosts (backend, ollama) won't resolve in test environment
                     // This is expected - they only exist in docker-compose network during runtime
-                    docker.image("${DOCKER_IMAGE_FRONTEND}:${IMAGE_TAG}").inside {
-                        sh '''
-                            # Verify build artifacts exist
-                            test -f /usr/share/nginx/html/index.html && echo "✓ Frontend build artifacts exist"
-                            
-                            # Test Nginx configuration syntax (ignore upstream resolution errors)
-                            # The upstream hosts will be available in docker-compose network
-                            nginx -t 2>&1 | grep -E "(syntax is ok|test is successful)" && echo "✓ Nginx config syntax valid" || {
-                                # If only upstream errors, still consider it valid
-                                if nginx -t 2>&1 | grep -q "host not found in upstream"; then
-                                    echo "⚠ Nginx upstream hosts not resolvable (expected in test environment)"
-                                    echo "✓ Config syntax is valid - upstream hosts available in docker-compose network"
-                                    exit 0
-                                else
-                                    echo "✗ Nginx config has real errors"
-                                    exit 1
-                                fi
-                            }
-                        '''
-                    }
+                    sh """
+                        # Verify build artifacts exist in the image
+                        docker run --rm ${DOCKER_IMAGE_FRONTEND}:${IMAGE_TAG} test -f /usr/share/nginx/html/index.html && echo "✓ Frontend build artifacts exist"
+                        
+                        # Test Nginx configuration syntax
+                        # Capture both stdout and stderr
+                        nginx_output=\$(docker run --rm ${DOCKER_IMAGE_FRONTEND}:${IMAGE_TAG} nginx -t 2>&1) || nginx_exit_code=\$?
+                        
+                        # Check if it's just an upstream resolution error (expected in test environment)
+                        if echo "\$nginx_output" | grep -q "host not found in upstream"; then
+                            echo "⚠ Nginx upstream hosts not resolvable (expected in test environment)"
+                            echo "✓ Config syntax is valid - upstream hosts (backend, ollama) will be available in docker-compose network"
+                            echo "✓ Frontend test passed"
+                            exit 0
+                        # Check if nginx test actually passed
+                        elif echo "\$nginx_output" | grep -qE "(syntax is ok|test is successful)"; then
+                            echo "✓ Nginx config syntax valid"
+                            echo "✓ Frontend test passed"
+                            exit 0
+                        else
+                            echo "✗ Nginx config has real errors:"
+                            echo "\$nginx_output"
+                            exit 1
+                        fi
+                    """
                 }
             }
         }
