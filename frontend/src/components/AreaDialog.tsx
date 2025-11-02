@@ -6,6 +6,7 @@ import type { Question } from '../config/courseMaterials'
 import { API_KEYS, checkAPIKey } from '../config/apiKeys'
 import axios from 'axios'
 import BattleScene from './BattleScene'
+import FinalReportDialog from './FinalReportDialog'
 
 // Add CSS animation styles
 const globalStyles = `
@@ -78,6 +79,7 @@ interface AreaDialogProps {
   onClose: () => void
   areaId: string
   onComplete: () => void
+  onExitToLogin?: () => void
 }
 
 const DialogOverlay = styled(motion.div)`
@@ -304,9 +306,9 @@ const ProgressLabel = styled.div`
   pointer-events: none;
 `
 
-// 使用配置文件中的课程资料
+// Use course materials from configuration file
 
-const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComplete }) => {
+const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComplete, onExitToLogin }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isUserTyping, setIsUserTyping] = useState(false)
@@ -336,14 +338,49 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
 
   // Learned knowledge points (IDs)
   const [courseData, setCourseData] = useState<any>(null)
+  const [isFinalDestination, setIsFinalDestination] = useState(false)
+  const [finalSubject, setFinalSubject] = useState<string>('')
+  const [showFinalReport, setShowFinalReport] = useState(false)
   
   // Battle scene state control
   const [showBattleScene, setShowBattleScene] = useState(false)
   const totalKnowledgePoints = courseData?.knowledgePointCount || 0
   const learningProgress = (learnedKnowledgePoints.size / totalKnowledgePoints) * 100
 
-  // Fetch dynamic course data from backend API
+  // Check if this is a final destination area
   useEffect(() => {
+    const checkFinalDestination = async () => {
+      if (!areaId) return
+      
+      try {
+        const gameStateResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/game-state`)
+        const area = gameStateResponse.data?.areas?.[areaId]
+        
+        if (area?.type === 'final_destination') {
+          setIsFinalDestination(true)
+          // Extract subject from parent_subject or name (e.g., "Physics Fundamentals: Chapter 1" -> "Physics Fundamentals")
+          const subject = area.parent_subject || (area.name ? area.name.split('-')[0].trim() : '')
+          setFinalSubject(subject)
+          // Automatically show final report dialog when entering final destination
+          setShowFinalReport(true)
+          return
+        }
+      } catch (error) {
+        console.error('Failed to check final destination:', error)
+      }
+      
+      setIsFinalDestination(false)
+    }
+    
+    if (areaId) {
+      checkFinalDestination()
+    }
+  }, [areaId])
+
+  // Fetch dynamic course data from backend API (only for non-final areas)
+  useEffect(() => {
+    if (isFinalDestination) return // Skip for final destination areas
+    
     const fetchCourseData = async () => {
       try {
         console.log(`📚 Fetching course data: ${areaId}`)
@@ -366,10 +403,10 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
     if (areaId) {
       fetchCourseData()
     }
-  }, [areaId])
+  }, [areaId, isFinalDestination])
 
   useEffect(() => {
-    if (isOpen && areaId && courseData) {
+    if (isOpen && areaId && courseData && !isFinalDestination) {
       // Clear previous session UI immediately to avoid showing stale records
       setMessages([])
       setThinkingContent('')
@@ -377,7 +414,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
       setSelectedAnswer(null)
       initializeDialog()
     }
-  }, [isOpen, areaId, courseData])
+  }, [isOpen, areaId, courseData, isFinalDestination])
 
   const initializeDialog = async () => {
     setIsLoading(true)
@@ -422,19 +459,133 @@ Please only output the above format without any additional content.`
 
       const response = await callRealLLMAPI(listPrompt, selectedModel)
       
-      // Parse knowledge points list
+      // Validate response - if it looks like a prompt, use fallback
+      if (!response || response.trim().length < 10 || 
+          response.includes('【Course Materials】') || 
+          response.includes('Generate a knowledge points list')) {
+        console.warn('LLM response appears to be invalid, using course materials')
+        // Use course materials directly as knowledge points
+        const fallbackPoints = courseData?.materials?.slice(0, totalKnowledgePoints) || []
+        const formattedPoints = fallbackPoints.map((material: string, index: number) => {
+          // Extract title from material - try multiple patterns
+          // Pattern 1: "Title: Description" or "Title：Description"
+          let titleMatch = material.match(/^([^:：]+?)[:：]/)
+          if (titleMatch) {
+            return titleMatch[1].trim()
+          }
+          // Pattern 2: Numbered format "1. Title" or "1) Title"
+          titleMatch = material.match(/^\d+[\.\)]\s*(.+)/)
+          if (titleMatch) {
+            return titleMatch[1].trim()
+          }
+          // Pattern 3: Extract first sentence or first 50 characters
+          const firstSentence = material.split(/[。.\n]/)[0].trim()
+          if (firstSentence.length > 5) {
+            return firstSentence.length > 60 ? firstSentence.substring(0, 60) + '...' : firstSentence
+          }
+          // Fallback: use first 40 characters
+          return material.trim().length > 40 ? material.trim().substring(0, 40) + '...' : material.trim() || `Knowledge Point ${index + 1}`
+        })
+        setKnowledgePointsList(formattedPoints.filter((p: string) => p.length > 0))
+      } else {
+        // Parse knowledge points list from LLM response
       const lines = response.split('\n').filter(line => line.trim())
       const points = lines.map(line => {
-        const match = line.match(/\d+\.\s*(.+)/)
-        return match ? match[1].trim() : line.trim()
-      }).filter(point => point.length > 0)
-      
-      setKnowledgePointsList(points)
+          // Try to match numbered format: "1. Title" or "1) Title" or "6. Title"
+          const match = line.match(/\d+[\.\)]\s*(.+)/)
+          if (match) {
+            let extracted = match[1].trim()
+            // Remove any additional numbering prefixes (e.g., "6. Title" -> "Title")
+            extracted = extracted.replace(/^\d+[\.\)]\s*/, '').trim()
+            // Validate: skip if it's just a number or too short
+            if (extracted.length > 2 && !/^\d+$/.test(extracted)) {
+              return extracted
+            }
+          }
+          // Try bracket format: "[Title]"
+          const bracketMatch = line.match(/\[(.+)\]/)
+          if (bracketMatch) {
+            let extracted = bracketMatch[1].trim()
+            extracted = extracted.replace(/^\d+[\.\)]\s*/, '').trim()
+            return extracted
+          }
+          // If line doesn't match patterns but has content, use it
+          let trimmed = line.trim()
+          // Remove numbering prefixes
+          trimmed = trimmed.replace(/^\d+[\.\)]\s*/, '').trim()
+          if (trimmed.length > 2 && !trimmed.includes('【') && !trimmed.includes('Task') && !trimmed.includes('Requirements') && !trimmed.includes('Output Format')) {
+            return trimmed
+          }
+          return null
+        }).filter((point): point is string => point !== null && point.length > 0 && !/^\d+$/.test(point))
+        
+        if (points.length > 0 && points.length >= totalKnowledgePoints) {
+          setKnowledgePointsList(points.slice(0, totalKnowledgePoints))
+        } else {
+          // Fallback to course materials - better extraction
+          console.warn('Failed to parse knowledge points from LLM, using course materials')
+          const fallbackPoints = courseData?.materials?.slice(0, totalKnowledgePoints) || []
+          const formattedPoints = fallbackPoints.map((material: string, index: number) => {
+            // Extract title from material - try multiple patterns
+            let titleMatch = material.match(/^([^:：]+?)[:：]/)
+            if (titleMatch) {
+              return titleMatch[1].trim()
+            }
+            titleMatch = material.match(/^\d+[\.\)]\s*(.+)/)
+            if (titleMatch) {
+              return titleMatch[1].trim()
+            }
+            const firstSentence = material.split(/[。.\n]/)[0].trim()
+            if (firstSentence.length > 5) {
+              return firstSentence.length > 60 ? firstSentence.substring(0, 60) + '...' : firstSentence
+            }
+            return material.trim().length > 40 ? material.trim().substring(0, 40) + '...' : material.trim() || `Knowledge Point ${index + 1}`
+          })
+          setKnowledgePointsList(formattedPoints.filter((p: string) => p.length > 0))
+        }
+      }
 
       const currentProgress = Math.round((restoredLearnedPoints.length / totalKnowledgePoints) * 100)
       const progressMessage = restoredLearnedPoints.length > 0 
         ? `\n\n📊 **Learning Progress Restored:** ${restoredLearnedPoints.length}/${totalKnowledgePoints} (${currentProgress}%)\n✅ You previously learned: ${restoredLearnedPoints.map(p => `Point ${p}`).join(', ')}` 
         : ''
+
+      // Get final knowledge points list (from parsed response or fallback)
+      let finalPoints = knowledgePointsList.length > 0 ? knowledgePointsList : []
+      
+      // If still empty or only contains numbers, use course materials with better extraction
+      if (finalPoints.length === 0 || finalPoints.every(p => /^\d+$/.test(p))) {
+        console.warn('Knowledge points list is empty or invalid, extracting from course materials')
+        finalPoints = (courseData?.materials?.slice(0, totalKnowledgePoints) || []).map((m: string, i: number) => {
+          // Try multiple extraction patterns
+          let titleMatch = m.match(/^([^:：]+?)[:：]/)
+          if (titleMatch && titleMatch[1].trim().length > 2) {
+            return titleMatch[1].trim()
+          }
+          titleMatch = m.match(/^\d+[\.\)]\s*(.+)/)
+          if (titleMatch && titleMatch[1].trim().length > 2) {
+            return titleMatch[1].trim()
+          }
+          // Extract first meaningful sentence
+          const sentences = m.split(/[。.\n]/).filter(s => s.trim().length > 5)
+          if (sentences.length > 0) {
+            const title = sentences[0].trim()
+            return title.length > 60 ? title.substring(0, 60) + '...' : title
+          }
+          // Fallback to first 40 characters
+          const trimmed = m.trim()
+          return trimmed.length > 40 ? trimmed.substring(0, 40) + '...' : trimmed || `Knowledge Point ${i + 1}`
+        }).filter((p: string) => p && p.length > 0 && !/^\d+$/.test(p))
+      }
+      
+      // Ensure we have the right number of points
+      if (finalPoints.length < totalKnowledgePoints) {
+        finalPoints = finalPoints.concat(
+          Array.from({ length: totalKnowledgePoints - finalPoints.length }, (_, i) => 
+            `Knowledge Point ${finalPoints.length + i + 1}`
+          )
+        )
+      }
 
       const welcomeMessage: Message = {
         id: '1',
@@ -450,7 +601,7 @@ Young apprentice, I am a professor at the Magic Academy, and I will guide you to
 
 📚 **Knowledge Points in This Area:**
 
-${points.map((point, index) => `${index + 1}. ${point}`).join('\n')}
+${finalPoints.map((point: string, index: number) => `${index + 1}. ${point}`).join('\n')}
 
 💡 **How to Use:**
 • Enter a number (1-${totalKnowledgePoints}) to learn the corresponding knowledge point
@@ -551,12 +702,12 @@ Please enter a number to learn a knowledge point, or ask me a question directly!
       const knowledgePointNumber = parseInt(userInput)
       
       if (!isNaN(knowledgePointNumber) && knowledgePointNumber >= 1 && knowledgePointNumber <= totalKnowledgePoints) {
-        // 学习知识点
+        // Learn knowledge point
         await learnKnowledgePoint(knowledgePointNumber)
       } else if (isTestMode && testQuestions.length > 0) {
         // Handle test answer
         await handleTestAnswer(userInput)
-      } else if (userInput.toLowerCase() === 'test' || userInput.toLowerCase() === '测试') {
+      } else if (userInput.toLowerCase() === 'test') {
         // Start test
         await startTest()
       } else {
@@ -582,9 +733,49 @@ Sorry, an error occurred while processing your message. Please try again later.`
   const learnKnowledgePoint = async (pointNumber: number) => {
     const pointTitle = knowledgePointsList[pointNumber - 1] || `Knowledge Point ${pointNumber}`
     
-    // Let LLM generate knowledge point content
-    // Only get current knowledge point materials, don't include other points
-    const currentPointMaterial = courseData?.materials[pointNumber - 1] || 'Fundamental Knowledge'
+    // Find the corresponding material for this knowledge point by matching title
+    // Since LLM may reorder the knowledge points, we should match by title content, not index
+    let currentPointMaterial = 'Fundamental Knowledge'
+    
+    if (courseData?.materials && courseData.materials.length > 0) {
+      // Clean the point title for matching (remove numbering prefixes like "6. ")
+      const cleanTitle = pointTitle.replace(/^\d+[\.\)]\s*/, '').trim().toLowerCase()
+      
+      // Try to find matching material by title
+      const matchedMaterial = courseData.materials.find((material: string) => {
+        if (!material) return false
+        
+        // Extract title from material using multiple patterns
+        // Pattern 1: "Title: Description"
+        let materialTitle = material.split(/[:：]/)[0].trim()
+        // Pattern 2: "6. Title" or "1) Title"
+        if (!materialTitle || materialTitle.length < 3) {
+          const numberedMatch = material.match(/^\d+[\.\)]\s*(.+)/)
+          materialTitle = numberedMatch ? numberedMatch[1].split(/[:：.\n]/)[0].trim() : material.split(/[:：.\n]/)[0].trim()
+        }
+        // Pattern 3: First sentence or first 40 chars
+        if (!materialTitle || materialTitle.length < 3) {
+          materialTitle = material.split(/[。.\n]/)[0].trim().substring(0, 40)
+        }
+        
+        const materialTitleLower = materialTitle.toLowerCase().replace(/^\d+[\.\)]\s*/, '').trim()
+        
+        // Match if titles are similar (contains or is contained)
+        return materialTitleLower.includes(cleanTitle) || 
+               cleanTitle.includes(materialTitleLower.substring(0, Math.min(cleanTitle.length, materialTitleLower.length))) ||
+               // Also check if key words match
+               cleanTitle.split(/\s+/).some(word => word.length > 3 && materialTitleLower.includes(word))
+      })
+      
+      if (matchedMaterial) {
+        currentPointMaterial = matchedMaterial
+        console.log(`✅ Matched material for "${pointTitle}"`)
+      } else {
+        // Fallback: use index-based matching as last resort
+        console.warn(`⚠️ Could not find matching material for "${pointTitle}", using index ${pointNumber - 1} as fallback`)
+        currentPointMaterial = courseData.materials[pointNumber - 1] || 'Fundamental Knowledge'
+      }
+    }
     
     const contentPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}, instructing a young apprentice on the knowledge point "${pointTitle}". Always answer in English only and format headings in bold (Markdown).
 
@@ -652,14 +843,14 @@ ${newLearnedPoints.size / totalKnowledgePoints >= 0.2 ? '🎉 **Congratulations!
   const handleTestAnswer = async (userInput: string) => {
     const answerString = userInput.trim().toUpperCase()
     
-    // 检查是否是批量答案（长度等于题目数量）
+    // Check if it's batch answers (length equals number of questions)
     const questionCount = testQuestions.length
     if (answerString.length === questionCount && questionCount > 0) {
-      // 批量处理答案
+      // Process batch answers
       const userAnswers = answerString.split('')
       const answerNumbers: number[] = []
       
-      // 验证每个答案都是ABCD
+      // Validate each answer is A, B, C, or D
       for (let i = 0; i < questionCount; i++) {
         const letter = userAnswers[i]
         let answerNumber = -1
@@ -949,7 +1140,7 @@ Stay determined! Review the knowledge points and challenge the duel again when y
       
       console.log(`📝 Question ${i + 1}/${totalQuestions} - Knowledge Point ${pointNumber}: ${pointTitle}`)
       
-      // 更新进度条
+      // Update progress bar
       const completed = i
       const remaining = totalQuestions - completed
       const progressBar = '▓'.repeat(completed) + '░'.repeat(remaining)
@@ -1011,9 +1202,9 @@ Please only output the above format without any additional content.`
         const optionAMatch = response.match(/A\.\s*(.+?)(?=\n[B-D]\.|$)/s)
         const optionBMatch = response.match(/B\.\s*(.+?)(?=\n[C-D]\.|$)/s)
         const optionCMatch = response.match(/C\.\s*(.+?)(?=\n[D]\.|$)/s)
-        const optionDMatch = response.match(/D\.\s*(.+?)(?=\n(?:Answer|答案)|$)/si)
-        const answerMatch = response.match(/(?:Answer|答案)[：:]\s*([A-D])/i)
-        const explanationMatch = response.match(/(?:Explanation|解析)[：:]\s*(.+?)$/si)
+        const optionDMatch = response.match(/D\.\s*(.+?)(?=\n(?:Answer)|$)/si)
+        const answerMatch = response.match(/(?:Answer)[：:]\s*([A-D])/i)
+        const explanationMatch = response.match(/(?:Explanation)[：:]\s*(.+?)$/si)
         
         if (questionMatch && optionAMatch && optionBMatch && optionCMatch && optionDMatch && answerMatch && explanationMatch) {
           const answerLetter = answerMatch[1].toUpperCase()
@@ -1215,7 +1406,7 @@ ${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
                 jsonMatch = [completedJson]
               }
             } catch (e) {
-              // 补全失败，继续尝试其他方法
+              // Completion failed, continue with other methods
             }
           } else {
             jsonMatch = [partialJson]
@@ -1226,9 +1417,9 @@ ${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
       if (jsonMatch) {
         try {
           const questionData = JSON.parse(jsonMatch[0])
-          console.log('解析的题目数据:', questionData)
+          console.log('Parsed question data:', questionData)
           
-          // 使用验证函数检查题目
+          // Use validation function to check question
           if (validateQuestion(questionData)) {
             
             setSelectedAnswer(null)
@@ -1237,18 +1428,18 @@ ${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
             const testMessage: Message = {
               id: Date.now().toString(),
               role: 'assistant',
-              content: `📝 **第${getCurrentQuestionNumber()}题**
+              content: `📝 **Question ${getCurrentQuestionNumber()}**
 
-**题目：**
+**Question:**
 ${questionData.question}
 
-**选项：**
+**Options:**
 A. ${questionData.options[0]}
 B. ${questionData.options[1]}
 C. ${questionData.options[2]}
 D. ${questionData.options[3]}
 
-请选择正确答案（回复A、B、C或D）：`,
+Please select the correct answer (reply A, B, C, or D):`,
               timestamp: new Date()
             }
 
@@ -1256,22 +1447,22 @@ D. ${questionData.options[3]}
             setThinkingContent('')
             return
           } else {
-            console.warn('生成的题目验证失败，重试中...', questionData)
-            // 重试生成题目
+            console.warn('Generated question validation failed, retrying...', questionData)
+            // Retry generating question
             setTimeout(() => {
               generateNextQuestion(retryCount + 1)
             }, 1000)
             return
           }
         } catch (parseError) {
-          console.error('JSON解析失败:', parseError, '尝试的JSON:', jsonMatch[0])
+          console.error('JSON parsing failed:', parseError, 'Attempted JSON:', jsonMatch[0])
         }
       }
     } catch (error) {
-      console.error('解析题目失败:', error)
+      console.error('Failed to parse question:', error)
     }
 
-    // 如果LLM生成失败，重试
+    // If LLM generation fails, retry
     setTimeout(() => {
       generateNextQuestion(retryCount + 1)
     }, 1000)
@@ -1319,9 +1510,9 @@ Answer directly without any prefix or suffix.`
     try {
       switch (model) {
         case 'claude-3.5':
-          // 检查API密钥是否配置
+          // Check if API key is configured
           if (!checkAPIKey('claude-3.5')) {
-            console.warn('Claude API密钥未配置，回退到本地模型')
+            console.warn('Claude API key not configured, falling back to local model')
             return await callLocalModel(userInput, 'qwen2.5', skipThinking)
           }
           
@@ -1349,8 +1540,8 @@ Answer directly without any prefix or suffix.`
             const data = await claudeResponse.json()
             return data.content[0].text
           } else {
-            console.error('Claude API调用失败:', claudeResponse.status)
-            // 回退到本地模型
+            console.error('Claude API call failed:', claudeResponse.status)
+            // Fall back to local model
             return await callLocalModel(userInput, 'qwen2.5', skipThinking)
           }
           break
@@ -1364,8 +1555,8 @@ Answer directly without any prefix or suffix.`
           return await callLocalModel(userInput, 'qwen2.5', skipThinking)
       }
     } catch (error) {
-      console.error('API调用失败:', error)
-      // 回退到本地模型
+      console.error('API call failed:', error)
+      // Fall back to local model
       return await callLocalModel(userInput, 'qwen2.5')
     }
   }
@@ -1398,7 +1589,7 @@ Answer directly without any prefix or suffix.`
     if (ollamaResponse.ok) {
       const reader = ollamaResponse.body?.getReader()
       if (!reader) {
-        throw new Error('无法读取响应流')
+        throw new Error('Unable to read response stream')
       }
       
       let fullResponse = ''
@@ -1418,13 +1609,13 @@ Answer directly without any prefix or suffix.`
               if (data.response) {
                 fullResponse += data.response
                 
-                // 实时更新思考过程（出题时不显示）
+                // Update thinking process in real-time (not shown during question generation)
                 if (showThinking && !skipThinking) {
                   setThinkingContent(prev => prev + data.response)
                 }
               }
             } catch (e) {
-              // 忽略非JSON行
+              // Ignore non-JSON lines
             }
           }
         }
@@ -1434,7 +1625,7 @@ Answer directly without any prefix or suffix.`
       
       return fullResponse
     } else {
-      console.error('Ollama API调用失败:', ollamaResponse.status, ollamaResponse.statusText)
+      console.error('Ollama API call failed:', ollamaResponse.status, ollamaResponse.statusText)
       return simulateLLMResponse(userInput, model)
     }
   }
@@ -1444,19 +1635,19 @@ Answer directly without any prefix or suffix.`
     
     const responses = {
       'ollama-llama2': [
-        `Llama2模型认为：${userInput} 是一个值得深入探讨的话题。`,
-        `从我的角度来看，${userInput} 有以下几个层面...`,
-        `这是一个很好的问题！让我用Llama2的视角来回答：${userInput}...`
+        `The Llama2 model thinks: ${userInput} is a topic worth exploring in depth.`,
+        `From my perspective, ${userInput} has the following aspects...`,
+        `This is a great question! Let me answer from Llama2's perspective: ${userInput}...`
       ],
       'huggingface': [
-        `基于Hugging Face的开源模型，我对${userInput}的理解是...`,
-        `这是一个复杂的话题。让我用开源AI的视角来分析：${userInput}...`,
-        `作为开源AI助手，我认为${userInput}可以从以下角度考虑...`
+        `Based on Hugging Face's open-source model, my understanding of ${userInput} is...`,
+        `This is a complex topic. Let me analyze it from an open-source AI perspective: ${userInput}...`,
+        `As an open-source AI assistant, I believe ${userInput} can be considered from the following angles...`
       ],
       'openai-compatible': [
-        `使用OpenAI兼容的API，我的回答是：${userInput} 这个问题...`,
-        `基于兼容模型的训练，我认为${userInput}涉及到...`,
-        `这是一个很好的问题！让我用兼容模型的视角来回答：${userInput}...`
+        `Using OpenAI-compatible API, my answer is: ${userInput} This question...`,
+        `Based on compatible model training, I think ${userInput} involves...`,
+        `This is a great question! Let me answer from a compatible model's perspective: ${userInput}...`
       ]
     }
     
@@ -1465,7 +1656,7 @@ Answer directly without any prefix or suffix.`
   }
 
   const getCurrentQuestionNumber = () => {
-    // 计算当前是第几题（基于测试开始后的用户回答数量）
+    // Calculate current question number (based on user answers after test starts)
     const testStartIndex = messages.findIndex(msg => msg.content.includes('Starting Test!'))
     if (testStartIndex === -1) return 1
     
@@ -1477,73 +1668,73 @@ Answer directly without any prefix or suffix.`
 
 
   const validateQuestion = (questionData: any): boolean => {
-    console.log('开始验证题目:', questionData)
+    console.log('Starting question validation:', questionData)
     
-    // 基本格式验证 - 放宽要求
+    // Basic format validation - relaxed requirements
     if (!questionData.question || !questionData.options || 
         !Array.isArray(questionData.options) || questionData.options.length !== 4) {
-      console.warn('基本格式验证失败')
+      console.warn('Basic format validation failed')
       return false
     }
     
-    // 答案范围验证
+    // Answer range validation
     if (typeof questionData.correctAnswer !== 'number' || 
         questionData.correctAnswer < 0 || questionData.correctAnswer > 3) {
-      console.warn('答案范围验证失败:', questionData.correctAnswer)
+      console.warn('Answer range validation failed:', questionData.correctAnswer)
       return false
     }
     
-    // 检查选项格式（不应该重复字母）
+    // Check option format (should not repeat letters)
     const options = questionData.options
     for (let i = 0; i < options.length; i++) {
       const option = options[i]
-      // 检查是否包含重复的字母标记
+      // Check if it contains duplicate letter markers
       if (option.includes(`(${String.fromCharCode(65 + i)})`) || 
           option.includes(`（${String.fromCharCode(65 + i)}）`) ||
           option.includes(`[${String.fromCharCode(65 + i)}]`) ||
           option.includes(`【${String.fromCharCode(65 + i)}】`)) {
-        console.warn('选项包含重复字母标记:', option)
+        console.warn('Option contains duplicate letter marker:', option)
         return false
       }
       
-      // 检查选项是否为空或太短 - 放宽要求
+      // Check if option is empty or too short - relaxed requirements
       if (!option.trim() || option.trim().length < 1) {
-        console.warn('选项内容太短:', option)
+        console.warn('Option content too short:', option)
         return false
       }
     }
     
-    // 检查题目是否为空或太短 - 放宽要求
+    // Check if question is empty or too short - relaxed requirements
     if (!questionData.question.trim() || questionData.question.trim().length < 3) {
-      console.warn('题目内容太短:', questionData.question)
+      console.warn('Question content too short:', questionData.question)
       return false
     }
     
-    // 检查数学题的答案一致性和唯一性
+    // Check math question answer consistency and uniqueness
     const question = questionData.question.toLowerCase()
     const correctAnswer = questionData.correctAnswer
     
-    if (question.includes('多少') || question.includes('等于') || question.includes('还剩') || 
-        question.includes('+') || question.includes('-') || question.includes('×') || question.includes('乘') ||
-        question.includes('颗') || question.includes('个') || question.includes('只')) {
+    if (question.includes('how many') || question.includes('equals') || question.includes('left') || 
+        question.includes('+') || question.includes('-') || question.includes('×') || question.includes('*') ||
+        question.includes('items') || question.includes('units')) {
       
-      // 检查题目是否泄露答案
-      if (question.includes('等于4') || question.includes('等于3') || question.includes('等于2') || 
-          question.includes('等于1') || question.includes('等于5') || question.includes('等于6')) {
-        console.warn('题目泄露答案:', question)
+      // Check if question reveals the answer
+      if (question.includes('equals 4') || question.includes('equals 3') || question.includes('equals 2') || 
+          question.includes('equals 1') || question.includes('equals 5') || question.includes('equals 6')) {
+        console.warn('Question reveals answer:', question)
         return false
       }
       
-      // 检查选项格式 - 数学题选项不能包含等号和结果
+      // Check option format - math question options cannot contain equals sign and result
       for (let i = 0; i < options.length; i++) {
         const option = options[i]
         if (option.includes('=') || option.includes('＝')) {
-          console.warn('数学题选项包含等号:', option)
+          console.warn('Math question option contains equals sign:', option)
           return false
         }
       }
       
-      // 检查选项唯一性 - 确保只有一个正确答案
+      // Check option uniqueness - ensure only one correct answer
       const results = []
       for (let i = 0; i < options.length; i++) {
         const option = options[i]
@@ -1553,27 +1744,27 @@ Answer directly without any prefix or suffix.`
           const num2 = parseInt(numbers[1])
           
           let result = 0
-          if (option.includes('×') || option.includes('乘')) {
+          if (option.includes('×') || option.includes('*')) {
             result = num1 * num2
-          } else if (option.includes('+') || option.includes('加')) {
+          } else if (option.includes('+')) {
             result = num1 + num2
-          } else if (option.includes('-') || option.includes('减')) {
+          } else if (option.includes('-')) {
             result = num1 - num2
-          } else if (option.includes('÷') || option.includes('除')) {
+          } else if (option.includes('÷') || option.includes('/')) {
             result = num1 / num2
           }
           results.push(result)
         }
       }
       
-      // 检查是否有重复的结果
+      // Check for duplicate results
       const uniqueResults = new Set(results)
       if (uniqueResults.size !== results.length) {
-        console.warn('数学题有多个正确答案:', results)
+        console.warn('Math question has multiple correct answers:', results)
         return false
       }
       
-      // 检查正确答案是否唯一
+      // Check if correct answer is unique
       const correctOption = options[correctAnswer]
       const correctNumbers = correctOption.match(/\d+/g)
       if (correctNumbers && correctNumbers.length >= 2) {
@@ -1581,17 +1772,17 @@ Answer directly without any prefix or suffix.`
         const num2 = parseInt(correctNumbers[1])
         
         let correctResult = 0
-        if (correctOption.includes('×') || correctOption.includes('乘')) {
+        if (correctOption.includes('×') || correctOption.includes('*')) {
           correctResult = num1 * num2
-        } else if (correctOption.includes('+') || correctOption.includes('加')) {
+        } else if (correctOption.includes('+')) {
           correctResult = num1 + num2
-        } else if (correctOption.includes('-') || correctOption.includes('减')) {
+        } else if (correctOption.includes('-')) {
           correctResult = num1 - num2
-        } else if (correctOption.includes('÷') || correctOption.includes('除')) {
+        } else if (correctOption.includes('÷') || correctOption.includes('/')) {
           correctResult = num1 / num2
         }
         
-        // 检查其他选项是否也是正确答案
+        // Check if other options are also correct answers
         for (let i = 0; i < options.length; i++) {
           if (i === correctAnswer) continue
           
@@ -1602,18 +1793,18 @@ Answer directly without any prefix or suffix.`
             const num2 = parseInt(otherNumbers[1])
             
             let otherResult = 0
-            if (otherOption.includes('×') || otherOption.includes('乘')) {
+            if (otherOption.includes('×') || otherOption.includes('*')) {
               otherResult = num1 * num2
-            } else if (otherOption.includes('+') || otherOption.includes('加')) {
+            } else if (otherOption.includes('+')) {
               otherResult = num1 + num2
-            } else if (otherOption.includes('-') || otherOption.includes('减')) {
+            } else if (otherOption.includes('-')) {
               otherResult = num1 - num2
-            } else if (otherOption.includes('÷') || otherOption.includes('除')) {
+            } else if (otherOption.includes('÷') || otherOption.includes('/')) {
               otherResult = num1 / num2
             }
             
             if (otherResult === correctResult) {
-              console.warn('数学题有多个正确答案:', { correctResult, otherResult, correctOption, otherOption })
+              console.warn('Math question has multiple correct answers:', { correctResult, otherResult, correctOption, otherOption })
               return false
             }
           }
@@ -1621,14 +1812,14 @@ Answer directly without any prefix or suffix.`
       }
     }
     
-    // 检查选项是否有重复内容 - 只在完全相同时拒绝
+    // Check if options have duplicate content - only reject if completely identical
     const optionSet = new Set(options.map((opt: string) => opt.trim().toLowerCase()))
     if (optionSet.size !== options.length) {
-      console.warn('选项内容有重复:', options)
+      console.warn('Options have duplicate content:', options)
       return false
     }
     
-    console.log('题目验证通过')
+    console.log('Question validation passed')
     return true
   }
 
@@ -1677,7 +1868,7 @@ Answer directly without any prefix or suffix.`
             onClick={(e) => e.stopPropagation()}
           >
             {!courseData ? (
-              // 加载课程数据中
+              // Loading course data
               <div style={{ 
                 display: 'flex', 
                 flexDirection: 'column',
@@ -1735,7 +1926,7 @@ Answer directly without any prefix or suffix.`
                         fontFamily: 'system-ui, -apple-system, sans-serif'
                       }}>
                         {message.content.split('\n').map((line, index) => {
-                          // 处理粗体文本
+                          // Process bold text
                           if (line.includes('**')) {
                             const parts = line.split(/(\*\*.*?\*\*)/g)
                             return (
@@ -1756,7 +1947,7 @@ Answer directly without any prefix or suffix.`
                               </div>
                             )
                           }
-                          // 处理分隔线
+                          // Process separator lines
                           if (line.trim() === '---') {
                             return (
                               <div key={index} style={{
@@ -1766,7 +1957,7 @@ Answer directly without any prefix or suffix.`
                               }}></div>
                             )
                           }
-                          // 处理列表项
+                          // Process list items
                           if (line.trim().startsWith('•')) {
                             return (
                               <div key={index} style={{ 
@@ -1777,7 +1968,7 @@ Answer directly without any prefix or suffix.`
                               </div>
                             )
                           }
-                          // 普通文本
+                          // Plain text
                           return <div key={index}>{line}</div>
                         })}
                       </div>
@@ -1802,7 +1993,7 @@ Answer directly without any prefix or suffix.`
                 </MessageBubble>
               )}
 
-              {/* 思考过程显示 */}
+              {/* Thinking process display */}
               {showThinking && thinkingContent && (
                 <MessageBubble $isUser={false}>
                   <div>
@@ -1881,7 +2072,7 @@ Answer directly without any prefix or suffix.`
               </SendButton>
             </InputContainer>
 
-            {/* 开始测试按钮：仅当学习进度≥20%时显示 */}
+            {/* Start test button: Only show when learning progress ≥20% */}
             {!isTestMode && totalKnowledgePoints > 0 && (learnedKnowledgePoints.size / totalKnowledgePoints) >= 0.2 && (
               <div style={{ marginTop: '16px', textAlign: 'center' }}>
                 <SendButton
@@ -1894,7 +2085,7 @@ Answer directly without any prefix or suffix.`
               </div>
             )}
 
-            {/* 测试模式提示 */}
+            {/* Test mode indicator */}
             {isTestMode && (
               <div style={{ 
                 marginTop: '16px', 
@@ -1924,6 +2115,25 @@ Answer directly without any prefix or suffix.`
         </DialogOverlay>
       )}
     </AnimatePresence>
+    
+    {/* Final Report Dialog for final destination areas */}
+    {isFinalDestination && (
+      <FinalReportDialog
+        isOpen={showFinalReport}
+        areaId={areaId}
+        subject={finalSubject}
+        onDownload={() => {
+          console.log('Report downloaded')
+        }}
+        onExit={() => {
+          setShowFinalReport(false)
+          onClose()
+          if (onExitToLogin) {
+            onExitToLogin()
+          }
+        }}
+      />
+    )}
     </>
   )
 }

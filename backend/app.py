@@ -3,6 +3,18 @@ from flask_cors import CORS
 import random
 import math
 import os
+import sys
+
+# Check Python environment on startup
+print(f"🐍 Python executable: {sys.executable}")
+print(f"🐍 Python version: {sys.version.split()[0]}")
+try:
+    import reportlab
+    print(f"✅ ReportLab available: {reportlab.__version__}")
+except ImportError:
+    print(f"❌ ReportLab NOT available in current Python environment")
+    print(f"⚠️  Make sure to activate virtual environment: source venv/bin/activate")
+    print(f"⚠️  Or install ReportLab: pip install reportlab==4.2.5")
 from werkzeug.utils import secure_filename
 import json
 from datetime import datetime
@@ -249,20 +261,21 @@ def parse_structured_txt(text_content):
     in_content = False
     current_chapter = ""
 
-    # Supported headers (Chinese and English)
-    meta_headers = {'# 课程元信息', '# Course Meta Information'}
-    content_headers = {'# 课程内容', '# Course Content'}
+    # Supported headers (English only, but can parse Chinese legacy formats)
+    meta_headers = {'# Course Meta Information'}
+    content_headers = {'# Course Content'}
 
-    # Metadata key mapping (Chinese and English)
+    # Metadata key mapping (English only, but can parse Chinese legacy formats)
     key_map = {
-        '课程名称': 'subject',
         'Course Name': 'subject',
-        '类别': 'category',
         'Category': 'category',
-        '难度': 'difficulty',
         'Difficulty': 'difficulty',
-        '描述': 'description',
         'Description': 'description',
+        # Legacy Chinese support (for backwards compatibility with old files)
+        '课程名称': 'subject',
+        '类别': 'category',
+        '难度': 'difficulty',
+        '描述': 'description',
     }
 
     for line in lines:
@@ -310,10 +323,9 @@ def generate_course_from_text(text_content, file_name):
     print(f"📝 Content preview:\n{text_content[:300]}")
     print(f"{'='*60}\n")
     
-    # Check if it's structured TXT format (supports Chinese/English markers)
+    # Check if it's structured TXT format (supports English markers)
     if (
-        ('# 课程元信息' in text_content and '# 课程内容' in text_content)
-        or ('# Course Meta Information' in text_content and '# Course Content' in text_content)
+        ('# Course Meta Information' in text_content and '# Course Content' in text_content)
     ):
         print("✨ Detected structured TXT format, using dedicated parser...")
         metadata, materials_titles = parse_structured_txt(text_content)
@@ -461,7 +473,20 @@ def generate_course_fallback(text_content, file_name):
     
     # Simple course topic recognition
     keywords_map = {
-        # Chinese keywords
+        # English keywords (primary)
+        'python': ('Python Programming', 'easy', 'Programming Language'),
+        'java': ('Java Programming', 'medium', 'Programming Language'),
+        'mathematics': ('Elementary Mathematics', 'easy', 'Basic Mathematics'),
+        'math': ('Elementary Mathematics', 'easy', 'Basic Mathematics'),
+        'network': ('Computer Networks', 'easy', 'Networking'),
+        'data structure': ('Data Structures and Algorithms', 'medium', 'Algorithms'),
+        'algorithm': ('Data Structures and Algorithms', 'medium', 'Algorithms'),
+        'operating system': ('Operating Systems', 'medium', 'Systems'),
+        'database': ('Database Systems', 'medium', 'Data Management'),
+        'machine learning': ('Machine Learning Basics', 'hard', 'AI'),
+        'artificial intelligence': ('Artificial Intelligence', 'hard', 'AI'),
+        'software engineering': ('Software Engineering', 'medium', 'Software Engineering'),
+        # Legacy Chinese keyword support (for backwards compatibility)
         '网络': ('Computer Networks', 'easy', 'Networking'),
         '数据结构': ('Data Structures and Algorithms', 'medium', 'Algorithms'),
         '算法': ('Data Structures and Algorithms', 'medium', 'Algorithms'),
@@ -470,11 +495,6 @@ def generate_course_fallback(text_content, file_name):
         '机器学习': ('Machine Learning Basics', 'hard', 'AI'),
         '人工智能': ('Artificial Intelligence', 'hard', 'AI'),
         '软件工程': ('Software Engineering', 'medium', 'Software Engineering'),
-        # English keywords
-        'python': ('Python Programming', 'easy', 'Programming Language'),
-        'java': ('Java Programming', 'medium', 'Programming Language'),
-        'mathematics': ('Elementary Mathematics', 'easy', 'Basic Mathematics'),
-        'math': ('Elementary Mathematics', 'easy', 'Basic Mathematics'),
     }
     
     subject = "General Course"
@@ -502,11 +522,11 @@ def generate_course_fallback(text_content, file_name):
         # Match title patterns: starting with numbers, bullets, or containing keywords
         if (re.match(r'^\d+[\.\)、]', line) or 
             re.match(r'^[•·►▪■□]', line) or
-            re.match(r'^第[一二三四五六七八九十\d]+[章节课]', line) or
-            any(kw in line for kw in ['定义', '概念', '原理', '方法', '技术', '算法', '协议', '模型', '特点', '优势'])):
+            re.match(r'^(Chapter|chapter|第)[\s一二三四五六七八九十\d]+[章节:]', line, re.IGNORECASE) or
+            any(kw in line.lower() for kw in ['definition', 'concept', 'principle', 'method', 'technique', 'algorithm', 'protocol', 'model', 'feature', 'advantage', 'introduction', 'overview'])):
             if 15 < len(line) < 150:  # Appropriate length
                 clean_line = re.sub(r'^[\d\.\)、•·►▪■□\s]+', '', line)  # Remove prefix
-                if clean_line and not clean_line.startswith('第'):
+                if clean_line and not clean_line.lower().startswith('chapter') and not re.match(r'^第', clean_line):
                     materials.append(clean_line)
     
     print(f"   ✓ Extracted {len(materials)} structured content items")
@@ -519,7 +539,7 @@ def generate_course_fallback(text_content, file_name):
             sent = sent.strip()
             # Filter sentences containing key terms
             if (30 < len(sent) < 200 and 
-                any(kw in sent for kw in ['是', '为', '指', '包括', '分为', '主要', '可以', '能够', '用于', '实现', '通过'])):
+                any(kw in sent.lower() for kw in ['is', 'are', 'refers', 'includes', 'consists', 'mainly', 'can', 'able', 'used', 'implement', 'through', 'define', 'definition', 'concept', 'principle'])):
                 materials.append(sent)
                 if len(materials) >= 15:
                     break
@@ -559,11 +579,11 @@ def generate_course_fallback(text_content, file_name):
         print("🔍 Step 5: Search keyword patterns...")
         # Extract keywords to generate knowledge points
         key_terms = []
-        for keyword in ['定义', '概念', '原理', '方法', '算法', '协议', '模型', '架构', '特征', '应用']:
-            pattern = f'{keyword}[：:，,]?([^。！？\n]{{10,80}})'
-            matches = re.findall(pattern, text_content)
+        for keyword in ['definition', 'concept', 'principle', 'method', 'algorithm', 'protocol', 'model', 'architecture', 'feature', 'application']:
+            pattern = f'{keyword}[：:,]?([^.!?\n]{{10,80}})'
+            matches = re.findall(pattern, text_content, re.IGNORECASE)
             for match in matches[:2]:
-                key_terms.append(f"{keyword}: {match.strip()}")
+                key_terms.append(f"{keyword.capitalize()}: {match.strip()}")
         
         unique_materials.extend(key_terms[:10 - len(unique_materials)])
         print(f"   ✓ Added {len(key_terms)} keyword matches")
@@ -577,7 +597,7 @@ def generate_course_fallback(text_content, file_name):
         for sent in all_sentences:
             sent = sent.strip()
             if 30 < len(sent) < 200:
-                score = sum(1 for kw in ['技术', '方法', '系统', '算法', '模型', '架构', '协议', '机制'] if kw in sent)
+                score = sum(1 for kw in ['technique', 'method', 'system', 'algorithm', 'model', 'architecture', 'protocol', 'mechanism'] if kw in sent.lower())
                 if score > 0:
                     scored_sentences.append((score, sent))
         
@@ -811,16 +831,19 @@ def delete_course_file(course_id):
 # Teacher Portal API - Reset game map (clear all course areas)
 @app.route('/api/reset-game-map', methods=['POST'])
 def reset_game_map():
-    """Reset game map, only keep start point"""
-    global game_state, course_library
+    """Reset game map, only keep start point, and clear all battle records and reports"""
+    global game_state, course_library, battle_records, student_reports
     
     print(f"\n{'='*60}")
-    print(f"🔄 Resetting game map")
+    print(f"🔄 Resetting game map and all student data")
     print(f"{'='*60}\n")
     
     # Save old state for logging
     old_area_count = len(game_state['areas'])
     old_course_count = len(course_library)
+    old_battle_records_count = sum(len(records) for records in battle_records.values())
+    old_reports_count = sum(len(reports) for reports in student_reports.values())
+    old_students_count = len(battle_records)
     
     # Reset game state
     game_state = {
@@ -842,15 +865,26 @@ def reset_game_map():
     # Clear course library
     course_library = {}
     
-    print(f"✅ Map reset successful!")
+    # Clear all battle records for all students
+    battle_records.clear()
+    
+    # Clear all student reports for all students
+    student_reports.clear()
+    
+    print(f"✅ Map and data reset successful!")
     print(f"   Deleted areas: {old_area_count - 1}")
     print(f"   Cleared courses: {old_course_count}")
+    print(f"   Cleared battle records: {old_battle_records_count} records from {old_students_count} student(s)")
+    print(f"   Cleared reports: {old_reports_count} reports")
     print(f"{'='*60}\n")
     
     return jsonify({
         'message': 'Game map has been reset',
         'deleted_areas': old_area_count - 1,
-        'cleared_courses': old_course_count
+        'cleared_courses': old_course_count,
+        'cleared_battle_records': old_battle_records_count,
+        'cleared_reports': old_reports_count,
+        'cleared_students': old_students_count
     })
 
 # Teacher Portal API - Apply course to game map
@@ -918,19 +952,33 @@ def apply_course_to_game():
         
         for material in materials:
             # Check if it's a new chapter marker
-            if '第' in material and ('章' in material or '节' in material):
+            is_chapter_marker = False
+            if re.search(r'(Chapter|chapter)[\s\d]+', material, re.IGNORECASE) or (re.search(r'第[\d一二三四五六七八九十]+[章节]', material)):
                 # Extract chapter name
-                import re
-                match = re.search(r'第[一二三四五六七八九十\d]+[章节]', material)
-                if match:
-                    current_chapter = match.group()
-                    if current_chapter not in chapters:
-                        chapters[current_chapter] = []
+                chapter_match = re.search(r'(Chapter|chapter)[\s\d]+', material, re.IGNORECASE)
+                if chapter_match:
+                    # Extract number from chapter match (cannot use backslash in f-string expression)
+                    number_match = re.search(r'\d+', chapter_match.group())
+                    chapter_num = number_match.group() if number_match else '1'
+                    current_chapter = f"Chapter {chapter_num}"
+                    is_chapter_marker = True
+                else:
+                    legacy_match = re.search(r'第[\d一二三四五六七八九十]+[章节]', material)
+                    if legacy_match:
+                        # Convert Chinese chapter to English
+                        number_match = re.search(r'\d+', legacy_match.group())
+                        chapter_num = number_match.group() if number_match else '1'
+                        current_chapter = f"Chapter {chapter_num}"
+                        is_chapter_marker = True
             
-            # Add knowledge point to current chapter
+            # Initialize chapter if not exists
             if current_chapter not in chapters:
                 chapters[current_chapter] = []
-            chapters[current_chapter].append(material)
+            
+            # Only add material to chapter if it's NOT a chapter marker
+            # Chapter markers should not be included as knowledge points
+            if not is_chapter_marker:
+                chapters[current_chapter].append(material)
         
         # If no chapters detected, evenly distribute all knowledge points
         if len(chapters) == 1 and len(chapters[current_chapter]) == len(materials):
@@ -944,6 +992,7 @@ def apply_course_to_game():
         print(f"📖 Detected {len(chapters)} chapters:")
         for chapter_name, points in chapters.items():
             print(f"   - {chapter_name}: {len(points)} knowledge points")
+            print(f"     First 3 points: {points[:3] if len(points) > 0 else 'N/A'}")
         
         # Create one Area for each chapter
         new_areas = {}
@@ -1017,6 +1066,8 @@ def apply_course_to_game():
             print(f"   Position: x={position['x']}, y={position['y']}")
             print(f"   Connection: {previous_area_id} → {area_id}")
             print(f"   Knowledge points: {len(chapter_materials)}")
+            print(f"   Materials preview: {chapter_materials[:2] if chapter_materials else 'N/A'}")
+            print(f"   Stored in course_library[{area_id}]")
             
             # Update to be "previous area" for next iteration
             previous_area_id = area_id
@@ -1024,19 +1075,80 @@ def apply_course_to_game():
             previous_level += 1
             chapter_index += 1
         
+        print(f"📊 Finished creating {len(chapters)} chapter areas")
+        print(f"   Last area ID: {previous_area_id}")
+        print(f"   Last position: x={previous_position['x']}, y={previous_position['y']}")
+        print(f"   Current new_areas count: {len(new_areas)}")
+        
+        # Create final destination area for this subject (unlocked when all chapters are completed)
+        # Use a cleaner final area ID
+        print(f"🎯 Starting final destination creation for subject: {subject}")
+        final_area_id = f"final_{subject.replace(' ', '_').replace(':', '_').lower()}"
+        print(f"   Generated final_area_id: {final_area_id}")
+        final_area_name = f"{subject} - Final Destination"
+        final_position = {
+            'x': previous_position['x'] + forward_distance,
+            'y': previous_position['y']
+        }
+        
+        # Get all chapter area IDs for this subject (exclude start area)
+        chapter_area_ids = [aid for aid in new_areas.keys() if aid != 'start']
+        print(f"   Chapter area IDs: {chapter_area_ids}")
+        print(f"   Number of chapters: {len(chapter_area_ids)}")
+        
+        print(f"   Creating final area at position: x={final_position['x']}, y={final_position['y']}")
+        new_areas[final_area_id] = {
+            'completed': False,
+            'position': final_position,
+            'connections': [],
+            'level': previous_level + 1,
+            'castle_type': random.randint(1, 10),
+            'name': final_area_name,
+            'learningProgress': 0,
+            'learnedPoints': [],
+            'type': 'final_destination',
+            'parent_subject': subject,
+            'required_areas': chapter_area_ids  # All chapter areas must be completed
+        }
+        
+        # Last chapter area connects to final destination (but final is locked until all chapters completed)
+        if previous_area_id in game_state['areas']:
+            game_state['areas'][previous_area_id]['connections'] = [final_area_id]
+        else:
+            new_areas[previous_area_id]['connections'] = [final_area_id]
+        
+        print(f"✅ Created final destination area: {final_area_id} - {final_area_name}")
+        print(f"   Position: x={final_position['x']}, y={final_position['y']}")
+        print(f"   Requires {len(chapter_area_ids)} chapter areas to be completed: {chapter_area_ids}")
+        print(f"   Type: final_destination")
+        print(f"   Parent subject: {subject}")
+        
         # Add new areas to game state
+        print(f"📦 Before update: game_state has {len(game_state['areas'])} areas")
+        print(f"📦 new_areas dictionary has {len(new_areas)} areas: {list(new_areas.keys())}")
         game_state['areas'].update(new_areas)
+        print(f"📦 After update: game_state has {len(game_state['areas'])} areas")
         game_state['max_level'] = max(area['level'] for area in game_state['areas'].values())
         
         print(f"\n✅ Successfully applied course to game map!")
-        print(f"   New areas created: {len(new_areas)}")
-        print(f"   Total areas: {len(game_state['areas'])}")
+        print(f"   📊 Summary:")
+        print(f"     - Chapters in course: {len(chapters)}")
+        print(f"     - Chapter areas created: {len(chapter_area_ids)}")
+        print(f"     - Final destination created: {final_area_id}")
+        print(f"     - Total new_areas: {len(new_areas)} (should be {len(chapters) + 1})")
+        print(f"     - New areas list: {list(new_areas.keys())}")
+        print(f"   📦 Game state update:")
+        print(f"     - Before: {len(game_state['areas']) - len(new_areas)} areas")
+        print(f"     - After: {len(game_state['areas'])} areas")
+        print(f"     - All area IDs: {list(game_state['areas'].keys())}")
+        print(f"     - Final area exists: {final_area_id in game_state['areas']}")
         print(f"{'='*60}\n")
         
         return jsonify({
             'message': f'Successfully applied course to game map',
             'new_areas': list(new_areas.keys()),
             'chapter_count': len(chapters),
+            'final_area_id': final_area_id,
             'game_state': game_state
         })
     
@@ -1051,9 +1163,17 @@ def apply_course_to_game():
 @app.route('/api/course-library/<area_id>', methods=['GET'])
 def get_course_library(area_id):
     """Get course materials for specified area"""
+    print(f"\n📚 API Request: /api/course-library/{area_id}")
     if area_id in course_library:
-        return jsonify(course_library[area_id])
+        data = course_library[area_id]
+        print(f"✅ Found course data for {area_id}")
+        print(f"   Subject: {data.get('subject')}")
+        print(f"   Chapter: {data.get('chapter')}")
+        print(f"   Knowledge points count: {data.get('knowledgePointCount')}")
+        print(f"   First 2 materials: {data.get('materials', [])[:2]}")
+        return jsonify(data)
     else:
+        print(f"⚠️  No course data found for {area_id}, returning defaults")
         # Return default course materials (if not added from teacher portal)
         return jsonify({
             'subject': f'{area_id} Area',
@@ -1123,7 +1243,7 @@ def get_battle_records(student_id):
         'records': records
     })
 
-def analyze_battle_data(records):
+def analyze_battle_data(records, group_by_subject_chapter=False):
     """Analyze battle records for report generation"""
     if not records:
         return None
@@ -1151,13 +1271,84 @@ def analyze_battle_data(records):
     sorted_kps = sorted(knowledge_point_stats.items(), key=lambda x: x[1]['error_rate'], reverse=True)
     weak_points = sorted_kps[:3]
     
-    return {
+    result = {
         'total_questions': total_questions,
         'correct_count': correct_count,
         'accuracy': round(accuracy, 2),
         'knowledge_point_stats': knowledge_point_stats,
         'weak_points': [{'knowledge_point': kp, **stats} for kp, stats in weak_points]
     }
+    
+    # Group by subject and chapter for final reports
+    if group_by_subject_chapter:
+        subject_chapter_stats = {}
+        for record in records:
+            area_id = record.get('area_id')
+            if area_id:
+                course_info = course_library.get(area_id)
+                subject = 'Unknown Subject'
+                chapter = 'Unknown Chapter'
+                
+                if course_info:
+                    subject = course_info.get('parent_course', course_info.get('subject', 'Unknown Subject'))
+                    chapter = course_info.get('chapter', 'Unknown Chapter')
+                    subject_chapter_key = f"{subject} - {chapter}"
+                else:
+                    area = game_state['areas'].get(area_id)
+                    if area and area.get('name'):
+                        subject_chapter_key = area['name']
+                        # Try to extract subject and chapter from area name (format: "Subject: Chapter Name")
+                        if ':' in subject_chapter_key:
+                            parts = subject_chapter_key.split(':', 1)
+                            subject = parts[0].strip()
+                            chapter = parts[1].strip()
+                    else:
+                        subject_chapter_key = f"Area {area_id}"
+                
+                if subject_chapter_key not in subject_chapter_stats:
+                    subject_chapter_stats[subject_chapter_key] = {
+                        'subject': subject,
+                        'chapter': chapter,
+                        'total': 0,
+                        'correct': 0,
+                        'incorrect': 0,
+                        'areas': set()
+                    }
+                
+                subject_chapter_stats[subject_chapter_key]['total'] += 1
+                subject_chapter_stats[subject_chapter_key]['areas'].add(area_id)
+                if record['is_correct']:
+                    subject_chapter_stats[subject_chapter_key]['correct'] += 1
+                else:
+                    subject_chapter_stats[subject_chapter_key]['incorrect'] += 1
+        
+        # Convert sets to lists for JSON serialization
+        for key, stats in subject_chapter_stats.items():
+            stats['areas'] = list(stats['areas'])
+            stats['accuracy'] = (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+        
+        result['subject_chapter_stats'] = subject_chapter_stats
+        
+        # Debug: Print grouped statistics
+        print(f"\n📊 Subject-Chapter Statistics:")
+        subjects_dict = {}
+        for subject_chapter, stats in subject_chapter_stats.items():
+            subject = stats.get('subject', 'Unknown')
+            if subject not in subjects_dict:
+                subjects_dict[subject] = []
+            subjects_dict[subject].append({
+                'chapter': stats.get('chapter', 'Unknown'),
+                'stats': stats
+            })
+        
+        for subject, chapters in subjects_dict.items():
+            print(f"  📚 {subject}:")
+            for chap_info in chapters:
+                chap = chap_info['chapter']
+                s = chap_info['stats']
+                print(f"    - {chap}: {s['accuracy']:.1f}% ({s['correct']}/{s['total']})")
+    
+    return result
 
 def get_area_display_name(area_id):
     if not area_id:
@@ -1196,16 +1387,113 @@ def generate_ai_report(analysis_data, student_id, report_type='snapshot', area_n
 
         if report_type == 'module':
             scope_line = f'This report focuses on the module "{area_name}".' if area_name else "This report focuses on this module."
+            subject_section = ""
         elif report_type == 'final':
             scope_line = "This report summarizes the entire learning journey across every module."
+            # Organize by subject first, then chapters within each subject
+            subject_chapter_stats = analysis_data.get('subject_chapter_stats', {})
+            if subject_chapter_stats:
+                # Group by subject
+                subjects_dict = {}
+                for subject_chapter, stats in subject_chapter_stats.items():
+                    subject = stats.get('subject', 'Unknown Subject')
+                    chapter = stats.get('chapter', 'Unknown Chapter')
+                    
+                    if subject not in subjects_dict:
+                        subjects_dict[subject] = []
+                    subjects_dict[subject].append({
+                        'chapter': chapter,
+                        'accuracy': stats['accuracy'],
+                        'correct': stats['correct'],
+                        'total': stats['total']
+                    })
+                
+                # Build structured breakdown by subject - more explicit formatting
+                subject_section = "\n\n=== MANDATORY STRUCTURE: Report MUST be organized by SUBJECT ===\n"
+                subject_section += "You MUST write separate paragraphs for EACH SUBJECT listed below.\n"
+                subject_section += "Start with an opening paragraph, then one paragraph per subject, then suggestions and conclusion.\n\n"
+                
+                subject_section += "=== SUBJECT PERFORMANCE DATA ===\n\n"
+                for subject in sorted(subjects_dict.keys()):
+                    chapters = subjects_dict[subject]
+                    total_q = sum(c['total'] for c in chapters)
+                    total_correct = sum(c['correct'] for c in chapters)
+                    subj_accuracy = (total_correct / total_q * 100) if total_q > 0 else 0
+                    
+                    subject_section += f"SUBJECT: {subject}\n"
+                    subject_section += f"  Subject-level accuracy: {subj_accuracy:.1f}% ({total_correct} correct out of {total_q} total questions)\n"
+                    subject_section += f"  Chapters in this subject:\n"
+                    for chap in chapters:
+                        subject_section += f"    - {chap['chapter']}: {chap['accuracy']:.1f}% accuracy ({chap['correct']} correct out of {chap['total']} questions)\n"
+                    subject_section += "\n"
+            else:
+                subject_section = ""
         else:
             scope_line = "This report is a snapshot of recent learning performance."
+            subject_section = ""
 
-        prompt = f"""You are the chief mentor of the Arcane Academy. Craft a warm, encouraging learning report in English only.
+        if report_type == 'final':
+            prompt = f"""You are the chief mentor of the Magic Academy. Write a celebratory completion report that congratulates the student on finishing the entire course, while providing a comprehensive summary in English only.
 
 {scope_line}
 
-Student performance:
+{subject_section}
+Overall Achievement:
+- Total questions completed: {total_questions}
+- Overall mastery accuracy: {accuracy:.1f}%
+- Areas that showed challenge:
+{weak_points_desc}
+
+MANDATORY REPORT STRUCTURE (You MUST follow this exactly):
+
+1. CONGRATULATORY OPENING (2-3 sentences):
+   - Start with enthusiastic congratulations on completing the entire course
+   - Celebrate the student's dedication and perseverance
+   - Acknowledge the total questions answered and overall accuracy as an achievement
+   - Use warm, proud, and congratulatory tone
+
+2. COURSE SUMMARY PARAGRAPHS (One paragraph per subject):
+   You MUST write one dedicated paragraph for EACH SUBJECT listed above.
+   Each paragraph should:
+   - Start with celebration of that subject's completion (e.g., "In [Subject Name], you have demonstrated...", "Your journey through [Subject Name] has been...")
+   - Highlight the subject's overall accuracy percentage as an achievement
+   - Summarize performance across all chapters in that subject
+   - Recognize strengths and acknowledge areas that required extra effort
+   - Frame everything in a positive, congratulatory manner
+   
+   Example tone for each subject:
+   "You have successfully completed [Subject Name], answering [X] questions with an impressive [Y]% accuracy. 
+   Throughout [Chapter 1], you achieved [Z]% accuracy, showcasing your understanding of [topic]. 
+   In [Chapter 2], your [W]% accuracy reflected your growing mastery. Your solid grasp of [strength] 
+   in this subject is commendable, and your willingness to tackle [challenging area] shows true dedication."
+
+3. REFLECTION ON GROWTH (1 paragraph):
+   - Reflect on the student's overall learning journey
+   - Highlight key achievements and milestones
+   - Acknowledge progress made, even in challenging areas
+
+4. CONGRATULATORY CONCLUSION (2-3 sentences):
+   - End with a grand, inspiring congratulations message
+   - Use magical academy-themed imagery (e.g., "You have proven yourself worthy", "Your dedication has unlocked new realms of knowledge")
+   - Celebrate the completion as a significant milestone
+   - End on a high, inspiring note
+
+IMPORTANT RULES:
+- Write in polished, celebratory prose
+- Tone should be CONGRATULATORY and PROUD throughout
+- NO bullet points, NO numbered lists, NO emojis, NO markdown formatting
+- NO weird numbers like "42.9 questions" - use whole numbers only
+- Each subject MUST get its own paragraph
+- Focus on celebration and achievement, while still providing meaningful summary
+- Total length: 400-500 words (enough to celebrate and summarize thoroughly)
+
+Now write the congratulatory completion report following the structure above exactly:"""
+        else:
+            prompt = f"""You are the chief mentor of the Arcane Academy. Craft a warm, encouraging learning report in English only.
+
+{scope_line}
+
+Overall Performance:
 - Total questions answered: {total_questions}
 - Overall accuracy: {accuracy:.1f}%
 - Key challenges:
@@ -1217,7 +1505,7 @@ Instructions:
 3. Offer at least two actionable suggestions that reference the knowledge points.
 4. Conclude with an inspiring message that fits a magical academy setting.
 5. Limit the response to roughly 180-220 words.
-6. Do not use bullet lists, emojis, or markdown formatting—write in polished prose.
+6. Write in polished prose, NO bullet lists, NO emojis, NO markdown formatting.
 """
 
         print("🤖 Generating AI report via Ollama...")
@@ -1289,7 +1577,9 @@ def generate_fallback_report(analysis_data, report_type='snapshot', area_name=No
     return " ".join([opening, analysis_text, advice_text, closing])
 
 def create_report_payload(student_id, records, report_type, area_id=None, metadata=None):
-    analysis_data = analyze_battle_data(records)
+    # For final reports, group by subject and chapter
+    group_by_subject_chapter = (report_type == 'final')
+    analysis_data = analyze_battle_data(records, group_by_subject_chapter=group_by_subject_chapter)
     if not analysis_data:
         return None
 
@@ -1413,6 +1703,372 @@ def generate_final_report():
         print(f"❌ Failed to generate final report: {str(e)}")
         return jsonify({'error': f'Failed to generate final report: {str(e)}'}), 500
 
+@app.route('/api/reports/generate-subject-final', methods=['POST'])
+def generate_subject_final_report():
+    """Generate final report for a specific subject and save to file"""
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id', 'default_student')
+        area_id = data.get('area_id')
+        subject = data.get('subject', 'Unknown Subject')
+
+        if not area_id:
+            return jsonify({'error': 'area_id is required'}), 400
+
+        # Get all records for areas of this subject
+        subject_areas = []
+        for aid, area in game_state['areas'].items():
+            if aid == 'start' or aid == area_id:
+                continue  # Skip start area and the final destination area itself
+            area_subject = None
+            course_info = course_library.get(aid)
+            if course_info:
+                area_subject = course_info.get('parent_course', course_info.get('subject', ''))
+            elif area.get('parent_subject'):
+                area_subject = area.get('parent_subject')
+            
+            # Normalize subject names for comparison (handle "Subject: Chapter" format)
+            if area_subject:
+                # Extract subject part before colon if exists
+                area_subject_clean = area_subject.split(':')[0].strip() if ':' in area_subject else area_subject.strip()
+                subject_clean = subject.split(':')[0].strip() if ':' in subject else subject.strip()
+                if area_subject_clean.lower() == subject_clean.lower():
+                    subject_areas.append(aid)
+        
+        print(f"📊 Found {len(subject_areas)} areas for subject '{subject}': {subject_areas}")
+
+        # Filter records for this subject's areas
+        records = [
+            record for record in battle_records.get(student_id, [])
+            if record.get('area_id') in subject_areas
+        ]
+
+        if not records:
+            return jsonify({'error': 'No battle records found for this subject'}), 400
+
+        # Generate report
+        analysis_data = analyze_battle_data(records, group_by_subject_chapter=True)
+        if not analysis_data:
+            return jsonify({'error': 'Unable to analyze battle data'}), 500
+
+        area_name = f"{subject} - Final Report"
+        ai_summary = generate_ai_report(analysis_data, student_id, report_type='final', area_name=area_name)
+        generated_at = datetime.now().isoformat()
+
+        report = {
+            'report_id': f"report_{uuid4().hex}",
+            'student_id': student_id,
+            'type': 'subject_final',
+            'area_id': area_id,
+            'area_name': area_name,
+            'subject': subject,
+            'title': f"{subject} - Completion Summary",
+            'subtitle': f"Completed {analysis_data['total_questions']} questions with {analysis_data['accuracy']:.1f}% accuracy",
+            'generated_at': generated_at,
+            'analysis': analysis_data,
+            'ai_summary': ai_summary
+        }
+
+        # Store in memory
+        store_report(student_id, report, replace_type='subject_final', replace_area=area_id)
+
+        # Save to file for teacher access
+        save_report_to_file(report)
+
+        return jsonify(report)
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ Failed to generate subject final report: {str(e)}")
+        print(error_trace)
+        return jsonify({'error': f'Failed to generate subject final report: {str(e)}'}), 500
+
+def save_report_to_file(report):
+    """Save report to file system for teacher access (both JSON and PDF)"""
+    try:
+        REPORTS_FOLDER = os.path.join(os.path.dirname(__file__), 'reports')
+        if not os.path.exists(REPORTS_FOLDER):
+            os.makedirs(REPORTS_FOLDER)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Save JSON version
+        filename_json = f"report_{report['report_id']}_{timestamp}.json"
+        filepath_json = os.path.join(REPORTS_FOLDER, filename_json)
+        with open(filepath_json, 'w', encoding='utf-8') as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+        print(f"💾 JSON report saved: {filepath_json}")
+
+        # Save PDF version
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+            from reportlab.lib.units import inch
+            from reportlab.lib.colors import HexColor
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+            from reportlab.lib.enums import TA_CENTER
+            
+            filename_pdf = f"report_{report['report_id']}_{timestamp}.pdf"
+            filepath_pdf = os.path.join(REPORTS_FOLDER, filename_pdf)
+            
+            doc = SimpleDocTemplate(filepath_pdf, pagesize=A4,
+                                   rightMargin=72, leftMargin=72,
+                                   topMargin=72, bottomMargin=72)
+            
+            story = []
+            styles = getSampleStyleSheet()
+            
+            # Magic Academy themed styles
+            title_style = ParagraphStyle(
+                'MagicTitle',
+                parent=styles['Heading1'],
+                fontSize=26,
+                textColor=HexColor('#2c3e50'),
+                spaceAfter=20,
+                alignment=TA_CENTER,
+                fontName='Helvetica-Bold'
+            )
+            
+            subtitle_style = ParagraphStyle(
+                'MagicSubtitle',
+                parent=styles['Heading2'],
+                fontSize=14,
+                textColor=HexColor('#7f8c8d'),
+                spaceAfter=20,
+                alignment=TA_CENTER,
+                fontName='Helvetica-Oblique'
+            )
+            
+            heading_style = ParagraphStyle(
+                'MagicHeading',
+                parent=styles['Heading2'],
+                fontSize=16,
+                textColor=HexColor('#34495e'),
+                spaceAfter=12,
+                spaceBefore=20,
+                fontName='Helvetica-Bold'
+            )
+            
+            body_style = ParagraphStyle(
+                'MagicBody',
+                parent=styles['Normal'],
+                fontSize=11,
+                textColor=HexColor('#2c3e50'),
+                spaceAfter=12,
+                leading=16,
+                fontName='Helvetica'
+            )
+            
+            # Title
+            title = report.get('title', 'Course Completion Certificate')
+            story.append(Paragraph(title, title_style))
+            
+            # Subtitle
+            if 'subtitle' in report:
+                story.append(Paragraph(report['subtitle'], subtitle_style))
+            
+            # Subject and date
+            story.append(Spacer(1, 0.2*inch))
+            if 'subject' in report:
+                story.append(Paragraph(f"<b>Subject:</b> {report['subject']}", body_style))
+            
+            gen_date = datetime.fromisoformat(report.get('generated_at', datetime.now().isoformat()))
+            story.append(Paragraph(f"<b>Date:</b> {gen_date.strftime('%B %d, %Y at %I:%M %p')}", body_style))
+            
+            story.append(Spacer(1, 0.3*inch))
+            
+            # AI Summary (main content)
+            if 'ai_summary' in report and report['ai_summary']:
+                summary_paragraphs = report['ai_summary'].split('\n\n')
+                for para in summary_paragraphs:
+                    para = para.strip()
+                    if para:
+                        story.append(Paragraph(para.replace('\n', '<br/>'), body_style))
+                        story.append(Spacer(1, 0.15*inch))
+            
+            # Performance Statistics
+            if 'analysis' in report:
+                analysis = report['analysis']
+                story.append(Spacer(1, 0.2*inch))
+                story.append(Paragraph("Performance Statistics", heading_style))
+                if 'total_questions' in analysis:
+                    story.append(Paragraph(f"<b>Total Questions Completed:</b> {analysis['total_questions']}", body_style))
+                if 'accuracy' in analysis:
+                    story.append(Paragraph(f"<b>Overall Mastery:</b> {analysis['accuracy']:.1f}%", body_style))
+                if 'correct_count' in analysis:
+                    story.append(Paragraph(f"<b>Correct Answers:</b> {analysis['correct_count']} out of {analysis.get('total_questions', 'N/A')}", body_style))
+            
+            doc.build(story)
+            print(f"📄 PDF report saved: {filepath_pdf}")
+            
+        except ImportError:
+            print(f"⚠️ ReportLab not installed, skipping PDF generation")
+        except Exception as pdf_error:
+            print(f"⚠️ PDF generation failed: {str(pdf_error)}")
+
+        return True
+    except Exception as e:
+        print(f"❌ Failed to save report to file: {str(e)}")
+        return False
+
+@app.route('/api/reports/<report_id>/download-pdf', methods=['GET'])
+def download_report_pdf(report_id):
+    """Download a report as styled PDF"""
+    import sys
+    print(f"🔍 Python path: {sys.executable}")
+    print(f"🔍 Python version: {sys.version}")
+    
+    # Check if reportlab is available
+    try:
+        import reportlab
+        print(f"✅ ReportLab found at: {reportlab.__file__}")
+    except ImportError as e:
+        print(f"❌ ReportLab import failed: {str(e)}")
+        print(f"🔍 Python executable: {sys.executable}")
+        print(f"🔍 Python path: {sys.path[:3]}")
+        return jsonify({
+            'error': f'ReportLab library not installed. Python: {sys.executable}. Please activate virtual environment and install with: pip install reportlab'
+        }), 500
+    
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import inch
+        from reportlab.lib.colors import HexColor
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.enums import TA_CENTER
+        from flask import send_file
+        from io import BytesIO
+        
+        # Find report in student_reports
+        report = None
+        for student_id, reports_list in student_reports.items():
+            for r in reports_list:
+                if r.get('report_id') == report_id:
+                    report = r
+                    break
+            if report:
+                break
+        
+        if not report:
+            return jsonify({'error': 'Report not found'}), 404
+        
+        # Create PDF in memory
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4,
+                               rightMargin=72, leftMargin=72,
+                               topMargin=72, bottomMargin=72)
+        
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Magic Academy themed styles
+        title_style = ParagraphStyle(
+            'MagicTitle',
+            parent=styles['Heading1'],
+            fontSize=26,
+            textColor=HexColor('#2c3e50'),
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'MagicSubtitle',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor=HexColor('#7f8c8d'),
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Oblique'
+        )
+        
+        heading_style = ParagraphStyle(
+            'MagicHeading',
+            parent=styles['Heading2'],
+            fontSize=16,
+            textColor=HexColor('#34495e'),
+            spaceAfter=12,
+            spaceBefore=20,
+            fontName='Helvetica-Bold'
+        )
+        
+        body_style = ParagraphStyle(
+            'MagicBody',
+            parent=styles['Normal'],
+            fontSize=11,
+            textColor=HexColor('#2c3e50'),
+            spaceAfter=12,
+            leading=16,
+            fontName='Helvetica'
+        )
+        
+        # Title
+        story.append(Paragraph(report.get('title', 'Course Completion Certificate'), title_style))
+        if 'subtitle' in report:
+            story.append(Paragraph(report['subtitle'], subtitle_style))
+        
+        story.append(Spacer(1, 0.2*inch))
+        if 'subject' in report:
+            story.append(Paragraph(f"<b>Subject:</b> {report['subject']}", body_style))
+        
+        gen_date = datetime.fromisoformat(report.get('generated_at', datetime.now().isoformat()))
+        story.append(Paragraph(f"<b>Date:</b> {gen_date.strftime('%B %d, %Y at %I:%M %p')}", body_style))
+        
+        story.append(Spacer(1, 0.3*inch))
+        
+        # AI Summary
+        if 'ai_summary' in report and report['ai_summary']:
+            summary_paragraphs = report['ai_summary'].split('\n\n')
+            for para in summary_paragraphs:
+                para = para.strip()
+                if para:
+                    story.append(Paragraph(para.replace('\n', '<br/>'), body_style))
+                    story.append(Spacer(1, 0.15*inch))
+        
+        # Performance Statistics
+        if 'analysis' in report:
+            analysis = report['analysis']
+            story.append(Spacer(1, 0.2*inch))
+            story.append(Paragraph("Performance Statistics", heading_style))
+            if 'total_questions' in analysis:
+                story.append(Paragraph(f"<b>Total Questions Completed:</b> {analysis['total_questions']}", body_style))
+            if 'accuracy' in analysis:
+                story.append(Paragraph(f"<b>Overall Mastery:</b> {analysis['accuracy']:.1f}%", body_style))
+            if 'correct_count' in analysis:
+                story.append(Paragraph(f"<b>Correct Answers:</b> {analysis['correct_count']} out of {analysis.get('total_questions', 'N/A')}", body_style))
+        
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Return PDF
+        subject_name = report.get('subject', 'Course').replace(' ', '_')
+        filename = f"{subject_name}_Final_Report_{report_id[:8]}.pdf"
+        
+        print(f"📄 Returning PDF: {filename}, size: {buffer.tell()} bytes")
+        
+        from flask import Response
+        buffer.seek(0)
+        return Response(
+            buffer.getvalue(),
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'Content-Type': 'application/pdf'
+            }
+        )
+        
+    except ImportError as import_err:
+        print(f"❌ ReportLab not installed: {str(import_err)}")
+        return jsonify({'error': 'ReportLab library not installed. Please install it with: pip install reportlab'}), 500
+    except Exception as e:
+        print(f"❌ Failed to generate PDF: {str(e)}")
+        import traceback
+        error_trace = traceback.format_exc()
+        print(error_trace)
+        return jsonify({'error': f'Failed to generate PDF: {str(e)}'}), 500
+
 @app.route('/api/reports/<student_id>', methods=['GET'])
 def list_reports(student_id):
     """Return all stored reports for the student"""
@@ -1463,6 +2119,90 @@ def check_report_eligibility(student_id):
         'required_battles': 1,
         'suggestion': 'Complete at least one battle to unlock reports.' if total_battles < 1 else 'Reports are ready to view.'
     })
+
+@app.route('/api/teacher/reports', methods=['GET'])
+def list_all_reports():
+    """List all saved reports from the reports folder for teacher access"""
+    try:
+        REPORTS_FOLDER = os.path.join(os.path.dirname(__file__), 'reports')
+        print(f"🔍 Looking for reports in: {REPORTS_FOLDER}")
+        if not os.path.exists(REPORTS_FOLDER):
+            print(f"⚠️ Reports folder does not exist: {REPORTS_FOLDER}")
+            return jsonify({'reports': [], 'total': 0})
+        print(f"✅ Reports folder exists, listing files...")
+        
+        reports = []
+        # Read all JSON report files
+        json_files = [f for f in os.listdir(REPORTS_FOLDER) if f.endswith('.json')]
+        print(f"📁 Found {len(json_files)} JSON report files")
+        for filename in json_files:
+            filepath = os.path.join(REPORTS_FOLDER, filename)
+            try:
+                print(f"📄 Reading report: {filename}")
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    report_data = json.load(f)
+                # Extract relevant info for teacher view
+                report_info = {
+                    'report_id': report_data.get('report_id'),
+                    'student_id': report_data.get('student_id', 'unknown'),
+                    'type': report_data.get('type', 'unknown'),
+                    'subject': report_data.get('subject', 'Unknown Subject'),
+                    'title': report_data.get('title', 'Untitled Report'),
+                    'subtitle': report_data.get('subtitle', ''),
+                    'generated_at': report_data.get('generated_at'),
+                    'area_name': report_data.get('area_name', ''),
+                    'accuracy': report_data.get('analysis', {}).get('accuracy', 0),
+                    'total_questions': report_data.get('analysis', {}).get('total_questions', 0),
+                    'filename': filename,
+                    'pdf_filename': filename.replace('.json', '.pdf') if filename.endswith('.json') else None
+                }
+                reports.append(report_info)
+            except Exception as e:
+                print(f"⚠️ Failed to read report file {filename}: {str(e)}")
+                continue
+        
+        # Sort by generated_at (newest first)
+        reports.sort(key=lambda x: x.get('generated_at', ''), reverse=True)
+        
+        print(f"✅ Returning {len(reports)} reports to teacher portal")
+        return jsonify({
+            'reports': reports,
+            'total': len(reports)
+        })
+    except Exception as e:
+        print(f"❌ Failed to list reports: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': f'Failed to list reports: {str(e)}'}), 500
+
+@app.route('/api/teacher/reports/<report_id>/download', methods=['GET'])
+def download_teacher_report(report_id):
+    """Download a report PDF for teacher"""
+    try:
+        REPORTS_FOLDER = os.path.join(os.path.dirname(__file__), 'reports')
+        if not os.path.exists(REPORTS_FOLDER):
+            return jsonify({'error': 'Reports folder not found'}), 404
+        
+        # Find PDF file matching report_id
+        pdf_filename = None
+        for filename in os.listdir(REPORTS_FOLDER):
+            if filename.startswith(f'report_{report_id}') and filename.endswith('.pdf'):
+                pdf_filename = filename
+                break
+        
+        if not pdf_filename:
+            return jsonify({'error': 'PDF report not found'}), 404
+        
+        filepath = os.path.join(REPORTS_FOLDER, pdf_filename)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'PDF file not found'}), 404
+        
+        from flask import send_file
+        return send_file(filepath, mimetype='application/pdf', as_attachment=True, download_name=pdf_filename)
+        
+    except Exception as e:
+        print(f"❌ Failed to download report: {str(e)}")
+        return jsonify({'error': f'Failed to download report: {str(e)}'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8001))

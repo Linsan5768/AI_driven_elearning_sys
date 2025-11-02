@@ -299,6 +299,10 @@ interface Area {
   connections: string[]
   castle_type: number
   learningProgress?: number
+  type?: string  // 'final_destination' for final areas
+  parent_subject?: string
+  required_areas?: string[]
+  name?: string
 }
 
 const GameMap: React.FC = () => {
@@ -319,6 +323,11 @@ const GameMap: React.FC = () => {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/game-state`)
         if (response.ok) {
           const data = await response.json()
+          console.log('🗺️ Game state loaded:', {
+            totalAreas: Object.keys(data.areas).length,
+            areaIds: Object.keys(data.areas),
+            finalDestinations: Object.entries(data.areas).filter(([_, area]: [string, any]) => area.type === 'final_destination').map(([id, _]: [string, any]) => id)
+          })
           setAreas(data.areas)
           setCurrentArea(data.current_area)
           
@@ -467,14 +476,31 @@ const GameMap: React.FC = () => {
     return `/character/wizard_idle.gif`
   }
 
-  const getCastleImage = (castleType: number): string => {
-    // Return corresponding castle image path
+  const getCastleImage = (castleType: number, areaType?: string, areaId?: string): string => {
+    // Special image for start area
+    if (areaId === 'start') {
+      return `/castles/start.png`
+    }
+    // Special image for final destination areas
+    if (areaType === 'final_destination') {
+      return `/castles/final.png`
+    }
+    // Return corresponding castle image path for regular areas
     return `/castles/castle${castleType}.png`
   }
 
   const isAccessible = (areaId: string) => {
     // Current area is always accessible
     if (areaId === currentArea) return true;
+    
+    // Special logic for final destination areas
+    const area = areas[areaId]
+    if (area?.type === 'final_destination') {
+      // Check if all required areas (chapters) are completed
+      const requiredAreas = area.required_areas || []
+      const allCompleted = requiredAreas.every(reqId => areas[reqId]?.completed === true)
+      if (!allCompleted) return false
+    }
     
     // Check connections of all completed areas
     for (const [, area] of Object.entries(areas)) {
@@ -647,8 +673,8 @@ const GameMap: React.FC = () => {
                 transition: { duration: 0.1 }
               } : undefined}
             >
-              {/* Learning progress and test status - only show for non-start areas */}
-              {id !== 'start' && (
+              {/* Learning progress and test status - only show for non-start and non-final areas */}
+              {id !== 'start' && area.type !== 'final_destination' && (
                 <>
                   {/* Learning progress bar */}
                   <ProgressBarContainer>
@@ -662,14 +688,22 @@ const GameMap: React.FC = () => {
               )}
               
               <img 
-                src={getCastleImage(area.castle_type)} 
-                alt={`Castle ${id}`}
+                src={getCastleImage(area.castle_type, area.type, id)} 
+                alt={id === 'start' ? 'Start' : area.type === 'final_destination' ? 'Final Destination' : `Castle ${id}`}
                 onError={(e) => {
-                  // If image fails to load, use a fallback image
-                  e.currentTarget.src = '/castles/castle1.png'
+                  // If image fails to load, use a fallback image based on area type
+                  if (id === 'start') {
+                    e.currentTarget.src = '/castles/castle1.png'
+                  } else if (area.type === 'final_destination') {
+                    e.currentTarget.src = '/castles/castle1.png'
+                  } else {
+                    e.currentTarget.src = '/castles/castle1.png'
+                  }
                 }}
               />
-              <AreaLabel $completed={area.completed} $isCurrent={id === currentArea}>{id}</AreaLabel>
+              <AreaLabel $completed={area.completed} $isCurrent={id === currentArea}>
+                {area.type === 'final_destination' ? '🏆 Final' : id}
+              </AreaLabel>
             </AreaButton>
           </AreaContainer>
         ))}
@@ -703,6 +737,10 @@ const GameMap: React.FC = () => {
         onClose={handleDialogClose}
         areaId={selectedAreaId}
         onComplete={handleDialogComplete}
+        onExitToLogin={() => {
+          // Trigger exit to login by reloading page
+          window.location.reload()
+        }}
       />
     </MapContainer>
   )

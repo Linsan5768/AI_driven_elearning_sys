@@ -199,12 +199,28 @@ interface TeacherPortalProps {
 
 import { API_BASE_URL } from '../config/apiConfig'
 
+interface ReportInfo {
+  report_id: string
+  student_id: string
+  type: string
+  subject: string
+  title: string
+  subtitle: string
+  generated_at: string
+  area_name: string
+  accuracy: number
+  total_questions: number
+  filename: string
+  pdf_filename: string | null
+}
+
 const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCourseApplied, onLogout }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [generatedCourse, setGeneratedCourse] = useState<CourseData | null>(null)
   const [courses, setCourses] = useState<CourseData[]>([])
+  const [reports, setReports] = useState<ReportInfo[]>([])
   const [statusMessage, setStatusMessage] = useState('')
   const [replaceExisting, setReplaceExisting] = useState(true) // Default: replace existing courses
   const [isDragging, setIsDragging] = useState(false)
@@ -212,10 +228,65 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load course history
+  // Load course history and reports
   useEffect(() => {
     loadCourses()
+    loadReports()
   }, [])
+
+  const loadReports = async () => {
+    try {
+      console.log(`🔍 Loading reports from: ${API_BASE_URL}/teacher/reports`)
+      const response = await axios.get(`${API_BASE_URL}/teacher/reports`)
+      console.log(`✅ Reports API response:`, response.data)
+      if (response.data && response.data.reports) {
+        setReports(response.data.reports)
+        console.log(`📊 Loaded ${response.data.total} reports`)
+      } else {
+        console.warn('⚠️ No reports in response:', response.data)
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to load reports:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url
+      })
+      // Show error to user
+      setStatusMessage(`⚠️ Failed to load reports: ${error.message}`)
+    }
+  }
+
+  const handleDownloadReport = async (reportId: string, subject: string) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/teacher/reports/${reportId}/download`,
+        {
+          responseType: 'blob',
+          timeout: 30000
+        }
+      )
+
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const subjectName = subject.replace(/\s+/g, '_')
+      a.download = `${subjectName}_Report_${Date.now()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      setTimeout(() => {
+        if (document.body.contains(a)) {
+          document.body.removeChild(a)
+        }
+        URL.revokeObjectURL(url)
+      }, 200)
+    } catch (err: any) {
+      console.error('Failed to download report:', err)
+      alert(err.response?.data?.error || 'Failed to download report')
+    }
+  }
 
   const loadCourses = async () => {
     try {
@@ -507,8 +578,8 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
             <p style={{ 
               textAlign: 'center', 
               marginTop: '20px',
-              color: statusMessage.includes('Success') || statusMessage.includes('成功') ? '#4CAF50' : 
-                     statusMessage.includes('failed') || statusMessage.includes('失败') ? '#f44336' : '#667eea',
+              color: statusMessage.includes('Success') ? '#4CAF50' : 
+                     statusMessage.includes('failed') ? '#f44336' : '#667eea',
               fontWeight: 600
             }}>
               {statusMessage}
@@ -689,6 +760,74 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
                   </div>
                 </CourseCard>
               ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Student Reports Section */}
+        {reports.length > 0 && (
+          <Card
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <h2 style={{ margin: '0 0 25px 0', color: '#333' }}>
+              📊 Student Reports ({reports.length})
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {reports.map((report) => (
+                <CourseCard
+                  key={report.report_id}
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ margin: '0 0 8px 0', color: '#667eea', fontSize: '18px' }}>
+                        📖 {report.subject}
+                      </h3>
+                      <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                        {report.title}
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                        {report.subtitle}
+                      </div>
+                      <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#111', flexWrap: 'wrap' }}>
+                        <span>📅 {new Date(report.generated_at).toLocaleDateString()}</span>
+                        <span>📚 {report.total_questions} Questions</span>
+                        <span>🎯 {report.accuracy.toFixed(1)}% Accuracy</span>
+                        <span>👤 Student: {report.student_id}</span>
+                        <span>📝 Type: {report.type === 'subject_final' ? 'Subject Final' : report.type === 'module' ? 'Module' : report.type}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      {report.pdf_filename && (
+                        <Button
+                          variant="primary"
+                          onClick={() => handleDownloadReport(report.report_id, report.subject)}
+                        >
+                          📥 Download PDF
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CourseCard>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {reports.length === 0 && (
+          <Card
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              <div style={{ fontSize: '48px', marginBottom: '20px' }}>📊</div>
+              <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>No Reports Yet</h3>
+              <p style={{ margin: 0 }}>Student reports will appear here after they complete course units and tests.</p>
             </div>
           </Card>
         )}

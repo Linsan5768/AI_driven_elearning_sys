@@ -89,12 +89,12 @@ export const COURSE_MATERIALS: Record<string, CourseMaterial> = {
   }
 }
 
-// 获取指定区域的课程资料
+// Get course material for specified area
 export const getCourseMaterial = (areaId: string): CourseMaterial | null => {
   return COURSE_MATERIALS[areaId] || null
 }
 
-// 获取所有课程分类
+// Get all course categories
 export const getCourseCategories = (): string[] => {
   const categories = new Set<string>()
   Object.values(COURSE_MATERIALS).forEach(material => {
@@ -103,12 +103,12 @@ export const getCourseCategories = (): string[] => {
   return Array.from(categories)
 }
 
-// 根据难度获取课程
+// Get courses by difficulty level
 export const getCoursesByDifficulty = (difficulty: 'easy' | 'medium' | 'hard'): CourseMaterial[] => {
   return Object.values(COURSE_MATERIALS).filter(material => material.difficulty === difficulty)
 }
 
-// 根据分类获取课程
+// Get courses by category
 export const getCoursesByCategory = (category: string): CourseMaterial[] => {
   return Object.values(COURSE_MATERIALS).filter(material => material.category === category)
 }

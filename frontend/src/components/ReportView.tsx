@@ -516,6 +516,7 @@ const ReportView = ({ studentId = 'default_student', onBack }: ReportViewProps) 
     }
   }
 
+  // Fetch reports when component mounts or studentId changes
   useEffect(() => {
     fetchReports()
   }, [studentId])

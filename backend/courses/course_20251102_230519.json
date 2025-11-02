@@ -1,0 +1,16 @@
+{
+  "subject": "Elementary Mathematics Fundamentals",
+  "materials": [
+    "1. Understanding Integers: Integers include natural numbers and negative integers. Natural numbers start from 0, and 1, 2, 3, 4, etc. are all natural numbers. We can use a number line to represent integers — positive numbers are on the right of 0, and negative numbers are on the left of 0. Integers are widely used in daily life, such as representing temperature on a thermometer and elevation above or below sea level.",
+    "2. Addition and Subtraction: Addition combines two or more numbers together and is represented by the plus sign \"+\". Subtraction removes one number from another and is represented by the minus sign \"-\". Addition and subtraction are inverse operations. For example, 5 + 3 = 8, then 8 - 3 = 5. Mastering addition and subtraction helps us solve many real-life problems such as giving change or calculating distance.",
+    "3. Multiplication Table: Multiplication is a simplified way of repeatedly adding the same number. The multiplication table, also called the \"Nine-Nine Table,\" ranges from \"1×1=1\" to \"9×9=81,\" containing 81 formulas in total. Memorizing and understanding the multiplication table is fundamental to learning mathematics, allowing quick calculations. For example, “three fives are fifteen” means 3 added five times equals 15.",
+    "4. Meaning of Division: Division means splitting a number into equal parts — finding out how many in each part or how many times one number is contained in another. Division uses the \"÷\" symbol. For example, 12 ÷ 3 = 4 means dividing 12 equally into 3 parts, each part being 4. Division is the inverse of multiplication; knowing multiplication allows us to deduce division. For example, since 3 × 4 = 12, then 12 ÷ 3 = 4.",
+    "5. Mixed Operations of the Four Rules: The four basic operations include addition, subtraction, multiplication, and division. When there are no parentheses, calculate multiplication and division first, then addition and subtraction. If there are parentheses, calculate the expressions inside them first. Operations of the same rank should be done from left to right. For example, in 12 + 3 × 4, calculate 3 × 4 = 12 first, then 12 + 12 = 24. Mastering the order of operations is important; otherwise, errors are likely."
+  ],
+  "difficulty": "easy",
+  "category": "Basic Mathematics",
+  "id": "course_20251102_230519",
+  "fileName": "math.txt",
+  "generatedAt": "2025-11-02T23:05:19.486587",
+  "knowledgePointCount": 5
+}

@@ -347,6 +347,7 @@ function App() {
       <AnimatePresence mode="wait">
         {currentView === 'report' ? (
           <ReportView 
+            key="report-view"
             studentId="default_student"
             onBack={() => setCurrentView('map')}
           />

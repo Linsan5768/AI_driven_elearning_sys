@@ -1,7 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import axios from 'axios';
+
+// Load MathJax v3 once for TeX rendering (\\( ... \\), \\[ ... \\])
+if (typeof window !== 'undefined' && !(window as any)._mathjaxLoaded) {
+  ;(window as any).MathJax = {
+    tex: {
+      inlineMath: [['\\(', '\\)'], ['$', '$']],
+      displayMath: [['\\[', '\\]'], ['$$', '$$']]
+    },
+    options: {
+      skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+    }
+  }
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.async = true
+  script.onload = () => { (window as any)._mathjaxLoaded = true }
+  document.head.appendChild(script)
+}
 
 // ============= Animations =============
 const damageShake = keyframes`
@@ -423,6 +441,11 @@ const HintText = styled.div`
   font-size: 14px;
   color: #fff;
   line-height: 1.6;
+  
+  /* MathJax rendering - ensure formulas are visible */
+  .MathJax {
+    color: #fff !important;
+  }
 `;
 
 const AIBadge = styled.span`
@@ -483,6 +506,7 @@ const BattleScene: React.FC<BattleSceneProps> = ({
   const [currentHint, setCurrentHint] = useState<string>('');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [systemWarning, setSystemWarning] = useState<string | null>(null);
+  const hintTextRef = useRef<HTMLDivElement>(null);
 
   // Generate all questions on mount
   useEffect(() => {
@@ -496,6 +520,16 @@ const BattleScene: React.FC<BattleSceneProps> = ({
       setIsGeneratingQuestions(false);
     }
   }, [questions]);
+
+  // Re-typeset math whenever hint content updates
+  useEffect(() => {
+    if (showHint && currentHint) {
+      const mj = (window as any).MathJax;
+      if (mj && hintTextRef.current) {
+        mj.typesetPromise ? mj.typesetPromise([hintTextRef.current]) : mj.typeset?.();
+      }
+    }
+  }, [currentHint, showHint]);
 
   const generateAllQuestions = async () => {
     const learnedPoints = Array.from(learnedKnowledgePoints);
@@ -695,9 +729,9 @@ correctAnswer is the index (0-3) of the correct option.`;
         is_correct: isCorrect,
         knowledge_point: knowledgePoint
       });
-      console.log('📝 答题记录已保存');
+      console.log('📝 Battle record saved');
     } catch (error) {
-      console.error('❌ 保存答题记录失败:', error);
+      console.error('❌ Failed to save battle record:', error);
     }
   };
 
@@ -707,7 +741,7 @@ correctAnswer is the index (0-3) of the correct option.`;
     setIsAnswering(true);
     const isCorrect = optionIndex === currentQuestion.correctAnswer;
 
-    // 保存答题记录
+    // Save battle record
     saveBattleRecord(
       currentQuestion.question,
       optionIndex,
@@ -913,7 +947,7 @@ Output ONLY the hint text, no extra formatting or labels.`;
                   <HintHeader>
                     HINT <AIBadge>AI GENERATED</AIBadge>
                   </HintHeader>
-                  <HintText>{currentHint}</HintText>
+                  <HintText ref={hintTextRef}>{currentHint}</HintText>
                 </HintPanel>
               )}
             </QuestionBox>
