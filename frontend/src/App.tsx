@@ -115,8 +115,7 @@ const LandingStatus = styled.div`
   line-height: 1.6;
 `
 
-const API_BASE_URL = 'http://127.0.0.1:8001/api'  // Updated backend port
-const BACKEND_URL = 'http://127.0.0.1:8001'  // Updated backend port
+import { API_BASE_URL, BACKEND_URL } from './config/apiConfig'
 
 function App() {
   const [gameState, setGameState] = useState<any>(null)

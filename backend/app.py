@@ -414,7 +414,7 @@ def generate_course_from_text(text_content, file_name):
         
         # 尝试使用Ollama API
         ollama_response = requests.post(
-            'http://localhost:11434/api/generate',
+            'http://ollama:11434/api/generate',
             json={
                 'model': 'qwen2.5',
                 'prompt': prompt,
@@ -1223,7 +1223,7 @@ Instructions:
         print("🤖 Generating AI report via Ollama...")
 
         ollama_response = requests.post(
-            'http://localhost:11434/api/generate',
+            'http://ollama:11434/api/generate',
             json={
                 'model': 'qwen2.5',
                 'prompt': prompt,
@@ -1465,5 +1465,7 @@ def check_report_eligibility(student_id):
     })
 
 if __name__ == '__main__':
-    print("Starting game server on port 8001...")
-    app.run(host='0.0.0.0', port=8001, debug=True)
+    port = int(os.environ.get('PORT', 8001))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    print(f"Starting game server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=debug)

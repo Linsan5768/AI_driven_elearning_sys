@@ -256,37 +256,7 @@ const PathContainer = styled(motion.div)`
   }
 `
 
-const PathSVG = styled.svg<{ $active: boolean }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-
-  path {
-    fill: none;
-    stroke: ${props => props.$active 
-      ? 'url(#activeGradient)' 
-      : 'url(#inactiveGradient)'
-    };
-    stroke-width: 8;
-    stroke-dasharray: 20 12;
-    stroke-linecap: round;
-    filter: ${props => props.$active 
-      ? 'drop-shadow(0 0 15px rgba(33, 150, 243, 0.4))' 
-      : 'drop-shadow(0 0 8px rgba(0,0,0,0.3))'
-    };
-    opacity: ${props => props.$active ? 1 : 0.6};
-    animation: ${props => props.$active ? 'pathFlow 2s linear infinite' : 'none'};
-    transition: all 0.3s ease;
-  }
-
-  @keyframes pathFlow {
-    0% { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: 32; }
-  }
-`
+// PathSVG component removed - no longer used
 
 const Character = styled(motion.div)`
   position: absolute;
@@ -328,6 +298,7 @@ interface Area {
   }
   connections: string[]
   castle_type: number
+  learningProgress?: number
 }
 
 const GameMap: React.FC = () => {
@@ -345,7 +316,7 @@ const GameMap: React.FC = () => {
     // Fetch game state
     const fetchGameState = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8001/api/game-state')
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/game-state`)
         if (response.ok) {
           const data = await response.json()
           setAreas(data.areas)
@@ -506,7 +477,7 @@ const GameMap: React.FC = () => {
     if (areaId === currentArea) return true;
     
     // Check connections of all completed areas
-    for (const [id, area] of Object.entries(areas)) {
+    for (const [, area] of Object.entries(areas)) {
       if (area.completed && area.connections?.includes(areaId)) {
         return true;
       }
@@ -541,7 +512,7 @@ const GameMap: React.FC = () => {
   const handleDialogComplete = async () => {
     if (selectedAreaId) {
       try {
-        const response = await fetch(`http://127.0.0.1:8001/api/complete-area/${selectedAreaId}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/complete-area/${selectedAreaId}`, {
           method: 'POST',
         })
         

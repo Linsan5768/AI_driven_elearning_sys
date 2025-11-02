@@ -579,7 +579,8 @@ correctAnswer is the index (0-3) of the correct option.`;
 
         if (!llmUnavailableWarned && error instanceof Error && error.message === 'LOCAL_LLM_NOT_AVAILABLE') {
           llmUnavailableWarned = true;
-          setSystemWarning('Local LLM service at http://127.0.0.1:11434 is not reachable (HTTP 404). Generating fallback questions instead. Start the Ollama server or switch to a cloud model to restore dynamic questions.');
+          const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
+          setSystemWarning(`Local LLM service at ${ollamaUrl} is not reachable (HTTP 404). Generating fallback questions instead. Start the Ollama server or switch to a cloud model to restore dynamic questions.`);
         }
 
         generatedQuestions.push(generateFallbackQuestion(pointNumber, knowledgePointTitle, knowledgePointContent));
@@ -595,7 +596,8 @@ correctAnswer is the index (0-3) of the correct option.`;
     // Handle different model types
     if (model === 'qwen2.5' || model === 'ollama-qwen2.5') {
       try {
-        const response = await axios.post('http://127.0.0.1:11434/api/generate', {
+        const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
+        const response = await axios.post(`${ollamaUrl}/api/generate`, {
           model: 'qwen2.5:7b',
           prompt: prompt,
           stream: false,
@@ -617,7 +619,8 @@ correctAnswer is the index (0-3) of the correct option.`;
       }
     } else if (model === 'ollama-llama2') {
       try {
-        const response = await axios.post('http://127.0.0.1:11434/api/generate', {
+        const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
+        const response = await axios.post(`${ollamaUrl}/api/generate`, {
           model: 'llama2',
           prompt: prompt,
           stream: false,
@@ -639,7 +642,7 @@ correctAnswer is the index (0-3) of the correct option.`;
       }
     } else if (model === 'claude-3.5') {
       try {
-        const response = await axios.post('http://127.0.0.1:8001/api/claude-chat', {
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/claude-chat`, {
           prompt: prompt,
           stream: false
         });
@@ -653,7 +656,8 @@ correctAnswer is the index (0-3) of the correct option.`;
     
     // Default to qwen2.5 if unsupported model
     console.warn('⚠️ Unsupported model, using qwen2.5:7b as fallback');
-    const response = await axios.post('http://127.0.0.1:11434/api/generate', {
+    const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
+    const response = await axios.post(`${ollamaUrl}/api/generate`, {
       model: 'qwen2.5:7b',
       prompt: prompt,
       stream: false,
@@ -665,7 +669,7 @@ correctAnswer is the index (0-3) of the correct option.`;
     return response.data.response;
   };
 
-  const generateFallbackQuestion = (pointNumber: number, pointTitle: string, pointContent: string): Question => {
+  const generateFallbackQuestion = (_pointNumber: number, pointTitle: string, pointContent: string): Question => {
     return {
       question: `Which of the following statements about "${pointTitle}" is correct?`,
       options: [
@@ -680,10 +684,10 @@ correctAnswer is the index (0-3) of the correct option.`;
     };
   };
 
-  // 保存答题记录到后端
+  // Save battle record to backend
   const saveBattleRecord = async (question: string, answer: number, isCorrect: boolean, knowledgePoint: string) => {
     try {
-      await axios.post('http://127.0.0.1:8001/api/save-battle-record', {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/save-battle-record`, {
         student_id: 'default_student',
         area_id: areaId,
         question: question,

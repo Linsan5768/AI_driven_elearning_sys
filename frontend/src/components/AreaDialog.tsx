@@ -318,11 +318,11 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
 
   const [learnedKnowledgePoints, setLearnedKnowledgePoints] = useState<Set<number>>(new Set())
   const [knowledgePointsList, setKnowledgePointsList] = useState<string[]>([])
-  const [showThinking, setShowThinking] = useState(true)  // 永久开启思考显示
+  const [showThinking] = useState(true)  // Always show thinking (permanently enabled)
   const [thinkingContent, setThinkingContent] = useState<string>('')
   const [testQuestions, setTestQuestions] = useState<Question[]>([])
 
-  const [correctAnswers, setCorrectAnswers] = useState(0)
+  // correctAnswers removed - BattleScene handles scoring now
   const [selectedModel, setSelectedModel] = useState<string>('qwen2.5')
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
@@ -347,7 +347,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
     const fetchCourseData = async () => {
       try {
         console.log(`📚 Fetching course data: ${areaId}`)
-        const response = await axios.get(`http://127.0.0.1:8001/api/course-library/${areaId}`)
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/course-library/${areaId}`)
         if (response.data) {
           setCourseData(response.data)
           console.log(`✅ Successfully loaded course: ${response.data.subject}`, response.data)
@@ -387,7 +387,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
     try {
       // Fetch learned points from backend
       let restoredLearnedPoints: number[] = []
-      const gameStateResponse = await axios.get('http://127.0.0.1:8001/api/game-state')
+      const gameStateResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/game-state`)
       if (gameStateResponse.data && gameStateResponse.data.areas[areaId]) {
         const areaData = gameStateResponse.data.areas[areaId]
         restoredLearnedPoints = areaData.learnedPoints || []
@@ -471,7 +471,7 @@ Please enter a number to learn a knowledge point, or ask me a question directly!
       // setLearnedKnowledgePoints(new Set())
       setTestQuestions([])
 
-      setCorrectAnswers(0)
+      // setCorrectAnswers(0) // Removed - BattleScene handles scoring
     } catch (error) {
       console.error('Initialization failed:', error)
       // Use default knowledge points list
@@ -519,7 +519,7 @@ Please enter a number to learn a knowledge point, or ask me a question directly!
       // setLearnedKnowledgePoints(new Set())
       setTestQuestions([])
 
-      setCorrectAnswers(0)
+      // setCorrectAnswers(0) // Removed - BattleScene handles scoring
     } finally {
       setIsLoading(false)
       setThinkingContent('')
@@ -621,7 +621,7 @@ Write a single paragraph or short bullet list following the structure. No titles
     
     // Call backend API to update learning progress
     try {
-      await axios.post(`http://127.0.0.1:8001/api/update-learning-progress/${areaId}`, {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/update-learning-progress/${areaId}`, {
         learnedPoints: Array.from(newLearnedPoints)
       })
     } catch (error) {
@@ -705,7 +705,7 @@ Example: ${exampleAnswer}`,
         })
       }
       
-      setCorrectAnswers(correctCount)
+      // setCorrectAnswers(correctCount) // Removed - BattleScene handles scoring
       
       // Display detailed results
       const detailedResults = results.map((result, index) => {
@@ -791,7 +791,7 @@ Please enter a ${questionCount}-letter answer combination, for example: ${exampl
     setMessages(prev => [...prev, errorMessage])
   }
 
-  const generateFallbackQuestion = (questionNum: number, pointTitle: string, pointContent: string): Question => {
+  const generateFallbackQuestion = (questionNum: number, pointTitle: string, _pointContent: string): Question => {
     // Extract key information from knowledge point content to generate simple question
     console.log(`🔄 Generating fallback question ${questionNum} - ${pointTitle}`)
     
@@ -839,7 +839,7 @@ Please continue learning more knowledge points!`,
       const studentId = 'default_student'
 
       try {
-        const completeResponse = await fetch(`http://127.0.0.1:8001/api/complete-area/${areaId}`, {
+        const completeResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/complete-area/${areaId}`, {
           method: 'POST'
         })
 
@@ -850,7 +850,7 @@ Please continue learning more knowledge points!`,
         }
 
         try {
-          await fetch('http://127.0.0.1:8001/api/reports/generate-area', {
+          await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/reports/generate-area`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -864,7 +864,7 @@ Please continue learning more knowledge points!`,
 
         if (completionData?.all_completed) {
           try {
-            await fetch('http://127.0.0.1:8001/api/reports/generate-final', {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/reports/generate-final`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -877,16 +877,16 @@ Please continue learning more knowledge points!`,
         }
 
         const successMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
+      id: Date.now().toString(),
+      role: 'assistant',
           content: `Battle Victory!
 
 Excellent work! You achieved ${score.toFixed(1)}% accuracy in this duel.
 
 The professor has archived a report for this module and unlocked the next hall.
 You can review your personal report library anytime from the main map.`,
-          timestamp: new Date()
-        }
+      timestamp: new Date()
+    }
         setMessages(prev => [...prev, successMessage])
 
         // Notify parent to refresh map state
@@ -909,7 +909,7 @@ Stay determined! Review the knowledge points and challenge the duel again when y
     }
   }
 
-  const generateAllQuestions = async () => {
+  /* const _generateAllQuestions = async () => { // Unused - tests now use BattleScene
     // Only generate questions for learned knowledge points
     const learnedPoints = Array.from(learnedKnowledgePoints)
     const totalQuestions = learnedPoints.length  // Generate questions based on learned points
@@ -1088,7 +1088,7 @@ Please submit all your answers at once, format: ${answerFormat}
     }
     
     setMessages(prev => [...prev, allQuestionsMessage])
-  }
+  } */
 
   const generateNextQuestion = async (retryCount = 0) => {
     // Max 2 retries to avoid excessive retrying
@@ -1277,12 +1277,6 @@ D. ${questionData.options[3]}
     }, 1000)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
-    }
-  }
 
   const handleComplete = () => {
     onComplete()
@@ -1384,7 +1378,8 @@ Answer directly without any prefix or suffix.`
       setThinkingContent('🤔 Thinking...\n')
     }
     
-    const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
+    const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
+    const ollamaResponse = await fetch(`${ollamaUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1480,9 +1475,6 @@ Answer directly without any prefix or suffix.`
     return userAnswers.length + 1
   }
 
-  const getErrorAnalysis = () => {
-    return `You answered ${5 - correctAnswers} questions wrong. It is recommended to re-study the relevant knowledge points, especially those you got wrong.`
-  }
 
   const validateQuestion = (questionData: any): boolean => {
     console.log('开始验证题目:', questionData)

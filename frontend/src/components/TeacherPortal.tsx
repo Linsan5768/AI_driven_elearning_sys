@@ -197,7 +197,7 @@ interface TeacherPortalProps {
   onLogout: () => void
 }
 
-const API_BASE_URL = 'http://127.0.0.1:8001/api'
+import { API_BASE_URL } from '../config/apiConfig'
 
 const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCourseApplied, onLogout }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -208,7 +208,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
   const [statusMessage, setStatusMessage] = useState('')
   const [replaceExisting, setReplaceExisting] = useState(true) // Default: replace existing courses
   const [isDragging, setIsDragging] = useState(false)
-  const [showHistory, setShowHistory] = useState(true)
+  // History is always shown now, removed toggle
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -305,7 +305,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
         }
       })
       
-      const { file_path, text_content } = uploadResponse.data
+      const { text_content } = uploadResponse.data
       
       setProgress(40)
       setStatusMessage('🤖 AI Professor analyzing course content...')
