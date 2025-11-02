@@ -1162,10 +1162,19 @@ def analyze_battle_data(records):
 def get_area_display_name(area_id):
     if not area_id:
         return None
-    if area_id in course_library:
-        subject = course_library[area_id].get('subject')
+
+    area = game_state['areas'].get(area_id)
+    if area:
+        area_name = area.get('name')
+        if area_name:
+            return area_name
+
+    course_info = course_library.get(area_id)
+    if course_info:
+        subject = course_info.get('subject')
         if subject:
             return subject
+
     return area_id.replace('_', ' ').title()
 
 def generate_ai_report(analysis_data, student_id, report_type='snapshot', area_name=None):
