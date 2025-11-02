@@ -1,0 +1,21 @@
+FROM jenkins/jenkins:lts
+
+# Switch to root to install Docker CLI and fix permissions
+USER root
+
+# Install Docker CLI
+RUN apt-get update && \
+    apt-get install -y docker.io && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy custom entrypoint script
+COPY jenkins-entrypoint.sh /usr/local/bin/jenkins-entrypoint.sh
+RUN chmod +x /usr/local/bin/jenkins-entrypoint.sh
+
+# Set custom entrypoint (needs to run as root to fix socket permissions)
+# Jenkins.sh will switch to jenkins user internally
+ENTRYPOINT ["/usr/local/bin/jenkins-entrypoint.sh"]
+
+# Keep as root for entrypoint, jenkins.sh will handle user switching
+
