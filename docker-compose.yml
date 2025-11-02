@@ -7,8 +7,10 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - ./backend/uploads:/app/uploads
-      - ./backend/courses:/app/courses
+      # Use named volumes instead of bind mounts for data persistence
+      # This allows data to persist even if local directories are deleted
+      - backend_uploads:/app/uploads
+      - backend_courses:/app/courses
     environment:
       - FLASK_ENV=production
       - FLASK_DEBUG=False
@@ -60,4 +62,8 @@ networks:
 
 volumes:
   ollama_data:
+  backend_uploads:
+    # Named volume for backend uploads - persists data independently of local filesystem
+  backend_courses:
+    # Named volume for backend courses - persists data independently of local filesystem
 
