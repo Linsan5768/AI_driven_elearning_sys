@@ -18,6 +18,103 @@ const AppContainer = styled.div`
   overflow: hidden;
 `
 
+const LandingContainer = styled.div`
+  width: 100vw;
+  height: 100vh;
+  background: url('/HP.png') center/cover no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`
+
+const LandingCard = styled.div`
+  background: rgba(10, 10, 10, 0.78);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 420px;
+  width: 100%;
+`
+
+const LandingTitle = styled.h1`
+  font-size: 36px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 1px;
+`
+
+const LandingSubtitle = styled.p`
+  margin: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+`
+
+const LandingButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+`
+
+const LandingButton = styled.button<{ $background: string }>`
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: ${({ $background }) => `url('${$background}') center/cover no-repeat`};
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    transition: background 0.2s ease;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:hover::after {
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`
+
+const LandingStatus = styled.div`
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1.6;
+`
+
 const API_BASE_URL = 'http://127.0.0.1:8001/api'  // Updated backend port
 const BACKEND_URL = 'http://127.0.0.1:8001'  // Updated backend port
 
@@ -27,7 +124,7 @@ function App() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<string>('Checking connection...')
-  const [mode, setMode] = useState<'student' | 'teacher'>('teacher') // Initial interface is teacher portal
+  const [mode, setMode] = useState<'login' | 'student' | 'teacher'>('login')
 
   useEffect(() => {
     checkBackendStatus()
@@ -69,6 +166,31 @@ function App() {
     }
   }
 
+  const enterStudentMode = async () => {
+    setMode('student')
+    setCurrentView('map')
+    setSelectedArea(null)
+    if (!gameState) {
+      try {
+        await fetchGameState()
+      } catch {
+        // error is handled within fetchGameState
+      }
+    }
+  }
+
+  const enterTeacherMode = () => {
+    setMode('teacher')
+    setCurrentView('map')
+    setSelectedArea(null)
+  }
+
+  const handleLogout = () => {
+    setMode('login')
+    setCurrentView('map')
+    setSelectedArea(null)
+  }
+
   const handleAreaComplete = async (areaId: string) => {
     try {
       await axios.post(`${API_BASE_URL}/complete-area/${areaId}`)
@@ -87,7 +209,7 @@ function App() {
   //   setCurrentView('area')
   // }
 
-  if (error) {
+  if (error && mode !== 'login') {
     return (
       <AppContainer>
         <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -130,6 +252,49 @@ function App() {
     )
   }
 
+  if (mode === 'login') {
+    return (
+      <LandingContainer>
+        <LandingCard>
+          <LandingTitle>Magic Learning Realm</LandingTitle>
+          <LandingSubtitle>
+            Choose your role to enter the learning world. Teachers manage courses, students explore the map.
+          </LandingSubtitle>
+          <LandingButtonGroup>
+            <LandingButton $background="/button1.png" onClick={enterStudentMode}>
+              <span>Enter Student Mode</span>
+            </LandingButton>
+            <LandingButton $background="/button2.png" onClick={enterTeacherMode}>
+              <span>Enter Teacher Mode</span>
+            </LandingButton>
+          </LandingButtonGroup>
+          <LandingStatus>
+            Status: {connectionStatus}
+            {error ? (
+              <>
+                <br />
+                <span style={{ color: '#ff8080' }}>{error}</span>
+              </>
+            ) : null}
+          </LandingStatus>
+          <button
+            onClick={checkBackendStatus}
+            style={{
+              padding: '10px 20px',
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              borderRadius: '12px',
+              color: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            Check Server Status
+          </button>
+        </LandingCard>
+      </LandingContainer>
+    )
+  }
+
   if (!gameState) {
     return (
       <AppContainer>
@@ -138,6 +303,20 @@ function App() {
           <div style={{ marginTop: '20px', color: '#666' }}>
             Status: {connectionStatus}
           </div>
+          <button 
+            onClick={checkBackendStatus}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              background: '#2196F3',
+              border: 'none',
+              borderRadius: '5px',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            Retry Connection
+          </button>
         </div>
       </AppContainer>
     )
@@ -157,6 +336,7 @@ function App() {
             // Refresh game state after course applied successfully
             fetchGameState()
           }}
+          onLogout={handleLogout}
         />
       </AppContainer>
     )
@@ -213,7 +393,7 @@ function App() {
                   e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)'
                 }}
               >
-                📊 学习报告
+                View Report
               </button>
               <button
                 onClick={() => setMode('teacher')}
@@ -239,7 +419,33 @@ function App() {
                   e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)'
                 }}
               >
-                🧙‍♂️ Teacher Portal
+                Teacher Portal
+              </button>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(244, 67, 54, 0.9)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '25px',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(244, 67, 54, 0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                Return to Login
               </button>
             </div>
             <GameMap />

@@ -133,6 +133,17 @@ const QuestionPanel = styled.div`
   overflow-y: auto;
 `;
 
+const WarningBanner = styled.div`
+  background: rgba(255, 193, 7, 0.12);
+  border: 2px solid rgba(255, 193, 7, 0.35);
+  color: #ffe082;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+`;
 const HeaderBar = styled.div`
   display: flex;
   justify-content: space-between;
@@ -471,6 +482,7 @@ const BattleScene: React.FC<BattleSceneProps> = ({
   const [isGeneratingHint, setIsGeneratingHint] = useState(false);
   const [currentHint, setCurrentHint] = useState<string>('');
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [systemWarning, setSystemWarning] = useState<string | null>(null);
 
   // Generate all questions on mount
   useEffect(() => {
@@ -496,6 +508,8 @@ const BattleScene: React.FC<BattleSceneProps> = ({
     }
 
     const generatedQuestions: Question[] = [];
+
+    let llmUnavailableWarned = false;
 
     for (let i = 0; i < totalQuestions; i++) {
       // Update progress
@@ -562,6 +576,12 @@ correctAnswer is the index (0-3) of the correct option.`;
         });
       } catch (error) {
         console.error('❌ Error generating question:', error);
+
+        if (!llmUnavailableWarned && error instanceof Error && error.message === 'LOCAL_LLM_NOT_AVAILABLE') {
+          llmUnavailableWarned = true;
+          setSystemWarning('Local LLM service at http://127.0.0.1:11434 is not reachable (HTTP 404). Generating fallback questions instead. Start the Ollama server or switch to a cloud model to restore dynamic questions.');
+        }
+
         generatedQuestions.push(generateFallbackQuestion(pointNumber, knowledgePointTitle, knowledgePointContent));
       }
     }
@@ -588,7 +608,12 @@ correctAnswer is the index (0-3) of the correct option.`;
         return response.data.response;
       } catch (error) {
         console.error('❌ Qwen2.5 error:', error);
-        throw error;
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 404) {
+            throw new Error('LOCAL_LLM_NOT_AVAILABLE');
+          }
+        }
+        throw error instanceof Error ? error : new Error('LLM request failed');
       }
     } else if (model === 'ollama-llama2') {
       try {
@@ -605,7 +630,12 @@ correctAnswer is the index (0-3) of the correct option.`;
         return response.data.response;
       } catch (error) {
         console.error('❌ Llama2 error:', error);
-        throw error;
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 404) {
+            throw new Error('LOCAL_LLM_NOT_AVAILABLE');
+          }
+        }
+        throw error instanceof Error ? error : new Error('LLM request failed');
       }
     } else if (model === 'claude-3.5') {
       try {
@@ -855,6 +885,10 @@ Output ONLY the hint text, no extra formatting or labels.`;
           <CloseButton onClick={onClose}>FORFEIT</CloseButton>
         </HeaderBar>
 
+        {systemWarning && (
+          <WarningBanner>{systemWarning}</WarningBanner>
+        )}
+
         {currentQuestion && (
           <>
             <QuestionBox>
@@ -914,4 +948,3 @@ Output ONLY the hint text, no extra formatting or labels.`;
 };
 
 export default BattleScene;
-
