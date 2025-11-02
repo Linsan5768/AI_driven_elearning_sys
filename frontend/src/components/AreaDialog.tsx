@@ -836,28 +836,60 @@ Please continue learning more knowledge points!`,
     setShowBattleScene(false)
 
     if (passed) {
-      // Mark area as completed
+      const studentId = 'default_student'
+
       try {
-        await fetch(`http://127.0.0.1:8001/api/complete-area/${areaId}`, {
+        const completeResponse = await fetch(`http://127.0.0.1:8001/api/complete-area/${areaId}`, {
           method: 'POST'
         })
 
+        const completionData = await completeResponse.json()
+
+        if (!completeResponse.ok) {
+          throw new Error(completionData?.error || 'Failed to mark area as completed')
+        }
+
+        try {
+          await fetch('http://127.0.0.1:8001/api/reports/generate-area', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              student_id: studentId,
+              area_id: areaId
+            })
+          })
+        } catch (reportError) {
+          console.error('Failed to generate module report:', reportError)
+        }
+
+        if (completionData?.all_completed) {
+          try {
+            await fetch('http://127.0.0.1:8001/api/reports/generate-final', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                student_id: studentId
+              })
+            })
+          } catch (finalError) {
+            console.error('Failed to generate final report:', finalError)
+          }
+        }
+
         const successMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-          content: `🎉 **Battle Victory!**
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Battle Victory!
 
-Congratulations! You achieved ${score.toFixed(1)}% accuracy in the magic battle!
+Excellent work! You achieved ${score.toFixed(1)}% accuracy in this duel.
 
-✨ The professor recognizes your mastery of the magic!
-✨ The next area has been unlocked!
-
-You may now proceed to the next Magic Hall or review what you've learned here.`,
-      timestamp: new Date()
-    }
+The professor has archived a report for this module and unlocked the next hall.
+You can review your personal report library anytime from the main map.`,
+          timestamp: new Date()
+        }
         setMessages(prev => [...prev, successMessage])
-        
-        // Call the onComplete callback to notify parent component
+
+        // Notify parent to refresh map state
         onComplete()
       } catch (error) {
         console.error('Failed to complete area:', error)
@@ -866,12 +898,11 @@ You may now proceed to the next Magic Hall or review what you've learned here.`,
       const failMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `💔 **Battle Result**
+        content: `Battle Result
 
-You achieved ${score.toFixed(1)}% accuracy, but you need at least 80% to proceed.
+You achieved ${score.toFixed(1)}% accuracy, but you need at least 80% to unlock the next hall.
 
-📚 Don't be discouraged! Review the knowledge points and try again.
-💪 You can retake the test after reviewing the materials.`,
+Stay determined! Review the knowledge points and challenge the duel again when you are ready.`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, failMessage])
@@ -1633,15 +1664,19 @@ Answer directly without any prefix or suffix.`
             {/* Avatars on both sides of dialog */}
             <AvatarCircle
               side="left"
-              src={isUserTyping 
-                ? '/character/A_young_wizard_student_is_holding_a_magic_wand._breathing-idle_south-east.gif'
-                : '/character/wizard_idle.gif'}
+              src={
+                isUserTyping
+                  ? '/character/A_young_wizard_student_is_holding_a_magic_wand._breathing-idle_south-east.gif'
+                  : '/character/A_young_wizard_student_is_holding_a_magic_wand._breathing-idle_south-east.gif'
+              }
             />
             <AvatarCircle
               side="right"
-              src={isLoading 
-                ? '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south-west.gif'
-                : '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south.gif'}
+              src={
+                isLoading
+                  ? '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south-west.gif'
+                  : '/character/A_old_wizard_professor_is_holding_a_magic_wand_with_a_magic_hat._breathing-idle_south-west.gif'
+              }
             />
           <DialogContent
             initial={{ scale: 0.8, opacity: 0 }}

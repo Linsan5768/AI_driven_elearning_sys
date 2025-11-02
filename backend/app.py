@@ -6,6 +6,7 @@ import os
 from werkzeug.utils import secure_filename
 import json
 from datetime import datetime
+from uuid import uuid4
 import re
 
 app = Flask(__name__)
@@ -137,7 +138,17 @@ def complete_area(area_id):
         else:
             print(f"🎉 恭喜！已完成所有区域！")
         
-        return jsonify({"message": f"Area {area_id} completed", "game_state": game_state})
+        all_completed = all(
+            area_id_key == 'start' or area_data.get('completed')
+            for area_id_key, area_data in game_state['areas'].items()
+            if area_id_key != 'start'
+        )
+        
+        return jsonify({
+            "message": f"Area {area_id} completed",
+            "game_state": game_state,
+            "all_completed": all_completed
+        })
     else:
         return jsonify({"error": "Area not found"}), 404
 
@@ -735,6 +746,14 @@ def generate_course():
 # 存储课程数据（在实际应用中应该使用数据库）
 course_library = {}
 
+# 存储学生答题记录（用于生成学习报告）
+# 结构: { student_id: [{ area_id, question, answer, is_correct, knowledge_point, timestamp }, ...] }
+battle_records = {}
+
+# 存储学生的学习报告历史
+# 结构: { student_id: [ { report_id, type, area_id, area_name, generated_at, analysis, ai_summary, title, subtitle }, ... ] }
+student_reports = {}
+
 # 课程持久化函数
 def save_course_to_file(course_data):
     """将课程保存到文件"""
@@ -1049,6 +1068,401 @@ def get_course_library(area_id):
             'category': 'General',
             'knowledgePointCount': 5
         })
+
+# ==================== 学习报告相关API ====================
+
+@app.route('/api/save-battle-record', methods=['POST'])
+def save_battle_record():
+    """保存答题记录"""
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id', 'default_student')  # 默认学生ID
+        area_id = data.get('area_id')
+        question = data.get('question')
+        answer = data.get('answer')
+        is_correct = data.get('is_correct')
+        knowledge_point = data.get('knowledge_point', '')
+        
+        if not all([area_id, question, answer is not None, is_correct is not None]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # 初始化学生记录
+        if student_id not in battle_records:
+            battle_records[student_id] = []
+        
+        # 添加答题记录
+        record = {
+            'area_id': area_id,
+            'question': question,
+            'answer': answer,
+            'is_correct': is_correct,
+            'knowledge_point': knowledge_point,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        battle_records[student_id].append(record)
+        
+        print(f"📝 保存答题记录: {student_id} - {area_id} - {'✅' if is_correct else '❌'}")
+        
+        return jsonify({
+            'message': 'Record saved successfully',
+            'total_records': len(battle_records[student_id])
+        })
+    
+    except Exception as e:
+        print(f"❌ 保存答题记录失败: {str(e)}")
+        return jsonify({'error': f'Failed to save record: {str(e)}'}), 500
+
+@app.route('/api/get-battle-records/<student_id>', methods=['GET'])
+def get_battle_records(student_id):
+    """获取学生的答题记录"""
+    records = battle_records.get(student_id, [])
+    return jsonify({
+        'student_id': student_id,
+        'total_battles': len(records),
+        'records': records
+    })
+
+def analyze_battle_data(records):
+    """Analyze battle records for report generation"""
+    if not records:
+        return None
+    
+    total_questions = len(records)
+    correct_count = sum(1 for r in records if r['is_correct'])
+    accuracy = (correct_count / total_questions * 100) if total_questions > 0 else 0
+    
+    knowledge_point_stats = {}
+    for record in records:
+        kp = record.get('knowledge_point', 'Uncategorized')
+        if kp not in knowledge_point_stats:
+            knowledge_point_stats[kp] = {'total': 0, 'correct': 0, 'incorrect': 0}
+        
+        knowledge_point_stats[kp]['total'] += 1
+        if record['is_correct']:
+            knowledge_point_stats[kp]['correct'] += 1
+        else:
+            knowledge_point_stats[kp]['incorrect'] += 1
+    
+    for kp, stats in knowledge_point_stats.items():
+        stats['error_rate'] = (stats['incorrect'] / stats['total'] * 100) if stats['total'] > 0 else 0
+        stats['accuracy'] = (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+    
+    sorted_kps = sorted(knowledge_point_stats.items(), key=lambda x: x[1]['error_rate'], reverse=True)
+    weak_points = sorted_kps[:3]
+    
+    return {
+        'total_questions': total_questions,
+        'correct_count': correct_count,
+        'accuracy': round(accuracy, 2),
+        'knowledge_point_stats': knowledge_point_stats,
+        'weak_points': [{'knowledge_point': kp, **stats} for kp, stats in weak_points]
+    }
+
+def get_area_display_name(area_id):
+    if not area_id:
+        return None
+
+    area = game_state['areas'].get(area_id)
+    if area:
+        area_name = area.get('name')
+        if area_name:
+            return area_name
+
+    course_info = course_library.get(area_id)
+    if course_info:
+        subject = course_info.get('subject')
+        if subject:
+            return subject
+
+    return area_id.replace('_', ' ').title()
+
+def generate_ai_report(analysis_data, student_id, report_type='snapshot', area_name=None):
+    """Generate a narrative report using an LLM, falling back to template text if needed"""
+    try:
+        import requests
+
+        accuracy = analysis_data['accuracy']
+        total_questions = analysis_data['total_questions']
+        weak_points = analysis_data['weak_points']
+
+        if weak_points:
+            weak_points_desc = "\n".join([
+                f"- {wp['knowledge_point']}: accuracy {wp['accuracy']:.1f}% ({wp['correct']}/{wp['total']} correct)"
+                for wp in weak_points
+            ])
+        else:
+            weak_points_desc = "None — every tracked knowledge point was answered correctly."
+
+        if report_type == 'module':
+            scope_line = f'This report focuses on the module "{area_name}".' if area_name else "This report focuses on this module."
+        elif report_type == 'final':
+            scope_line = "This report summarizes the entire learning journey across every module."
+        else:
+            scope_line = "This report is a snapshot of recent learning performance."
+
+        prompt = f"""You are the chief mentor of the Arcane Academy. Craft a warm, encouraging learning report in English only.
+
+{scope_line}
+
+Student performance:
+- Total questions answered: {total_questions}
+- Overall accuracy: {accuracy:.1f}%
+- Key challenges:
+{weak_points_desc}
+
+Instructions:
+1. Open with positive reinforcement grounded in the data above.
+2. Provide a concise analysis of strengths and opportunities.
+3. Offer at least two actionable suggestions that reference the knowledge points.
+4. Conclude with an inspiring message that fits a magical academy setting.
+5. Limit the response to roughly 180-220 words.
+6. Do not use bullet lists, emojis, or markdown formatting—write in polished prose.
+"""
+
+        print("🤖 Generating AI report via Ollama...")
+
+        ollama_response = requests.post(
+            'http://localhost:11434/api/generate',
+            json={
+                'model': 'qwen2.5',
+                'prompt': prompt,
+                'stream': False,
+                'options': {
+                    'temperature': 0.7,
+                    'top_p': 0.9
+                }
+            },
+            timeout=30
+        )
+
+        if ollama_response.status_code == 200:
+            ai_report = ollama_response.json().get('response', '').strip()
+            print(f"✅ AI report generated successfully, length {len(ai_report)} characters")
+            return ai_report
+        else:
+            print(f"⚠️ Ollama returned status {ollama_response.status_code}, using fallback report")
+            return generate_fallback_report(analysis_data, report_type=report_type, area_name=area_name)
+
+    except Exception as e:
+        print(f"⚠️ AI report generation failed: {str(e)}. Using fallback text.")
+        return generate_fallback_report(analysis_data, report_type=report_type, area_name=area_name)
+
+def generate_fallback_report(analysis_data, report_type='snapshot', area_name=None):
+    """Fallback text when the LLM is unavailable"""
+    accuracy = analysis_data['accuracy']
+    total_questions = analysis_data['total_questions']
+    weak_points = analysis_data['weak_points']
+
+    if report_type == 'module':
+        scope_label = f'the "{area_name}" module' if area_name else "this module"
+    elif report_type == 'final':
+        scope_label = "the entire curriculum"
+    else:
+        scope_label = "this study period"
+
+    if accuracy >= 90:
+        opening = f"Exceptional work! Across {scope_label}, the student achieved {accuracy:.1f}% accuracy over {total_questions} questions, showcasing confident command of the material."
+    elif accuracy >= 75:
+        opening = f"Great progress! The student reached {accuracy:.1f}% accuracy over {total_questions} questions in {scope_label}, signalling a strong grasp with room to grow."
+    elif accuracy >= 60:
+        opening = f"A solid foundation has been laid. With {accuracy:.1f}% accuracy across {total_questions} questions in {scope_label}, the learner is ready to refine their technique."
+    else:
+        opening = f"The path forward is clear. Achieving {accuracy:.1f}% accuracy across {total_questions} questions in {scope_label} reveals the areas where renewed focus will spark improvement."
+
+    analysis_text = (
+        f"The student converted {analysis_data['correct_count']} answers into correct responses and gathered insight from the remaining challenges."
+    )
+
+    if weak_points:
+        suggestion_sentences = []
+        for wp in weak_points:
+            suggestion_sentences.append(
+                f"Revisit {wp['knowledge_point']}, where accuracy was {wp['accuracy']:.1f}% ({wp['correct']} correct out of {wp['total']}). Review the lesson notes and attempt fresh practice questions to strengthen recall."
+            )
+        advice_text = " ".join(suggestion_sentences)
+    else:
+        advice_text = "Every tracked knowledge point was mastered. Reinforce that knowledge with spaced review and explore advanced variations to stretch understanding."
+
+    closing = "Maintain this curiosity and discipline; the Arcane Academy awaits the next breakthrough."
+
+    return " ".join([opening, analysis_text, advice_text, closing])
+
+def create_report_payload(student_id, records, report_type, area_id=None, metadata=None):
+    analysis_data = analyze_battle_data(records)
+    if not analysis_data:
+        return None
+
+    area_name = get_area_display_name(area_id) if area_id else None
+    ai_summary = generate_ai_report(analysis_data, student_id, report_type=report_type, area_name=area_name)
+    generated_at = datetime.now().isoformat()
+
+    if report_type == 'module':
+        title = f"{area_name or area_id} Battle Report"
+        subtitle = f"Accuracy {analysis_data['accuracy']:.1f}% • {analysis_data['correct_count']} correct out of {analysis_data['total_questions']} questions"
+    elif report_type == 'final':
+        title = "Grand Mastery Summary"
+        subtitle = f"Completed {analysis_data['total_questions']} questions across all modules with {analysis_data['accuracy']:.1f}% accuracy"
+    else:
+        title = "Performance Snapshot"
+        subtitle = f"Accuracy {analysis_data['accuracy']:.1f}% • {analysis_data['correct_count']}/{analysis_data['total_questions']} correct"
+
+    report = {
+        'report_id': f"report_{uuid4().hex}",
+        'student_id': student_id,
+        'type': report_type,
+        'area_id': area_id,
+        'area_name': area_name,
+        'title': title,
+        'subtitle': subtitle,
+        'generated_at': generated_at,
+        'analysis': analysis_data,
+        'ai_summary': ai_summary
+    }
+
+    if metadata:
+        report['metadata'] = metadata
+
+    return report
+
+def store_report(student_id, report, replace_type=None, replace_area=None):
+    reports = student_reports.setdefault(student_id, [])
+
+    if replace_type:
+        reports = [
+            r for r in reports
+            if not (
+                r.get('type') == replace_type and
+                (replace_area is None or r.get('area_id') == replace_area)
+            )
+        ]
+        student_reports[student_id] = reports
+
+    reports.append(report)
+    reports.sort(key=lambda r: r['generated_at'], reverse=True)
+    student_reports[student_id] = reports
+    return report
+
+@app.route('/api/reports/generate-area', methods=['POST'])
+def generate_module_report():
+    """Generate and store a module-level report after a battle"""
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id', 'default_student')
+        area_id = data.get('area_id')
+
+        if not area_id:
+            return jsonify({'error': 'area_id is required'}), 400
+
+        records = [
+            record for record in battle_records.get(student_id, [])
+            if record.get('area_id') == area_id
+        ]
+
+        if not records:
+            return jsonify({'error': 'No battle records found for this module'}), 400
+
+        report = create_report_payload(student_id, records, report_type='module', area_id=area_id)
+        if not report:
+            return jsonify({'error': 'Unable to analyze battle data'}), 500
+
+        store_report(student_id, report, replace_type='module', replace_area=area_id)
+        return jsonify(report)
+
+    except Exception as e:
+        print(f"❌ Failed to generate module report: {str(e)}")
+        return jsonify({'error': f'Failed to generate module report: {str(e)}'}), 500
+
+@app.route('/api/reports/generate-final', methods=['POST'])
+def generate_final_report():
+    """Generate and store the final cumulative report"""
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id', 'default_student')
+
+        records = battle_records.get(student_id, [])
+        if not records:
+            return jsonify({'error': 'No battle records found for this student'}), 400
+
+        total_modules = len([aid for aid in game_state['areas'] if aid != 'start'])
+        completed_modules = sum(
+            1 for aid, area in game_state['areas'].items()
+            if aid != 'start' and area.get('completed')
+        )
+
+        metadata = {
+            'total_modules': total_modules,
+            'completed_modules': completed_modules
+        }
+
+        report = create_report_payload(
+            student_id,
+            records,
+            report_type='final',
+            area_id=None,
+            metadata=metadata
+        )
+
+        if not report:
+            return jsonify({'error': 'Unable to analyze battle data'}), 500
+
+        store_report(student_id, report, replace_type='final')
+        return jsonify(report)
+
+    except Exception as e:
+        print(f"❌ Failed to generate final report: {str(e)}")
+        return jsonify({'error': f'Failed to generate final report: {str(e)}'}), 500
+
+@app.route('/api/reports/<student_id>', methods=['GET'])
+def list_reports(student_id):
+    """Return all stored reports for the student"""
+    reports = student_reports.get(student_id, [])
+    return jsonify({'reports': reports})
+
+@app.route('/api/reports/<student_id>/<report_id>', methods=['GET'])
+def get_report(student_id, report_id):
+    """Return a single stored report"""
+    reports = student_reports.get(student_id, [])
+    for report in reports:
+        if report.get('report_id') == report_id:
+            return jsonify(report)
+    return jsonify({'error': 'Report not found'}), 404
+
+@app.route('/api/generate-report/<student_id>', methods=['GET'])
+def generate_report(student_id):
+    """Generate a one-off snapshot report without storing it"""
+    try:
+        records = battle_records.get(student_id, [])
+
+        if len(records) < 1:
+            return jsonify({'error': 'Not enough data. Complete at least one battle before generating a report.'}), 400
+
+        report = create_report_payload(student_id, records, report_type='snapshot')
+        if not report:
+            return jsonify({'error': 'Unable to analyze battle data'}), 500
+
+        report['total_battles'] = len(records)
+        return jsonify(report)
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print("\n❌ Snapshot report generation failed:")
+        print(error_trace)
+        return jsonify({'error': f'Failed to generate report: {str(e)}'}), 500
+
+@app.route('/api/check-report-eligibility/<student_id>', methods=['GET'])
+def check_report_eligibility(student_id):
+    """Check whether there is enough data to review reports"""
+    records = battle_records.get(student_id, [])
+    total_battles = len(records)
+
+    return jsonify({
+        'eligible': total_battles >= 1,
+        'total_battles': total_battles,
+        'required_battles': 1,
+        'suggestion': 'Complete at least one battle to unlock reports.' if total_battles < 1 else 'Reports are ready to view.'
+    })
 
 if __name__ == '__main__':
     print("Starting game server on port 8001...")
