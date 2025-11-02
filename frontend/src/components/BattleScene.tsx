@@ -650,11 +650,36 @@ correctAnswer is the index (0-3) of the correct option.`;
     };
   };
 
+  // 保存答题记录到后端
+  const saveBattleRecord = async (question: string, answer: number, isCorrect: boolean, knowledgePoint: string) => {
+    try {
+      await axios.post('http://127.0.0.1:8001/api/save-battle-record', {
+        student_id: 'default_student',
+        area_id: areaId,
+        question: question,
+        answer: answer,
+        is_correct: isCorrect,
+        knowledge_point: knowledgePoint
+      });
+      console.log('📝 答题记录已保存');
+    } catch (error) {
+      console.error('❌ 保存答题记录失败:', error);
+    }
+  };
+
   const handleOptionSelect = async (optionIndex: number) => {
     if (isAnswering || !currentQuestion) return;
 
     setIsAnswering(true);
     const isCorrect = optionIndex === currentQuestion.correctAnswer;
+
+    // 保存答题记录
+    saveBattleRecord(
+      currentQuestion.question,
+      optionIndex,
+      isCorrect,
+      currentQuestion.pointTitle
+    );
 
     // Calculate damage
     const damage = Math.floor(100 / questions.length);

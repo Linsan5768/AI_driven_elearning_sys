@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import GameMap from './components/GameMap'
 import AreaView from './components/AreaView'
 import TeacherPortal from './components/TeacherPortal'
+import ReportView from './components/ReportView'
 import axios from 'axios'
 
 const AppContainer = styled.div`
@@ -165,7 +166,12 @@ function App() {
   return (
     <AppContainer>
       <AnimatePresence mode="wait">
-        {currentView === 'map' ? (
+        {currentView === 'report' ? (
+          <ReportView 
+            studentId="default_student"
+            onBack={() => setCurrentView('map')}
+          />
+        ) : currentView === 'map' ? (
           <motion.div
             key="map"
             initial={{ opacity: 0 }}
@@ -174,13 +180,41 @@ function App() {
             transition={{ duration: 0.5 }}
             style={{ width: '100%', height: '100%', position: 'relative' }}
           >
-            {/* Teacher mode switch button */}
+            {/* Teacher mode switch button and Report button */}
             <div style={{
               position: 'fixed',
               top: '20px',
               right: '20px',
-              zIndex: 1000
+              zIndex: 1000,
+              display: 'flex',
+              gap: '10px'
             }}>
+              <button
+                onClick={() => setCurrentView('report')}
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(244, 143, 177, 0.9)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '25px',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(244, 143, 177, 0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                📊 学习报告
+              </button>
               <button
                 onClick={() => setMode('teacher')}
                 style={{
