@@ -232,26 +232,42 @@ Jenkins enables:
 
 ### Setting Up Jenkins
 
-#### 1. Start Jenkins Container
+#### 1. Build Custom Jenkins Image (with Docker Support)
 
 ```bash
-# Create Jenkins container
+# Build Jenkins image with Docker CLI
+cd /path/to/demo
+docker build -t jenkins-with-docker -f Dockerfile.jenkins .
+
+# This creates a custom Jenkins image that includes:
+# - Docker CLI for building containers
+# - Automatic Docker socket permission fixing
+```
+
+#### 2. Start Jenkins Container
+
+```bash
+# Start Jenkins with Docker socket access
 docker run -d \
   --name jenkins \
   -p 8080:8080 \
   -p 50000:50000 \
   -v jenkins_home:/var/jenkins_home \
-  jenkins/jenkins:lts
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins-with-docker:latest
 
 # Wait for Jenkins to start (~1-2 minutes)
 docker logs -f jenkins
 # Press Ctrl+C when you see "Jenkins is fully up and running"
 
+# Verify Docker access
+docker exec jenkins docker ps
+
 # Get initial admin password
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
-#### 2. Configure Jenkins
+#### 3. Configure Jenkins
 
 1. **Access Jenkins**
    ```
@@ -285,7 +301,7 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
    - Click "Build Now"
    - View build progress and logs
 
-#### 3. View CI/CD Status
+#### 4. View CI/CD Status
 
 **Method 1: Jenkins Classic UI**
 ```
