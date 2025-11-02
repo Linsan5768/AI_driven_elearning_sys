@@ -18,7 +18,7 @@ COPY courses/ ./courses/
 COPY uploads/ ./uploads/
 
 # Create necessary directories
-RUN mkdir -p courses uploads
+RUN mkdir -p courses uploads reports
 
 # Expose port
 EXPOSE 8001

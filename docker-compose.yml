@@ -12,6 +12,7 @@ services:
       # Note: Volume names must match those defined in the 'volumes:' section below
       - backend_uploads:/app/uploads
       - backend_courses:/app/courses
+      - backend_reports:/app/reports
     environment:
       - FLASK_ENV=production
       - FLASK_DEBUG=False
@@ -67,4 +68,6 @@ volumes:
     # Named volume for backend uploads - persists data independently of local filesystem
   backend_courses:
     # Named volume for backend courses - persists data independently of local filesystem
+  backend_reports:
+    # Named volume for backend reports - persists data independently of local filesystem
 
