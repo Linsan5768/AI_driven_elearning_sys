@@ -9,6 +9,7 @@ services:
     volumes:
       # Use named volumes instead of bind mounts for data persistence
       # This allows data to persist even if local directories are deleted
+      # Note: Volume names must match those defined in the 'volumes:' section below
       - backend_uploads:/app/uploads
       - backend_courses:/app/courses
     environment:
