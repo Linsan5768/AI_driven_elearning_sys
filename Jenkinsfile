@@ -19,8 +19,9 @@ pipeline {
             steps {
                 script {
                     dir('backend') {
-                        def backendImage = docker.build("${DOCKER_IMAGE_BACKEND}:${IMAGE_TAG}")
-                        backendImage.tag("latest")
+                        sh """
+                            docker build -t ${DOCKER_IMAGE_BACKEND}:${IMAGE_TAG} -t ${DOCKER_IMAGE_BACKEND}:latest .
+                        """
                     }
                 }
             }
@@ -30,8 +31,9 @@ pipeline {
             steps {
                 script {
                     dir('frontend') {
-                        def frontendImage = docker.build("${DOCKER_IMAGE_FRONTEND}:${IMAGE_TAG}")
-                        frontendImage.tag("latest")
+                        sh """
+                            docker build -t ${DOCKER_IMAGE_FRONTEND}:${IMAGE_TAG} -t ${DOCKER_IMAGE_FRONTEND}:latest .
+                        """
                     }
                 }
             }
@@ -40,9 +42,9 @@ pipeline {
         stage('Test Backend') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE_BACKEND}:${IMAGE_TAG}").inside {
-                        sh 'python -c "import flask; print(\"Backend dependencies OK\")"'
-                    }
+                    sh """
+                        docker run --rm ${DOCKER_IMAGE_BACKEND}:${IMAGE_TAG} python -c "import flask; print('Backend dependencies OK')"
+                    """
                 }
             }
         }
