@@ -1,4 +1,4 @@
-# AI Driven eLearning System (Magic Academy)
+# AI Driven eLearning System
 
 AI Driven eLearning System is a full-stack learning platform that combines:
 - AI-assisted course understanding from uploaded materials (PDF/TXT/MD)
