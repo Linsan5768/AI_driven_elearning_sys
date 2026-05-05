@@ -1,229 +1,219 @@
-# Harry Potter Learning System
+# AI Driven eLearning System (Magic Academy)
 
-## Project Overview
-The Harry Potter Learning System is an AI-powered educational game that combines interactive learnin and battle mechanics. Teachers can upload the learning materials and AI will split it into detailed learning point and students can learn step by step and AI tutor will answer their questions in detail. Students engage in "Magic Duels" against AI professors, where each correct answer inflicts damage on the opponent -- AI progessors, and incorrect answers reduce the player's HP. Feedback modeul provides learning reports including correct accuracy, progress tracking, feedback, and status of each knowlege point. Through this gamified approach, students can study, battle, and review their learning progress in an engaging and adaptive environment
+AI Driven eLearning System is a full-stack learning platform that combines:
+- AI-assisted course understanding from uploaded materials (PDF/TXT/MD)
+- Structured knowledge modeling (concepts, facts, examples, topics, levels, relationships)
+- Gamified student learning (map exploration + AI tutor dialogue + battle-style assessment)
+- Teacher-side content generation, progress tracking, and report workflows
 
-## System Design & Objectives
-The system aims to enhance learning motivation through gamification and AI-driven adaptive teaching.  
-It transforms passive learning into an active, interactive experience.
-
-### Design Objectives
-- **Personalized Learning:**
-  AI professor adjusts question difficulty dynamically based on student performance.  
-- **Gamified Motivation:**
-  Learning progress is visualized through duels, progress bars, and unlockable stages.  
-- **Continuous Feedback:**
-  Real-time results and post-duel summaries help students identify weak areas.  
-- **Modular Scalability:**
-  Each feature (Teacher Portal, Student Map, Duel) is independently deployable for future extensions.  
-- **Efficient AI Integration:**
-  Combines local inference and cloud models for flexible, cost-effective performance.
-
-## Configuration
-
-### Environment Requirements
-        | Component | Version |
-        |------------|----------|
-        | Python | >= 3.10 |
-        | Node.js | >= 18 |
-        | npm | >= 9 |
-        | Ollama | Latest (supports Qwen2.5) |
-
-## Deployment
-This section explains how to install dependencies and run the project locally, including backend, frontend, and the local AI model
-  **Backend**
-   - `cd backend`
-   - `pip install -r requirements.txt`
-   - `python app.py`
-
-  **Frontend**
-   - `cd frontend`
-   - `npm install`
-   - `npm run dev`
-
-  **Local Model**
-   - `ollama run qwen2.5`
-
-## Technology and Implementation
-
-The Harry Potter Learning System adopts a full-stack AI-driven architecture integrating React (frontend), Flask (backend), and local LLM inference via Ollama.  
-It supports modular feature updates and iterative Agile development for learning, testing, and feedback loops.
-
-### Frontend (React + TypeScript + Vite)
-- Built with **React + TypeScript + Vite**, ensuring high performance and modular code reuse.  
-- Implements dynamic interfaces for:
-  - Student Map (progress tracking, castle unlocking)
-  - Magic Duel Scene (battle interaction)
-  - Teacher Portal (material upload & preview)
-- Communicates with the backend through RESTful APIs for lesson data, duel status, and progress updates.
-- Integrates **MathJax** to render mathematical formulas in learning dialogues.
-
-### Backend (Flask)
-- Developed using **Flask (Python 3.9)**, handling:
-  - Course parsing and conversion to structured JSON
-  - AI-powered question generation
-  - Game logic management (HP calculation, duel outcomes)
-- Stores user progress and course data persistently via JSON and backend cache.
-
-### AI Integration (Ollama + Claude)
-- **Ollama (local container)** manages the **Qwen2.5** model for generating learning questions and hints.  
-- **Claude 3.5 (cloud API)** serves as a backup and advanced reasoning layer for detailed explanations and error correction.  
-- AI response flow:
-  1. Teacher uploads course material.
-  2. Backend sends parsed content to Ollama/Claude.
-  3. Model returns structured JSON with knowledge points and multiple-choice questions.
-  4. Frontend renders these in the Magic Duel interface.
-
-### Deployment & Infrastructure
-- **Docker + Docker Compose** containerize all services (frontend, backend, Ollama) for reproducible environments.  
-- **Nginx** acts as a reverse proxy, managing `/api` and `/ollama` routes.  
-- Cloud hosting via **Render (backend)** and **Vercel (frontend)** for free-tier deployment.  
-
-### CI/CD & Development
-- **Jenkins + Jenkinsfile** automate build, test, and deployment workflows.  
-- **GitHub** serves as version control and collaboration hub.  
-- **ESLint** enforces frontend code quality, ensuring maintainable React components.
-
-### Creative & AI Tools
-- **Pixellab** for pixel-style character design and animations.  
-- **ChatGPT / Sora** for background scene generation and storytelling enhancement.  
-- **Cursor & Claude** assisted debugging and AI prompt engineering.
-
-
-## Data Flow & System Architecture
-1. Teacher uploads course material (TXT/PDF/MD) via the Teacher Portal.
-2. Flask backend parses and extracts key learning points.
-3. Ollama engine (Qwen2.5) generates structured question data.
-4. Frontend React displays learning dialogues, maps, and duel scenes.
-5. Student performance and HP status are synchronized with backend APIs.
-6. The Feedback Module analyzes performance and generates summary reports.
-- This modular data flow enables both local and cloud-based AI learning environments.
-
-## Visualization and Reporting
-- **Dynamic Result Visualization:**  
-  The frontend uses React-based chart libraries (such as Chart.js / Recharts) to visualize duel outcomes, learning accuracy, and progression over time.  
-- **Automated Summary Reports:**  
-  The backend aggregates user performance and generates personalized reports summarizing learning achievements, weak points, and recommended improvements.
-- **Data Flow Integration:**  
-  Real-time progress data is transmitted from the backend to the frontend through RESTful APIs, ensuring synchronized updates during and after each magic duel.
-- **Future Extension:**  
-  The reporting module can be expanded to include teacher dashboards and class-level analytics for group performance tracking.
-
-
-## Data Flow & System Architecture
-1. Teacher uploads course material (TXT) via the Teacher Portal.
-2. Flask backend parses and extracts key learning points.
-3. Ollama engine (Qwen2.5) generates structured question data.
-4. Frontend React displays learning dialogues, maps, and duel scenes.
-5. Student performance and HP status are synchronized with backend APIs.
-6. The Feedback Module analyzes performance and generates summary reports.
-- This modular data flow enables both local and cloud-based AI learning environments.
-
-## Future Improvements
-- To further enhance system scalability and interactivity, the following improvements are planned:
-- **Adaptive Difficulty:**
-  Introduce reinforcement learning to personalize question difficulty dynamically.
-- **Multiplayer Mode:**
-  Support peer-vs-peer duels and cooperative learning groups.
-- **Voice Interaction:**
-  Enable speech recognition for hands-free learning.
-- **Database Upgrade:**
-  Migrate from JSON storage to a structured SQL/NoSQL system.
-- **Teacher Dashboard:**
-  Add data analytics for class-level performance monitoring.
-- **Accessibility:**
-  Implement localization and accessibility support for broader audiences.
-
-## User Stories
-
-### Teacher Side (Course Management)
-
-| ID | Feature |
-|----|---------|
-| **US-T1** | Upload TXT course materials (≤16 MB) |
-| **US-T2** | Automatically extract 10-15 knowledge points from LLM |
-| **US-T3** | View, edit, and delete generated courses |
-| **US-T4** | Apply courses to the student map (replace/append) |
-| **US-T5** | Reset student progress |
-| **US-T6** | Save courses for later use |
-| **US-T7** | Switch between multiple courses |
-
-### Student Side (Learning & Testing)
-
-| ID | Feature |
-|----|---------|
-| **US-S1-S2** | Browse / navigate the learning map |
-| **US-S4-S5** | Learn knowledge points and interact with AI professors |
-| **US-S6-S7** | View learning progress and completed knowledge points |
-| **US-S8-S12** | Take Magic Duel tests, get hints, view battle reports, and unlock the next area |
-| **US-S13-S14** | View battle reports and final summaries |
+The current implementation uses a React + TypeScript frontend and a Flask backend, with local LLM inference via Ollama (Qwen2.5 by default).
 
 ---
 
-## Feedback Loop
+## Key Features
 
-### Core User Stories (Feedback)
+### Teacher Portal
+- Upload learning materials and generate courses asynchronously.
+- Real-time generation progress with percentage and stage updates.
+- Optional "thinking trace" display while processing.
+- Structured preview mode for generated knowledge (`concept_index`, topics, levels, relationships).
+- Legacy materials preview mode for backward compatibility.
+- Apply generated courses to the game map.
 
-| ID | Feature |
-|----|---------|
-| **US-FB3** | Get personalized knowledge point review recommendations |
-| **US-FB4** | Automatically adjust question difficulty |
-| **US-FB9** | Dynamically generate adaptive questions |
+### Student Experience
+- Explore course chapters through a map-based progression system.
+- Chat with an AI tutor in each area.
+- Learn individual knowledge points by index.
+- Track learning progress and unlock battle challenges.
+- Complete battle/test flows and unlock subsequent areas.
+- Generate area/final reports through backend report APIs.
 
-### Teacher Dashboard
-
-| ID | Feature |
-|----|---------|
-| **US-FB6** | View student feedback summary |
-| **US-FB7** | Improve courses based on feedback |
-| **US-FB12** | Continuously optimize courses |
-
-### AI Self-Improvement
-
-| ID | Feature |
-|----|---------|
-| **US-FB8** | AI iterates itself based on accumulated feedback |
+### Knowledge Modeling Pipeline (Backend)
+Course generation follows a staged pipeline:
+1. **Chunking**: split source text into small chunks suitable for local 7B models.
+2. **Atomic extraction**: per chunk, extract concepts/definitions/facts/examples.
+3. **Deterministic merge**: code-based deduplication and merge (not LLM rewrite).
+4. **Classification**: LLM assigns topic and level.
+5. **Relationship inference**: LLM infers concept relationships.
+6. **Structured output**: `materials` (object array), `knowledge_structure`, topic hierarchy.
 
 ---
 
-## Iteration Report
+## Tech Stack
 
-### Key Achievements & Challenges per Phase
+- **Frontend**: React 19, TypeScript, Vite, Emotion, Framer Motion, Axios
+- **Backend**: Flask 3.1, Flask-CORS, PyPDF2, Requests, ReportLab
+- **LLM**: Ollama (local), optional cloud fallback models
+- **Infra**: Docker, Docker Compose, Nginx, Jenkins pipeline files
+- **Persistence (current)**: JSON files for courses, uploads, reports, and game state
 
-| Phase | Goal | Achievements | Challenges |
-|-------|------|--------------|------------|
-| **1** | Basic Infrastructure | React + TS front-end, Flask API, map rendering, character animation | TypeScript config, state management |
-| **2** | Teacher Side & Course Generation | File upload, Ollama LLM extraction, TXT parsing, JSON persistence | PDF parsing reliability, prompt engineering |
-| **3** | Learning System Enhancement | Dynamic course loading, progress persistence, MathJax rendering | Cross-session persistence, formula performance |
-| **4** | Testing System Redesign | Combat UI, LLM question generation, HP mechanics, animations | Question consistency, animation smoothness |
-| **5** | Map System Reconstruction | Linear progress, 80% unlock rule, progress bar, character movement | Logic simplification |
-| **6** | Deployment & CI/CD | Docker containerization, Compose, Jenkins pipeline, docs | Docker networking, Ollama proxy |
+---
 
-### Technology Stack
+## Project Structure
 
-| Layer | Tech | Version | Purpose |
-|-------|------|---------|---------|
-| **Frontend** | React | 19.1.1 | Component UI framework |
-| | TypeScript | 5.8.3 | Type safety |
-| | Vite | 7.1.2 | Fast build & dev server |
-| | Emotion | 11.14.1 | CSS-in-JS |
-| | Axios | 1.11.0 | HTTP client |
-| | MathJax | 3.x (CDN) | Formula rendering |
-| **Backend** | Flask | 3.1.2 | REST API |
-| | Flask-CORS | 6.0.1 | CORS handling |
-| | PyPDF2 | 3.0.1 | PDF extraction |
-| | Requests | 2.31.0 | LLM API calls |
-| **Infrastructure** | Docker | - | Containerization |
-| | Docker-Compose | - | Orchestration |
-| | Nginx | - | Reverse proxy |
-| | Ollama | - | Local LLM service |
-| | Jenkins | - | CI/CD pipeline |
+```text
+AI_driven_elearning_sys/
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── courses/
+│   ├── uploads/
+│   └── reports/
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   ├── nginx.conf
+│   └── Dockerfile
+├── docker-compose.yml
+└── README.md
+```
 
-## Contribution Table
-| Name          | SID        | Contribution (%) |
-|----------------|-------------|------------------|
-| Qinan Zhou     | 530634247   | 20% |
-| Lin Zhao       | 520539392   | 20% |
-| Qihan Zhu      | 550489593   | 20% |
-| Mingze Li      | 550374130   | 20% |
-| Shimin Yuan    | 540269530   | 20% |
+---
+
+## Quick Start (Local Development)
+
+## 1) Prerequisites
+- Python 3.9+ (3.10+ recommended)
+- Node.js 18+
+- npm 9+
+- Ollama installed and running locally
+
+## 2) Start Ollama and pull model
+```bash
+ollama serve
+ollama pull qwen2.5:7b
+```
+
+## 3) Start backend
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+Backend default URL: `http://127.0.0.1:8001/api`
+
+## 4) Start frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend dev URL is printed by Vite (typically `http://127.0.0.1:5173`).
+
+---
+
+## Environment Configuration
+
+Frontend reads:
+- `VITE_API_BASE_URL` (default fallback: `http://127.0.0.1:8001/api`)
+- `VITE_OLLAMA_URL` (default fallback: `http://127.0.0.1:11434`, or `/ollama` in production)
+
+Example:
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8001/api
+VITE_OLLAMA_URL=http://127.0.0.1:11434
+```
+
+Note: Cloud model keys are currently configured in `frontend/src/config/apiKeys.ts`. For production, migrate keys to environment variables/secrets management.
+
+---
+
+## Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Default exposed ports:
+- Frontend: `80`
+- Backend: `8001`
+- Ollama: `11434`
+
+Compose uses named volumes for backend uploads/courses/reports and Ollama model data persistence.
+
+---
+
+## Main API Endpoints
+
+The backend exposes REST APIs under `/api`:
+
+- `GET /api/game-state`
+- `POST /api/complete-area/<area_id>`
+- `POST /api/update-learning-progress/<area_id>`
+- `POST /api/upload-pdf`
+- `POST /api/generate-course`
+- `POST /api/generate-course-async`
+- `GET /api/generate-course-progress/<job_id>`
+- `GET /api/courses`
+- `DELETE /api/courses/<course_id>`
+- `POST /api/apply-course-to-game`
+- `GET /api/course-library/<area_id>`
+- `POST /api/save-battle-record`
+- `GET /api/get-battle-records/<student_id>`
+- `POST /api/reports/generate-area`
+- `POST /api/reports/generate-final`
+- `POST /api/reports/generate-subject-final`
+- `GET /api/reports/<student_id>`
+
+---
+
+## Data Output Shape (Course Generation)
+
+Generated course data includes (high-level):
+- `subject`
+- `materials` (array of structured objects; no longer plain strings)
+- `difficulty`
+- `category`
+- `topics`
+- `knowledge_structure`:
+  - `pipeline`
+  - `concept_index`
+  - `topics`
+- `thinking_trace` (optional process trace)
+
+This structure is designed for richer downstream rendering and logic (student tutor, quizzes, pathing, analytics).
+
+---
+
+## Development Notes
+
+- JSON file storage is currently used for fast iteration and debugging.
+- Course generation has both synchronous and asynchronous endpoints; frontend prefers async for progress visualization.
+- Student and teacher UIs include backward-compatibility handling for older course formats.
+- If API behavior appears outdated after code changes, restart backend to ensure newest routes are loaded.
+
+---
+
+## Troubleshooting
+
+### "Processing failed" / endpoint 404
+- Ensure backend process is the latest code version.
+- Restart backend after pulling/changing API routes.
+
+### Student dialogue cannot answer normally
+- Ensure Ollama is running and model is available.
+- Verify `VITE_OLLAMA_URL` / backend API base URL.
+- Confirm course `materials` are in expected structured format and frontend normalization is applied.
+
+### No course history visible
+- Check backend `courses/` path and permissions.
+- Confirm course files exist and are readable by backend process.
+
+---
+
+## Roadmap (Suggested)
+
+- Replace JSON persistence with a database (PostgreSQL or MongoDB).
+- Add authentication and role management.
+- Move API keys to secure backend-managed secrets.
+- Add integration tests for course generation and student dialogue flows.
+- Improve observability (structured logs, metrics, job tracing).
+
+---
+
+## License
+
+No license file is currently defined in this repository. Add a license before public distribution.

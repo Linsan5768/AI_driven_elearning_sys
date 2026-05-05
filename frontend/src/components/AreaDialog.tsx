@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import styled from '@emotion/styled'
 import { motion, AnimatePresence } from 'framer-motion'
 import { COURSE_MATERIALS } from '../config/courseMaterials'
@@ -320,7 +320,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
 
   const [learnedKnowledgePoints, setLearnedKnowledgePoints] = useState<Set<number>>(new Set())
   const [knowledgePointsList, setKnowledgePointsList] = useState<string[]>([])
-  const [showThinking] = useState(true)  // Always show thinking (permanently enabled)
+  const [showThinking, setShowThinking] = useState(true)
   const [thinkingContent, setThinkingContent] = useState<string>('')
   const [testQuestions, setTestQuestions] = useState<Question[]>([])
 
@@ -344,8 +344,33 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
   
   // Battle scene state control
   const [showBattleScene, setShowBattleScene] = useState(false)
-  const totalKnowledgePoints = courseData?.knowledgePointCount || 0
-  const learningProgress = (learnedKnowledgePoints.size / totalKnowledgePoints) * 100
+  const materialTexts = useMemo(() => {
+    const rawMaterials = courseData?.materials
+    if (!Array.isArray(rawMaterials)) return [] as string[]
+
+    return rawMaterials
+      .map((material: any) => {
+        if (typeof material === 'string') return material
+        if (material && typeof material === 'object') {
+          const concept = String(material.concept || '').trim()
+          const definition = String(material.definition || '').trim()
+          const topic = String(material.topic || '').trim()
+
+          if (topic && concept && definition) return `${topic}: ${concept}: ${definition}`
+          if (topic && concept) return `${topic}: ${concept}`
+          if (concept && definition) return `${concept}: ${definition}`
+          if (concept) return concept
+          return JSON.stringify(material)
+        }
+        return String(material ?? '')
+      })
+      .filter((item: string) => item.trim().length > 0)
+  }, [courseData])
+
+  const totalKnowledgePoints = courseData?.knowledgePointCount || materialTexts.length || 0
+  const learningProgress = totalKnowledgePoints > 0
+    ? (learnedKnowledgePoints.size / totalKnowledgePoints) * 100
+    : 0
 
   // Check if this is a final destination area
   useEffect(() => {
@@ -433,11 +458,42 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ isOpen, onClose, areaId, onComp
         console.log(`📚 Restored learning progress: ${areaId} - Learned ${restoredLearnedPoints.length} knowledge points`, restoredLearnedPoints)
       }
       
-      // Let LLM generate knowledge points list
-      const listPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}. Generate a knowledge points list based strictly on the course materials. Always answer in English only.
+      // Build base system prompt from course-level cognitive architecture if available
+      let baseSystemPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}.`
+      if (courseData?.cognitive_architecture) {
+        const arch = courseData.cognitive_architecture
+        const profileLines: string[] = []
+        if (arch.agent_profile?.role) {
+          profileLines.push(`Role: ${arch.agent_profile.role}`)
+        }
+        if (arch.agent_profile?.persona) {
+          profileLines.push(`Persona: ${arch.agent_profile.persona}`)
+        }
+        if (arch.agent_profile?.target_students) {
+          profileLines.push(`Target students: ${arch.agent_profile.target_students}`)
+        }
+        if (arch.knowledge_scope?.core_themes?.length) {
+          profileLines.push(`Core themes: ${arch.knowledge_scope.core_themes.join('; ')}`)
+        }
+        if (arch.interaction_guidelines?.tone) {
+          profileLines.push(`Tone: ${arch.interaction_guidelines.tone}`)
+        }
+        if (arch.interaction_guidelines?.feedback_style?.length) {
+          profileLines.push(`Feedback style: ${arch.interaction_guidelines.feedback_style.join(' / ')}`)
+        }
+        baseSystemPrompt = `You are the dedicated AI tutor for the course "${courseData?.subject || 'Course'}".\n\n` +
+          `Cognitive architecture summary:\n` +
+          profileLines.join('\n') +
+          `\n\nFollow this architecture strictly when helping the student.`
+      }
+
+      // Let LLM generate knowledge points list using the base system prompt
+      const listPrompt = `${baseSystemPrompt}
+
+Generate a knowledge points list based strictly on the course materials below. Always answer in English only.
 
 【Course Materials】:
-${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
+${materialTexts.join('\n') || 'Fundamental Knowledge'}
 
 【Task】: Based on the above course materials, generate ${totalKnowledgePoints} knowledge point titles
 
@@ -465,7 +521,7 @@ Please only output the above format without any additional content.`
           response.includes('Generate a knowledge points list')) {
         console.warn('LLM response appears to be invalid, using course materials')
         // Use course materials directly as knowledge points
-        const fallbackPoints = courseData?.materials?.slice(0, totalKnowledgePoints) || []
+        const fallbackPoints = materialTexts.slice(0, totalKnowledgePoints)
         const formattedPoints = fallbackPoints.map((material: string, index: number) => {
           // Extract title from material - try multiple patterns
           // Pattern 1: "Title: Description" or "Title：Description"
@@ -524,7 +580,7 @@ Please only output the above format without any additional content.`
         } else {
           // Fallback to course materials - better extraction
           console.warn('Failed to parse knowledge points from LLM, using course materials')
-          const fallbackPoints = courseData?.materials?.slice(0, totalKnowledgePoints) || []
+          const fallbackPoints = materialTexts.slice(0, totalKnowledgePoints)
           const formattedPoints = fallbackPoints.map((material: string, index: number) => {
             // Extract title from material - try multiple patterns
             let titleMatch = material.match(/^([^:：]+?)[:：]/)
@@ -556,7 +612,7 @@ Please only output the above format without any additional content.`
       // If still empty or only contains numbers, use course materials with better extraction
       if (finalPoints.length === 0 || finalPoints.every(p => /^\d+$/.test(p))) {
         console.warn('Knowledge points list is empty or invalid, extracting from course materials')
-        finalPoints = (courseData?.materials?.slice(0, totalKnowledgePoints) || []).map((m: string, i: number) => {
+        finalPoints = materialTexts.slice(0, totalKnowledgePoints).map((m: string, i: number) => {
           // Try multiple extraction patterns
           let titleMatch = m.match(/^([^:：]+?)[:：]/)
           if (titleMatch && titleMatch[1].trim().length > 2) {
@@ -683,6 +739,12 @@ Please enter a number to learn a knowledge point, or ask me a question directly!
     }
   }, [messages])
 
+  useEffect(() => {
+    if (!showThinking) {
+      setThinkingContent('')
+    }
+  }, [showThinking])
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
 
@@ -737,12 +799,12 @@ Sorry, an error occurred while processing your message. Please try again later.`
     // Since LLM may reorder the knowledge points, we should match by title content, not index
     let currentPointMaterial = 'Fundamental Knowledge'
     
-    if (courseData?.materials && courseData.materials.length > 0) {
+    if (materialTexts.length > 0) {
       // Clean the point title for matching (remove numbering prefixes like "6. ")
       const cleanTitle = pointTitle.replace(/^\d+[\.\)]\s*/, '').trim().toLowerCase()
       
       // Try to find matching material by title
-      const matchedMaterial = courseData.materials.find((material: string) => {
+      const matchedMaterial = materialTexts.find((material: string) => {
         if (!material) return false
         
         // Extract title from material using multiple patterns
@@ -773,7 +835,7 @@ Sorry, an error occurred while processing your message. Please try again later.`
       } else {
         // Fallback: use index-based matching as last resort
         console.warn(`⚠️ Could not find matching material for "${pointTitle}", using index ${pointNumber - 1} as fallback`)
-        currentPointMaterial = courseData.materials[pointNumber - 1] || 'Fundamental Knowledge'
+        currentPointMaterial = materialTexts[pointNumber - 1] || 'Fundamental Knowledge'
       }
     }
     
@@ -1136,7 +1198,7 @@ Stay determined! Review the knowledge points and challenge the duel again when y
       // Get learned knowledge point (in learning order)
       const pointNumber = learnedPoints[i]
       const pointTitle = knowledgePointsList[pointNumber - 1] || `Knowledge Point ${pointNumber}`
-      const pointContent = courseData?.materials[pointNumber - 1] || ''
+      const pointContent = materialTexts[pointNumber - 1] || ''
       
       console.log(`📝 Question ${i + 1}/${totalQuestions} - Knowledge Point ${pointNumber}: ${pointTitle}`)
       
@@ -1290,7 +1352,7 @@ Please submit all your answers at once, format: ${answerFormat}
       const learnedPoints = Array.from(learnedKnowledgePoints)
       const randomPointNumber = learnedPoints[Math.floor(Math.random() * learnedPoints.length)]
       const pointTitle = knowledgePointsList[randomPointNumber - 1] || `Knowledge Point ${randomPointNumber}`
-      const pointContent = courseData?.materials[randomPointNumber - 1] || ''
+      const pointContent = materialTexts[randomPointNumber - 1] || ''
       
       // Use fallback question generation function
       const defaultQuestion: Question = generateFallbackQuestion(
@@ -1340,7 +1402,7 @@ Please select the correct answer (reply A, B, C, or D):`,
     const questionPrompt = `You are a professor at the Magic Academy, designing a technical test question about "${pointTitle}" for magic apprentices. Always answer in English only.
 
 【Course Materials】:
-${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
+${materialTexts.join('\n') || 'Fundamental Knowledge'}
 
 【Question Requirements】:
 1. Question must be strictly based on course material content
@@ -1478,7 +1540,7 @@ Please select the correct answer (reply A, B, C, or D):`,
     const chatPrompt = `You are a professor at the Magic Academy teaching ${courseData?.subject || 'Course'}, guiding a curious magic apprentice. Answer the apprentice's question strictly based on the course materials. Always answer in English only.
 
 【Course Materials】:
-${courseData?.materials.join('\n') || 'Fundamental Knowledge'}
+${materialTexts.join('\n') || 'Fundamental Knowledge'}
 
 【Apprentice Question】: ${userInput}
 
@@ -1903,7 +1965,14 @@ Answer directly without any prefix or suffix.`
                   <option value="claude-3.5">🌐 Claude 3.5 (Online)</option>
                   
                 </select>
-                {/* Removed Thinking Display indicator */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ddd', fontSize: '12px' }}>
+                  <input
+                    type="checkbox"
+                    checked={showThinking}
+                    onChange={(e) => setShowThinking(e.target.checked)}
+                  />
+                  Show thinking
+                </label>
                 <CloseButton onClick={onClose}>×</CloseButton>
               </div>
             </DialogHeader>
