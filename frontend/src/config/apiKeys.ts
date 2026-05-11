@@ -19,7 +19,7 @@ export const API_KEYS = {
 export const MODEL_CONFIG = {
   // Local models (no API key required)
   LOCAL_MODELS: {
-    'qwen2.5': 'qwen2.5:7b',
+    'qwen2.5': 'qwen2.5',
     'deepseek-r1': 'deepseek-r1:8b',
     'mistral': 'mistral',
     'llama2': 'llama2'

@@ -1,0 +1,297 @@
+{
+  "course": "INFO4444",
+  "areas": [
+    {
+      "id": "area_1",
+      "name": "Networking",
+      "description": "Concept cluster for Networking",
+      "difficulty": 2,
+      "position": {
+        "x": 120,
+        "y": 240
+      },
+      "concept_nodes": [
+        {
+          "concept_id": "fallback_2",
+          "title": "Computer Networks: Basic concepts and theoretical framework",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Basic concepts and theoretical framework"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Basic concepts and theoretical framework\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Basic concepts and theoretical framework\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_6",
+          "title": "Computer Networks: Best practices and design principles",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Best practices and design principles"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Best practices and design principles\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Best practices and design principles\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_5",
+          "title": "Computer Networks: Common issues and solutions",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Common issues and solutions"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Common issues and solutions\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Common issues and solutions\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_9",
+          "title": "Computer Networks: Comprehensive exercises and practical projects",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Comprehensive exercises and practical projects"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Comprehensive exercises and practical projects\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Comprehensive exercises and practical projects\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_1",
+          "title": "Computer Networks: Core content and learning objectives of this course",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Core content and learning objectives of this course"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Core content and learning objectives of this course\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Core content and learning objectives of this course\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_8",
+          "title": "Computer Networks: Development trends and future prospects",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Development trends and future prospects"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Development trends and future prospects\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Development trends and future prospects\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_3",
+          "title": "Computer Networks: Key technologies and implementation methods",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Key technologies and implementation methods"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Key technologies and implementation methods\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Key technologies and implementation methods\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_7",
+          "title": "Computer Networks: Performance optimization and improvement strategies",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Performance optimization and improvement strategies"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Performance optimization and improvement strategies\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Performance optimization and improvement strategies\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_4",
+          "title": "Computer Networks: Real-world application scenarios and case analysis",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Real-world application scenarios and case analysis"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Real-world application scenarios and case analysis\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Real-world application scenarios and case analysis\" with one concrete example."
+            }
+          ]
+        },
+        {
+          "concept_id": "fallback_10",
+          "title": "Computer Networks: Summary and knowledge system construction",
+          "summary": "",
+          "importance": 4,
+          "prerequisites": [],
+          "keywords": [
+            "Computer Networks: Summary and knowledge system construction"
+          ],
+          "quiz": [
+            {
+              "type": "single_choice",
+              "prompt": "Which statement best describes \"Computer Networks: Summary and knowledge system construction\"?",
+              "options": [],
+              "answer": null
+            }
+          ],
+          "npc": {
+            "role": "Tutor",
+            "style": "Socratic and concise"
+          },
+          "tasks": [
+            {
+              "type": "explain",
+              "prompt": "Explain \"Computer Networks: Summary and knowledge system construction\" with one concrete example."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

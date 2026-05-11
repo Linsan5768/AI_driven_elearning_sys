@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import axios from 'axios';
@@ -507,6 +507,31 @@ const BattleScene: React.FC<BattleSceneProps> = ({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [systemWarning, setSystemWarning] = useState<string | null>(null);
   const hintTextRef = useRef<HTMLDivElement>(null);
+  const materialTexts = useMemo(() => {
+    const rawMaterials = courseData?.materials;
+    if (!Array.isArray(rawMaterials)) return [] as string[];
+
+    return rawMaterials
+      .map((material: any) => {
+        if (typeof material === 'string') return material;
+        if (material && typeof material === 'object') {
+          const concept = String(material.concept || '').trim();
+          const definition = String(material.definition || '').trim();
+          const topic = String(material.topic || '').trim();
+          const facts = Array.isArray(material.facts) ? material.facts.filter(Boolean).join('; ') : '';
+
+          const core = [
+            topic && concept ? `${topic}: ${concept}` : concept || topic,
+            definition,
+            facts
+          ].filter(Boolean).join(' - ');
+
+          return core || JSON.stringify(material);
+        }
+        return String(material ?? '');
+      })
+      .filter((item: string) => item.trim().length > 0);
+  }, [courseData]);
 
   // Generate all questions on mount
   useEffect(() => {
@@ -551,8 +576,9 @@ const BattleScene: React.FC<BattleSceneProps> = ({
       setLoadingProgress(progress);
       
       const pointNumber = learnedPoints[i];
-      const knowledgePointTitle = courseData?.materials?.[pointNumber - 1]?.split('\n')[0] || `Knowledge Point ${pointNumber}`;
-      const knowledgePointContent = courseData?.materials?.[pointNumber - 1] || '';
+      const knowledgePointContent = materialTexts[pointNumber - 1] || '';
+      const knowledgePointTitle =
+        knowledgePointContent.split(/[:\n]/)[0]?.trim() || `Knowledge Point ${pointNumber}`;
 
       try {
         console.log(`Generating question ${i + 1}/${totalQuestions} for: ${knowledgePointTitle}`);
@@ -613,8 +639,8 @@ correctAnswer is the index (0-3) of the correct option.`;
 
         if (!llmUnavailableWarned && error instanceof Error && error.message === 'LOCAL_LLM_NOT_AVAILABLE') {
           llmUnavailableWarned = true;
-          const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
-          setSystemWarning(`Local LLM service at ${ollamaUrl} is not reachable (HTTP 404). Generating fallback questions instead. Start the Ollama server or switch to a cloud model to restore dynamic questions.`);
+          const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434');
+          setSystemWarning(`Local LLM service at ${ollamaUrl} is not reachable. Generating fallback questions instead. Start Ollama or switch to Claude to restore dynamic generation.`);
         }
 
         generatedQuestions.push(generateFallbackQuestion(pointNumber, knowledgePointTitle, knowledgePointContent));
@@ -624,28 +650,47 @@ correctAnswer is the index (0-3) of the correct option.`;
     setQuestions(generatedQuestions);
   };
 
+  const requestOllamaText = async (ollamaModel: string, prompt: string): Promise<string> => {
+    const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434');
+    try {
+      const generateResp = await axios.post(`${ollamaUrl}/api/generate`, {
+        model: ollamaModel,
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          num_predict: 500
+        }
+      });
+      return generateResp.data?.response || '';
+    } catch (error) {
+      if (axios.isAxiosError(error) && (!error.response || error.response.status === 404)) {
+        // Ollama 0.17+ may expose only OpenAI-compatible endpoints in some setups.
+        const chatResp = await axios.post(`${ollamaUrl}/v1/chat/completions`, {
+          model: ollamaModel,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          stream: false
+        });
+        return chatResp.data?.choices?.[0]?.message?.content || '';
+      }
+      throw error;
+    }
+  };
+
   const callLLMForQuestion = async (prompt: string, model: string): Promise<string> => {
     console.log('🔮 Calling LLM for question generation, model:', model);
     
     // Handle different model types
     if (model === 'qwen2.5' || model === 'ollama-qwen2.5') {
       try {
-        const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
-        const response = await axios.post(`${ollamaUrl}/api/generate`, {
-          model: 'qwen2.5:7b',
-          prompt: prompt,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            num_predict: 500
-          }
-        });
+        const response = await requestOllamaText('qwen2.5', prompt);
         console.log('✅ Qwen2.5 response received');
-        return response.data.response;
+        return response;
       } catch (error) {
         console.error('❌ Qwen2.5 error:', error);
         if (axios.isAxiosError(error)) {
-          if (error.response?.status === 404) {
+          if (!error.response || error.response?.status === 404) {
             throw new Error('LOCAL_LLM_NOT_AVAILABLE');
           }
         }
@@ -653,22 +698,13 @@ correctAnswer is the index (0-3) of the correct option.`;
       }
     } else if (model === 'ollama-llama2') {
       try {
-        const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
-        const response = await axios.post(`${ollamaUrl}/api/generate`, {
-          model: 'llama2',
-          prompt: prompt,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            num_predict: 500
-          }
-        });
+        const response = await requestOllamaText('llama2', prompt);
         console.log('✅ Llama2 response received');
-        return response.data.response;
+        return response;
       } catch (error) {
         console.error('❌ Llama2 error:', error);
         if (axios.isAxiosError(error)) {
-          if (error.response?.status === 404) {
+          if (!error.response || error.response?.status === 404) {
             throw new Error('LOCAL_LLM_NOT_AVAILABLE');
           }
         }
@@ -684,23 +720,14 @@ correctAnswer is the index (0-3) of the correct option.`;
         return response.data.response;
       } catch (error) {
         console.error('❌ Claude error:', error);
-        throw error;
+        setSystemWarning('Claude API is unavailable or not configured. Falling back to local Qwen model.');
+        return callLLMForQuestion(prompt, 'qwen2.5');
       }
     }
     
     // Default to qwen2.5 if unsupported model
-    console.warn('⚠️ Unsupported model, using qwen2.5:7b as fallback');
-    const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
-    const response = await axios.post(`${ollamaUrl}/api/generate`, {
-      model: 'qwen2.5:7b',
-      prompt: prompt,
-      stream: false,
-      options: {
-        temperature: 0.7,
-        num_predict: 500
-      }
-    });
-    return response.data.response;
+    console.warn('⚠️ Unsupported model, using qwen2.5 as fallback');
+    return requestOllamaText('qwen2.5', prompt);
   };
 
   const generateFallbackQuestion = (_pointNumber: number, pointTitle: string, pointContent: string): Question => {

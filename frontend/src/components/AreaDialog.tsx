@@ -1624,7 +1624,7 @@ Answer directly without any prefix or suffix.`
   }
 
   const callLocalModel = async (userInput: string, model: string = 'qwen2.5', skipThinking: boolean = false): Promise<string> => {
-    const ollamaModel = model === 'qwen2.5' ? 'qwen2.5:7b' : 'llama2'
+    const ollamaModel = model === 'qwen2.5' ? 'qwen2.5' : 'llama2'
     
     // Start streaming thinking content (hidden during question generation)
     if (showThinking && !skipThinking) {
@@ -1632,7 +1632,7 @@ Answer directly without any prefix or suffix.`
     }
     
     const ollamaUrl = import.meta.env.VITE_OLLAMA_URL || (import.meta.env.PROD ? '/ollama' : 'http://127.0.0.1:11434')
-    const ollamaResponse = await fetch(`${ollamaUrl}/api/generate`, {
+    let ollamaResponse = await fetch(`${ollamaUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1647,6 +1647,31 @@ Answer directly without any prefix or suffix.`
         }
       })
     })
+
+    // Ollama compatibility fallback for environments exposing OpenAI-like endpoints.
+    if (!ollamaResponse.ok && ollamaResponse.status === 404) {
+      const compatResponse = await fetch(`${ollamaUrl}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: ollamaModel,
+          messages: [{ role: 'user', content: userInput }],
+          temperature: 0.3,
+          stream: false
+        })
+      })
+
+      if (compatResponse.ok) {
+        const data = await compatResponse.json()
+        const compatText = data?.choices?.[0]?.message?.content || ''
+        if (showThinking && !skipThinking) {
+          setThinkingContent(prev => prev + compatText)
+        }
+        return compatText
+      }
+
+      ollamaResponse = compatResponse
+    }
     
     if (ollamaResponse.ok) {
       const reader = ollamaResponse.body?.getReader()

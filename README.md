@@ -81,7 +81,7 @@ AI_driven_elearning_sys/
 ## 2) Start Ollama and pull model
 ```bash
 ollama serve
-ollama pull qwen2.5:7b
+ollama pull qwen2.5
 ```
 
 ## 3) Start backend

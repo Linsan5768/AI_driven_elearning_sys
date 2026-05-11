@@ -6,7 +6,7 @@ import axios from 'axios'
 const PortalContainer = styled.div`
   width: 100vw;
   height: 100vh;
-  background-image: url('/teacher.png');
+  /*background-image: url('/Teacherend_Homepage.png');*/
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -134,22 +134,28 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
   }
 `
 
-const ProgressBar = styled.div<{ progress: number }>`
+const ProgressTrack = styled.div`
   width: 100%;
-  height: 8px;
+  height: 12px;
   background: #e0e0e0;
-  border-radius: 4px;
+  border-radius: 10px;
   overflow: hidden;
-  margin: 20px 0;
-  
-  &::after {
-    content: '';
-    display: block;
-    width: ${props => props.progress}%;
-    height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    transition: width 0.3s ease;
-  }
+  margin: 14px 0 10px;
+`
+
+const ProgressFill = styled.div<{ progress: number }>`
+  width: ${props => props.progress}%;
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.35s ease;
+`
+
+const ProgressMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #333;
 `
 
 const CourseCard = styled(motion.div)`
@@ -184,11 +190,39 @@ const KnowledgePoint = styled.div`
 interface CourseData {
   id: string
   subject: string
-  materials: string[]
+  materials: Array<string | {
+    id?: string
+    concept?: string
+    topic?: string
+    level?: string
+    definition?: string
+    facts?: Array<{ fact?: string; numbers?: string[]; source_quote?: string }>
+  }>
   difficulty: 'easy' | 'medium' | 'hard'
   category: string
   fileName: string
   generatedAt: string
+  thinking_trace?: string[]
+  knowledge_structure?: {
+    pipeline?: string[]
+    concept_index?: Array<{
+      concept: string
+      topic: string
+      level: string
+      definition?: { text?: string; source_quotes?: string[] }
+      examples?: Array<{ text?: string; source_quote?: string }>
+      key_facts?: Array<{ fact?: string; numbers?: string[]; source_quote?: string }>
+      relationships?: Array<{ type?: string; target_concept?: string; evidence_quote?: string }>
+    }>
+    topics?: Array<{
+      topic: string
+      levels?: {
+        beginner?: string[]
+        intermediate?: string[]
+        advanced?: string[]
+      }
+    }>
+  }
 }
 
 interface TeacherPortalProps {
@@ -215,18 +249,81 @@ interface ReportInfo {
 }
 
 const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCourseApplied, onLogout }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [generatedCourse, setGeneratedCourse] = useState<CourseData | null>(null)
   const [courses, setCourses] = useState<CourseData[]>([])
   const [reports, setReports] = useState<ReportInfo[]>([])
   const [statusMessage, setStatusMessage] = useState('')
+  const [processingStage, setProcessingStage] = useState('')
+  const [showProcessingThinking, setShowProcessingThinking] = useState(false)
+  const [thinkingSteps, setThinkingSteps] = useState<string[]>([])
   const [replaceExisting, setReplaceExisting] = useState(true) // Default: replace existing courses
   const [isDragging, setIsDragging] = useState(false)
+  const [previewMode, setPreviewMode] = useState<'summary' | 'structure'>('structure')
   // History is always shown now, removed toggle
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const normalizeCourseData = (raw: any): CourseData => {
+    const knowledgeStructure = raw?.knowledge_structure
+    const conceptIndex = Array.isArray(knowledgeStructure?.concept_index)
+      ? knowledgeStructure.concept_index
+      : []
+
+    const safeMaterials: Array<string | {
+      id?: string
+      concept?: string
+      topic?: string
+      level?: string
+      definition?: string
+      facts?: Array<{ fact?: string; numbers?: string[]; source_quote?: string }>
+    }> = Array.isArray(raw?.materials)
+      ? raw.materials.filter((m: any) => {
+          if (typeof m === 'string') return m.trim().length > 0
+          if (m && typeof m === 'object') return Boolean(m.concept || m.definition)
+          return false
+        })
+      : []
+
+    const fallbackFromConcepts: Array<string> = conceptIndex
+      .map((c: any) => {
+        const concept = typeof c?.concept === 'string' ? c.concept.trim() : ''
+        const topic = typeof c?.topic === 'string' ? c.topic.trim() : 'General'
+        if (!concept) return ''
+        return `${topic}: ${concept}`
+      })
+      .filter((x: string) => x.length > 0)
+
+    const materials = safeMaterials.length > 0 ? safeMaterials : fallbackFromConcepts
+
+    const difficultyRaw = String(raw?.difficulty || 'medium').toLowerCase()
+    const difficulty: 'easy' | 'medium' | 'hard' =
+      difficultyRaw === 'easy' || difficultyRaw === 'hard' ? difficultyRaw : 'medium'
+
+    return {
+      id: String(raw?.id || `course_${Date.now()}`),
+      subject: String(raw?.subject || 'Untitled Course'),
+      materials,
+      difficulty,
+      category: String(raw?.category || 'General'),
+      fileName: String(raw?.fileName || raw?.filename || 'unknown'),
+      generatedAt: String(raw?.generatedAt || new Date().toISOString()),
+      thinking_trace: Array.isArray(raw?.thinking_trace) ? raw.thinking_trace : undefined,
+      knowledge_structure: knowledgeStructure
+    }
+  }
+
+  const updateProcessing = (nextProgress: number, stage: string, thought?: string) => {
+    const safeProgress = Math.max(0, Math.min(100, Math.round(nextProgress)))
+    setProgress(safeProgress)
+    setProcessingStage(stage)
+    setStatusMessage(stage)
+    if (thought) {
+      setThinkingSteps(prev => [...prev, thought])
+    }
+  }
 
   // Load course history and reports
   useEffect(() => {
@@ -292,12 +389,22 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
     try {
       const response = await axios.get(`${API_BASE_URL}/courses`)
       if (response.data && response.data.courses) {
-        setCourses(response.data.courses)
+        const normalized = response.data.courses.map((c: any) => normalizeCourseData(c))
+        setCourses(normalized)
         console.log(`📚 Loaded ${response.data.total} historical courses`)
       }
     } catch (error) {
       console.error('Failed to load course list:', error)
     }
+  }
+
+  const renderMaterialText = (m: any): string => {
+    if (typeof m === 'string') return m
+    if (!m || typeof m !== 'object') return String(m)
+    const topic = m.topic ? `[${m.topic}] ` : ''
+    const concept = m.concept || 'Unnamed concept'
+    const definition = m.definition ? `: ${m.definition}` : ''
+    return `${topic}${concept}${definition}`
   }
 
   const handleDeleteCourse = async (courseId: string) => {
@@ -313,23 +420,36 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
     }
   }
 
-  const handleFileSelect = (file: File) => {
+  const handleFilesSelect = (files: FileList | File[]) => {
     const validTypes = ['application/pdf', 'text/plain', 'text/markdown']
     const validExtensions = ['.pdf', '.txt', '.md']
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-    
-    if (validTypes.includes(file.type) || validExtensions.includes(fileExtension)) {
-      setSelectedFile(file)
-      setStatusMessage(`File selected: ${file.name}`)
+    const incoming = Array.from(files)
+    const validFiles: File[] = []
+
+    incoming.forEach(file => {
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
+      if (validTypes.includes(file.type) || validExtensions.includes(fileExtension)) {
+        validFiles.push(file)
+      }
+    })
+
+    if (validFiles.length > 0) {
+      // Replace current selection with new valid files
+      setSelectedFiles(validFiles)
+      if (validFiles.length === 1) {
+        setStatusMessage(`File selected: ${validFiles[0].name}`)
+      } else {
+        setStatusMessage(`Selected ${validFiles.length} files`)
+      }
     } else {
       setStatusMessage('⚠️ Please upload PDF, TXT or MD file')
     }
   }
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      handleFileSelect(file)
+    const files = event.target.files
+    if (files && files.length > 0) {
+      handleFilesSelect(files)
     }
   }
 
@@ -346,68 +466,129 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
     e.preventDefault()
     setIsDragging(false)
     
-    const file = e.dataTransfer.files[0]
-    if (file) {
-      handleFileSelect(file)
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      handleFilesSelect(files)
     }
   }
 
   const handleUploadAndGenerate = async () => {
-    if (!selectedFile) {
-      setStatusMessage('⚠️ Please select a file first')
+    if (selectedFiles.length === 0) {
+      setStatusMessage('⚠️ Please select at least one file first')
       return
     }
 
     setIsProcessing(true)
-    setProgress(0)
-    setStatusMessage('📄 Reading file...')
+    setThinkingSteps([])
+    updateProcessing(5, '📄 Preparing uploaded files...', 'Input files validated and waiting for upload.')
 
     try {
-      // 1. Upload file
-      const formData = new FormData()
-      formData.append('file', selectedFile)
+      // 1. Upload all selected files and combine their text content
+      let combinedTextContent = ''
+      const sourceNames: string[] = []
+
+      for (let index = 0; index < selectedFiles.length; index++) {
+        const file = selectedFiles[index]
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const uploadProgress = 10 + Math.round((index / Math.max(selectedFiles.length, 1)) * 35)
+        updateProcessing(
+          uploadProgress,
+          `📤 Uploading file ${index + 1}/${selectedFiles.length}...`,
+          `Uploading ${file.name}`
+        )
+
+        const uploadResponse = await axios.post(`${API_BASE_URL}/upload-pdf`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+
+        const { text_content } = uploadResponse.data
+        sourceNames.push(file.name)
+        setThinkingSteps(prev => [
+          ...prev,
+          `Extracted text from ${file.name} (${text_content?.length || 0} chars).`
+        ])
+
+        // Mark boundaries between different source files to give LLM more context
+        combinedTextContent += `\n\n===== SOURCE FILE ${index + 1}: ${file.name} =====\n\n${text_content}`
+      }
       
-      setProgress(20)
-      setStatusMessage('📤 Uploading file to server...')
-      
-      const uploadResponse = await axios.post(`${API_BASE_URL}/upload-pdf`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      updateProcessing(50, '🤖 Starting realtime extraction job...', 'Dispatching async generation task.')
+
+      // 2. Start async generation job
+      const startResponse = await axios.post(`${API_BASE_URL}/generate-course-async`, {
+        text_content: combinedTextContent,
+        file_name: sourceNames.join(' + ')
+      })
+
+      const jobId = startResponse.data?.job_id
+      if (!jobId) {
+        throw new Error('No job_id returned from async generation API')
+      }
+
+      // 3. Poll realtime progress from backend
+      let courseResult: any = null
+      let consumedThinkingCount = 0
+      const maxPollRounds = 600 // ~10 minutes if interval is 1s
+
+      for (let round = 0; round < maxPollRounds; round++) {
+        const progressResponse = await axios.get(`${API_BASE_URL}/generate-course-progress/${jobId}`)
+        const job = progressResponse.data
+
+        const backendProgress = typeof job?.progress === 'number' ? Math.max(0, Math.min(100, job.progress)) : 0
+        const mappedProgress = 50 + Math.round((backendProgress / 100) * 50)
+        const stage = job?.stage || 'processing'
+        const detail = job?.detail || 'Processing...'
+        updateProcessing(mappedProgress, `🤖 ${stage}`, detail)
+
+        if (Array.isArray(job?.thinking_trace) && job.thinking_trace.length > consumedThinkingCount) {
+          const newSteps = job.thinking_trace.slice(consumedThinkingCount)
+          consumedThinkingCount = job.thinking_trace.length
+          setThinkingSteps(prev => [...prev, ...newSteps])
         }
-      })
-      
-      const { text_content } = uploadResponse.data
-      
-      setProgress(40)
-      setStatusMessage('🤖 AI Professor analyzing course content...')
-      
-      // 2. Let AI analyze content and generate knowledge points
-      const generateResponse = await axios.post(`${API_BASE_URL}/generate-course`, {
-        text_content,
-        file_name: selectedFile.name
-      })
-      
-      setProgress(80)
-      setStatusMessage('✨ Organizing knowledge points...')
-      
-      const courseData = generateResponse.data
+
+        if (job?.status === 'completed') {
+          courseResult = job?.result
+          break
+        }
+        if (job?.status === 'failed') {
+          throw new Error(job?.error || 'Async generation failed')
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+
+      if (!courseResult) {
+        throw new Error('Generation timeout: no completed result returned')
+      }
+
+      const courseData = normalizeCourseData(courseResult)
+      if (Array.isArray(courseData?.thinking_trace) && courseData.thinking_trace.length > 0) {
+        setThinkingSteps(prev => [...prev, ...(courseData.thinking_trace || [])])
+      }
       setGeneratedCourse(courseData)
       
       // Refresh course list (course saved to file)
       await loadCourses()
       
-      setProgress(100)
-      setStatusMessage('✅ Course generated successfully!')
+      updateProcessing(100, '✅ Course generated successfully!', 'Processing completed and result materialized.')
       
-      // Reset selected file
-      setSelectedFile(null)
+      // Reset selected files
+      setSelectedFiles([])
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
       
     } catch (error: any) {
       console.error('Error processing PDF:', error)
-      setStatusMessage(`❌ Processing failed: ${error.response?.data?.error || error.message}`)
+      updateProcessing(
+        progress || 0,
+        `❌ Processing failed: ${error.response?.data?.error || error.message}`,
+        `Error: ${error.response?.data?.error || error.message}`
+      )
     } finally {
       setIsProcessing(false)
     }
@@ -477,7 +658,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
     <PortalContainer>
       <Header>
         <Title>
-          🧙‍♂️ Computer Magic Academy - Teacher Portal
+          Teacher Portal
         </Title>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <div
@@ -527,6 +708,16 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           transition={{ duration: 0.5 }}
         >
           <h2 style={{ margin: '0 0 20px 0', color: '#333' }}>📚 Upload Course Materials</h2>
+          <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'flex-end' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#333', fontSize: '14px' }}>
+              <input
+                type="checkbox"
+                checked={showProcessingThinking}
+                onChange={(e) => setShowProcessingThinking(e.target.checked)}
+              />
+              Show model thinking process
+            </label>
+          </div>
           
           <UploadSection
             className={isDragging ? 'dragging' : ''}
@@ -536,13 +727,21 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
             onDrop={handleDrop}
           >
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>
-              {selectedFile ? (selectedFile.name.endsWith('.txt') || selectedFile.name.endsWith('.md') ? '📝' : '📄') : '📄'}
+              {selectedFiles.length > 0
+                ? (selectedFiles.every(f => f.name.toLowerCase().endsWith('.txt') || f.name.toLowerCase().endsWith('.md'))
+                    ? '📝'
+                    : '📄')
+                : '📄'}
             </div>
             <h3 style={{ margin: '0 0 10px 0', color: '#667eea' }}>
-              {selectedFile ? selectedFile.name : 'Click or Drag to Upload Course File'}
+              {selectedFiles.length === 0
+                ? 'Click or Drag to Upload Course Files (you can select multiple)'
+                : selectedFiles.length === 1
+                  ? selectedFiles[0].name
+                  : `${selectedFiles.length} files selected`}
             </h3>
             <p style={{ margin: 0, color: '#666' }}>
-              Support PDF, TXT, MD formats • AI will analyze and generate detailed knowledge points
+              Support PDF, TXT, MD formats • You can upload slides, transcripts and notes together • AI will analyze all selected files to generate detailed knowledge points
             </p>
           </UploadSection>
           
@@ -550,10 +749,11 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
             ref={fileInputRef}
             type="file"
             accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
+            multiple
             onChange={handleFileInputChange}
           />
           
-          {selectedFile && (
+          {selectedFiles.length > 0 && (
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
               <Button
                 variant="primary"
@@ -567,10 +767,34 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           
           {isProcessing && (
             <div>
-              <ProgressBar progress={progress} />
-              <p style={{ textAlign: 'center', color: '#667eea', fontWeight: 600 }}>
-                {statusMessage}
-              </p>
+              <ProgressTrack>
+                <ProgressFill progress={progress} />
+              </ProgressTrack>
+              <ProgressMeta>
+                <span>{processingStage || 'Processing...'}</span>
+                <strong>{progress}%</strong>
+              </ProgressMeta>
+              {showProcessingThinking && thinkingSteps.length > 0 && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    background: '#f7f8ff',
+                    border: '1px solid #d9ddff',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    fontSize: '13px',
+                    color: '#333'
+                  }}
+                >
+                  {thinkingSteps.map((step, index) => (
+                    <div key={index} style={{ marginBottom: '6px', lineHeight: 1.45 }}>
+                      {index + 1}. {step}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           
@@ -597,6 +821,21 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ margin: 0, color: '#333' }}>✨ Generated Course Content</h2>
               <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <select
+                  value={previewMode}
+                  onChange={(e) => setPreviewMode(e.target.value as 'summary' | 'structure')}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                    background: '#fff',
+                    color: '#333'
+                  }}
+                >
+                  <option value="structure">🧠 Structured Knowledge</option>
+                  <option value="summary">📚 Legacy Materials</option>
+                </select>
                 <label style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -692,18 +931,82 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
                 </div>
               </div>
               
-              <div>
-                <strong style={{ color: '#667eea', fontSize: '18px' }}>
-                  📚 Knowledge Points ({generatedCourse.materials.length}):
-                </strong>
-                <KnowledgePointList>
-                  {generatedCourse.materials.map((point, index) => (
-                    <KnowledgePoint key={index}>
-                      <strong>{index + 1}. </strong>{point}
-                    </KnowledgePoint>
-                  ))}
-                </KnowledgePointList>
-              </div>
+              {previewMode === 'summary' || !generatedCourse.knowledge_structure?.concept_index?.length ? (
+                <div>
+                  <strong style={{ color: '#667eea', fontSize: '18px' }}>
+                    📚 Knowledge Points ({generatedCourse.materials.length}):
+                  </strong>
+                  <KnowledgePointList>
+                    {generatedCourse.materials.map((point, index) => (
+                      <KnowledgePoint key={index}>
+                        <strong>{index + 1}. </strong>{renderMaterialText(point)}
+                      </KnowledgePoint>
+                    ))}
+                  </KnowledgePointList>
+                </div>
+              ) : (
+                <div>
+                  <strong style={{ color: '#667eea', fontSize: '18px' }}>
+                    🧠 Structured Concepts ({generatedCourse.knowledge_structure.concept_index.length})
+                  </strong>
+                  <KnowledgePointList>
+                    {generatedCourse.knowledge_structure.concept_index.map((concept, index) => (
+                      <KnowledgePoint key={index}>
+                        <div style={{ marginBottom: '8px' }}>
+                          <strong>{index + 1}. {concept.concept}</strong>
+                          <span style={{ marginLeft: '8px', color: '#555' }}>
+                            [{concept.topic} • {concept.level}]
+                          </span>
+                        </div>
+
+                        {concept.definition?.text && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Definition:</strong> {concept.definition.text}
+                          </div>
+                        )}
+
+                        {concept.examples && concept.examples.length > 0 && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Examples:</strong>
+                            <ul style={{ margin: '4px 0 0 18px' }}>
+                              {concept.examples.map((ex, i) => (
+                                <li key={i}>{ex.text || ex.source_quote || '-'}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {concept.key_facts && concept.key_facts.length > 0 && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Key Facts:</strong>
+                            <ul style={{ margin: '4px 0 0 18px' }}>
+                              {concept.key_facts.map((fact, i) => (
+                                <li key={i}>
+                                  {fact.fact || '-'}
+                                  {fact.numbers && fact.numbers.length > 0 ? ` (numbers: ${fact.numbers.join(', ')})` : ''}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {concept.relationships && concept.relationships.length > 0 && (
+                          <div>
+                            <strong>Relationships:</strong>
+                            <ul style={{ margin: '4px 0 0 18px' }}>
+                              {concept.relationships.map((rel, i) => (
+                                <li key={i}>
+                                  {rel.type || 'related-to'} → {rel.target_concept || 'N/A'}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </KnowledgePoint>
+                    ))}
+                  </KnowledgePointList>
+                </div>
+              )}
             </div>
           </Card>
         )}
@@ -733,7 +1036,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
                       </h3>
                       <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: '#111' }}>
                         <span>📁 {course.fileName}</span>
-                        <span>📚 {course.materials.length} Knowledge Points</span>
+                        <span>📚 {(course.materials || []).length} Knowledge Points</span>
                         <span>🏷️ {course.category}</span>
                       </div>
                     </div>

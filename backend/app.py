@@ -20,19 +20,20 @@ import json
 from datetime import datetime
 from uuid import uuid4
 import re
+import threading
+import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configure file upload
-UPLOAD_FOLDER = 'uploads'
-COURSES_FOLDER = 'courses'  # Store generated courses
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+COURSES_FOLDER = os.path.join(BASE_DIR, 'courses')  # Store generated courses
 ALLOWED_EXTENSIONS = {'pdf', 'txt', 'md'}  # Support PDF, TXT, and Markdown
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-if not os.path.exists(COURSES_FOLDER):
-    os.makedirs(COURSES_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(COURSES_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -194,6 +195,76 @@ def update_learning_progress(area_id):
         "game_state": game_state
     })
 
+@app.route('/api/claude-chat', methods=['POST'])
+def claude_chat():
+    """Proxy Claude API calls from frontend to avoid direct browser key usage."""
+    try:
+        data = request.get_json(silent=True) or {}
+        prompt = (data.get('prompt') or '').strip()
+        if not prompt:
+            return jsonify({'error': 'prompt is required'}), 400
+
+        claude_api_key = os.getenv('CLAUDE_API_KEY', '').strip()
+        if not claude_api_key:
+            return jsonify({
+                'error': 'Claude API key is not configured on backend.',
+                'code': 'CLAUDE_KEY_MISSING'
+            }), 503
+
+        import requests
+        response = requests.post(
+            'https://api.anthropic.com/v1/messages',
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': claude_api_key,
+                'anthropic-version': '2023-06-01'
+            },
+            json={
+                'model': 'claude-3-5-sonnet-20241022',
+                'max_tokens': 1000,
+                'messages': [
+                    {'role': 'user', 'content': prompt}
+                ]
+            },
+            timeout=30
+        )
+
+        if response.status_code != 200:
+            return jsonify({
+                'error': 'Claude API request failed',
+                'status_code': response.status_code,
+                'details': response.text[:500]
+            }), 502
+
+        payload = response.json()
+        content = payload.get('content', [])
+        text = ''
+        if isinstance(content, list) and content:
+            text = content[0].get('text', '') or ''
+
+        return jsonify({'response': text})
+    except requests.Timeout:
+        return jsonify({'error': 'Claude API timeout'}), 504
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/google-chat', methods=['POST'])
+def google_chat():
+    """Compatibility endpoint: route frontend Gemini calls to local Ollama."""
+    try:
+        data = request.get_json(silent=True) or {}
+        prompt = (data.get('prompt') or '').strip()
+        if not prompt:
+            return jsonify({'error': 'prompt is required'}), 400
+
+        # Ignore requested cloud model and always use local model.
+        text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        return jsonify({'response': text, 'provider': 'ollama', 'model': 'qwen2.5'})
+    except requests.Timeout:
+        return jsonify({'error': 'Local model timeout'}), 504
+    except Exception as e:
+        return jsonify({'error': f'Local model request failed: {str(e)}'}), 502
+
 # Text extraction function
 def extract_text_from_file(file_path):
     """Extract text from file (supports PDF, TXT, MD)"""
@@ -312,9 +383,855 @@ def parse_structured_txt(text_content):
 
     return metadata, materials
 
+def clean_text_for_chunking(text: str) -> str:
+    """Lightweight cleanup before chunking."""
+    lines = text.splitlines()
+    cleaned = []
+    for ln in lines:
+        s = ln.strip()
+        if not s:
+            continue
+        # Drop obvious noise
+        if "http://" in s or "https://" in s:
+            continue
+        if len(s) < 3:
+            continue
+        cleaned.append(s)
+    return "\n".join(cleaned)
+
+def split_text_into_chunks(text: str, max_chars: int = 2200, overlap_chars: int = 220):
+    """
+    Split text into semantically friendlier chunks for local small LLMs.
+    Preference order: paragraph -> sentence -> fixed windows.
+    """
+    text = clean_text_for_chunking(text)
+    if not text:
+        return []
+
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    chunks = []
+    current = ""
+
+    def push_chunk(content: str):
+        content = content.strip()
+        if content:
+            chunks.append(content)
+
+    for para in paragraphs:
+        # If a single paragraph is too large, split by sentence first
+        if len(para) > max_chars:
+            sentences = re.split(r'(?<=[\.\!\?。！？])\s+', para)
+            tmp = ""
+            for sent in sentences:
+                sent = sent.strip()
+                if not sent:
+                    continue
+                if len(tmp) + len(sent) + 1 <= max_chars:
+                    tmp = f"{tmp} {sent}".strip()
+                else:
+                    if tmp:
+                        push_chunk(tmp)
+                    # If one sentence is still too long, hard split
+                    if len(sent) > max_chars:
+                        start = 0
+                        while start < len(sent):
+                            end = min(start + max_chars, len(sent))
+                            push_chunk(sent[start:end])
+                            start = end
+                        tmp = ""
+                    else:
+                        tmp = sent
+            if tmp:
+                # merge with current if room allows
+                if len(current) + len(tmp) + 2 <= max_chars:
+                    current = f"{current}\n\n{tmp}".strip() if current else tmp
+                else:
+                    push_chunk(current)
+                    current = tmp
+            continue
+
+        # Normal paragraph packing
+        if len(current) + len(para) + 2 <= max_chars:
+            current = f"{current}\n\n{para}".strip() if current else para
+        else:
+            push_chunk(current)
+            current = para
+
+    if current:
+        push_chunk(current)
+
+    # Add lightweight overlap to preserve local context
+    if overlap_chars > 0 and len(chunks) > 1:
+        overlapped = []
+        for i, ch in enumerate(chunks):
+            if i == 0:
+                overlapped.append(ch)
+                continue
+            prev_tail = chunks[i - 1][-overlap_chars:]
+            merged = f"{prev_tail}\n\n{ch}"
+            overlapped.append(merged)
+        chunks = overlapped
+
+    return chunks
+
+def extract_first_json_object(text: str):
+    """Best-effort JSON extraction from LLM responses."""
+    if not text:
+        return None
+    match = re.search(r'\{[\s\S]*\}', text)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group())
+    except Exception:
+        return None
+
+def normalize_concept_key(name: str) -> str:
+    s = (name or '').strip().lower()
+    s = re.sub(r'[\s\-_]+', ' ', s)
+    s = re.sub(r'[^\w\s]', '', s)
+    return s
+
+def _dedupe_str_list(items):
+    seen = set()
+    out = []
+    for it in items:
+        s = str(it).strip()
+        if not s:
+            continue
+        k = s.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(s)
+    return out
+
+def _is_fallback_noise(text: str) -> bool:
+    """
+    Returns True if a candidate concept title extracted by heuristic fallback
+    should be discarded as noise / PDF artefact.
+    """
+    if not text:
+        return True
+    t = text.strip()
+
+    # File separator banners like "===== SOURCE FILE 1: ... ====="
+    if t.startswith('=') or t.startswith('-' * 4):
+        return True
+    if re.search(r'={4,}|[-]{4,}', t):
+        return True
+
+    # Bullet-fragment lines – start with punctuation noise
+    if re.match(r'^[•·►▪■□●\-\*]+', t):
+        return True
+
+    # Lines that start with a PDF keyword prefix but have no real noun/sentence
+    # e.g. "Method: s: • APIs", "Model: ) • Identify is this"
+    if re.match(r'^(Method|Model|Section|Figure|Table|Appendix|Note|Source|Page|Slide)\s*[:：\d]', t, re.IGNORECASE):
+        # Allow only if the rest looks like a real sentence (≥3 alpha words, no bullets)
+        rest = re.sub(r'^[^:：]+[:：]\s*', '', t)
+        words = [w for w in re.split(r'\W+', rest) if len(w) >= 3 and w.isalpha()]
+        has_bullets_in_rest = bool(re.search(r'[•·►▪■□●]', rest))
+        if len(words) < 3 or has_bullets_in_rest:
+            return True
+
+    # Truncated fragments: end in abbreviation mid-word (last word < 4 chars and not a full stop)
+    if re.search(r'\s\S{1,3}$', t) and not t.endswith(('.', ')', '?', '!')):
+        return True
+
+    # Too many bullet chars / slash / pipe symbols – it's a list not a concept title
+    noise_chars = sum(1 for c in t if c in '•·►▪■□●|/\\')
+    if noise_chars >= 3:
+        return True
+
+    # Minimum meaningful alpha content
+    alpha_words = [w for w in re.split(r'\W+', t) if len(w) >= 3 and w.isalpha()]
+    if len(alpha_words) < 2:
+        return True
+
+    return False
+
+def looks_like_non_concept_label(text: str) -> bool:
+    s = (text or '').strip().lower()
+    if not s:
+        return True
+    if s.endswith('?'):
+        return True
+    blocked_prefixes = [
+        'why ', 'what ', 'how ', 'question', 'questions', 'discussion',
+        'case study', 'case studies', 'summary', 'overview', 'agenda',
+        'learning objective', 'learning objectives', 'chapter ', 'section '
+    ]
+    for p in blocked_prefixes:
+        if s.startswith(p):
+            return True
+    return False
+
+def call_ollama_text(prompt: str, model: str = 'qwen2.5', timeout: int = 90, options: dict = None):
+    """
+    Call Ollama with endpoint compatibility:
+    1) legacy /api/generate
+    2) OpenAI-compatible /v1/chat/completions
+    """
+    options = options or {}
+    base_urls = [
+        os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434').rstrip('/'),
+        'http://ollama:11434'
+    ]
+
+    last_error = None
+    for base_url in base_urls:
+        try:
+            resp = requests.post(
+                f'{base_url}/api/generate',
+                json={'model': model, 'prompt': prompt, 'stream': False, 'options': options},
+                timeout=timeout
+            )
+            if resp.status_code == 200:
+                return resp.json().get('response', '')
+
+            # Some environments expose only the OpenAI-compatible path.
+            if resp.status_code == 404:
+                compat_resp = requests.post(
+                    f'{base_url}/v1/chat/completions',
+                    json={
+                        'model': model,
+                        'messages': [{'role': 'user', 'content': prompt}],
+                        'temperature': options.get('temperature', 0.3),
+                        'stream': False
+                    },
+                    timeout=timeout
+                )
+                if compat_resp.status_code == 200:
+                    payload = compat_resp.json()
+                    return (((payload.get('choices') or [{}])[0]).get('message') or {}).get('content', '')
+                last_error = f"{base_url} /v1/chat/completions returned {compat_resp.status_code}"
+            else:
+                last_error = f"{base_url} /api/generate returned {resp.status_code}"
+        except Exception as e:
+            last_error = str(e)
+            continue
+
+    raise RuntimeError(f'Ollama call failed: {last_error}')
+
+def extract_atomic_concepts_from_chunk_llm(chunk_text: str, chunk_idx: int, total_chunks: int):
+    """
+    Stage 1 (single responsibility): extract concept + definition + key facts only.
+    """
+    prompt = f"""
+You are a knowledge modeling extractor.
+Process only CHUNK {chunk_idx}/{total_chunks}.
+
+Definition of "knowledge point":
+- MUST be one of: concept, definition, principle, measurable fact.
+- MUST NOT be: question, slide title, discussion topic, example list.
+
+Task:
+1) Classify chunk items as concept|example|question|section.
+2) Keep all extracted items in output with explicit type.
+3) For examples, set belongs_to to the related concept.
+4) Preserve concrete details and numbers exactly from chunk.
+5) No topic classification and no concept-relationship inference.
+
+Output JSON only:
+{{
+  "chunk_index": {chunk_idx},
+  "items": [
+    {{
+      "type": "concept|example|question|section",
+      "concept": "concept name when type=concept",
+      "belongs_to": "concept name when type=example",
+      "definition": "definition text when type=concept",
+      "definition_quote": "exact supporting quote",
+      "example_text": "example text when type=example",
+      "example_quote": "exact quote for example",
+      "key_facts": [
+        {{
+          "fact": "factual statement",
+          "numbers": ["exact numbers/formulas if present"],
+          "source_quote": "exact supporting quote"
+        }}
+      ]
+    }}
+  ]
+}}
+
+CHUNK:
+\"\"\"
+{chunk_text}
+\"\"\"
+"""
+    try:
+        llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        parsed = extract_first_json_object(llm_text)
+        if not parsed:
+            return None
+        items = parsed.get('items', [])
+        if not isinstance(items, list):
+            items = []
+
+        concept_map = {}
+        pending_examples = []
+
+        for c in items:
+            if not isinstance(c, dict):
+                continue
+            item_type = str(c.get('type', '')).strip().lower()
+
+            # Keep only concept as knowledge nodes. Examples are attached later.
+            if item_type == 'concept':
+                concept = str(c.get('concept', '')).strip()
+                if not concept or looks_like_non_concept_label(concept):
+                    continue
+                key = normalize_concept_key(concept)
+                if key not in concept_map:
+                    concept_map[key] = {
+                        'concept': concept,
+                        'definition': {'text': '', 'source_quotes': []},
+                        'examples': [],
+                        'key_facts': [],
+                        'relationships': []
+                    }
+                definition = str(c.get('definition', '')).strip()
+                definition_quote = str(c.get('definition_quote', '')).strip()
+                if len(definition) > len(concept_map[key]['definition'].get('text', '')):
+                    concept_map[key]['definition']['text'] = definition
+                concept_map[key]['definition']['source_quotes'] = _dedupe_str_list(
+                    concept_map[key]['definition'].get('source_quotes', []) + [definition_quote]
+                )
+
+                key_facts_raw = c.get('key_facts', [])
+                if isinstance(key_facts_raw, list):
+                    for f in key_facts_raw:
+                        if not isinstance(f, dict):
+                            continue
+                        fact = str(f.get('fact', '')).strip()
+                        src = str(f.get('source_quote', '')).strip()
+                        nums = f.get('numbers', [])
+                        if not isinstance(nums, list):
+                            nums = []
+                        nums = _dedupe_str_list(nums)
+                        if fact or src:
+                            concept_map[key]['key_facts'].append({
+                                'fact': fact,
+                                'numbers': nums,
+                                'source_quote': src
+                            })
+            elif item_type == 'example':
+                pending_examples.append({
+                    'belongs_to': str(c.get('belongs_to', '')).strip(),
+                    'text': str(c.get('example_text', '')).strip(),
+                    'source_quote': str(c.get('example_quote', '')).strip()
+                })
+
+        # Attach examples to concept nodes only (discard orphan examples)
+        for ex in pending_examples:
+            belongs_to = ex.get('belongs_to', '')
+            text = ex.get('text', '')
+            quote = ex.get('source_quote', '')
+            if not belongs_to or (not text and not quote):
+                continue
+            key = normalize_concept_key(belongs_to)
+            if key in concept_map:
+                concept_map[key]['examples'].append({
+                    'text': text,
+                    'source_quote': quote
+                })
+
+        normalized = list(concept_map.values())
+        return {'chunk_index': chunk_idx, 'concepts': normalized} if normalized else None
+    except Exception as e:
+        print(f"⚠️ Chunk {chunk_idx} extraction failed: {e}")
+        return None
+
+def deterministic_merge_concepts(chunk_summaries):
+    """
+    Stage 2a deterministic merge (code, not LLM): dedupe + preserve details.
+    """
+    merged = {}
+    for summary in chunk_summaries:
+        for c in summary.get('concepts', []):
+            concept = str(c.get('concept', '')).strip()
+            if not concept:
+                continue
+            key = normalize_concept_key(concept)
+            if key not in merged:
+                merged[key] = {
+                    'id': f'concept_{uuid4().hex[:10]}',
+                    'concept': concept,
+                    'topic': 'General',
+                    'level': 'intermediate',
+                    'definition': {'text': '', 'source_quotes': []},
+                    'examples': [],
+                    'key_facts': [],
+                    'relationships': []
+                }
+            item = merged[key]
+            # Keep longer definition text
+            new_def = c.get('definition', {})
+            if isinstance(new_def, dict):
+                new_def_text = str(new_def.get('text', '')).strip()
+                if len(new_def_text) > len(item['definition'].get('text', '')):
+                    item['definition']['text'] = new_def_text
+                old_quotes = item['definition'].get('source_quotes', [])
+                new_quotes = new_def.get('source_quotes', [])
+                if not isinstance(old_quotes, list):
+                    old_quotes = []
+                if not isinstance(new_quotes, list):
+                    new_quotes = []
+                item['definition']['source_quotes'] = _dedupe_str_list(old_quotes + new_quotes)
+
+            # Merge key facts deterministically by normalized fact text
+            existing_fact_keys = set()
+            for f in item.get('key_facts', []):
+                existing_fact_keys.add(normalize_concept_key(str(f.get('fact', ''))))
+            for f in c.get('key_facts', []):
+                if not isinstance(f, dict):
+                    continue
+                fact_text = str(f.get('fact', '')).strip()
+                fact_key = normalize_concept_key(fact_text)
+                if not fact_key:
+                    continue
+                if fact_key in existing_fact_keys:
+                    # enrich existing numbers/quotes
+                    for ef in item['key_facts']:
+                        if normalize_concept_key(str(ef.get('fact', ''))) == fact_key:
+                            ef_nums = ef.get('numbers', [])
+                            ef_quote = ef.get('source_quote', '')
+                            f_nums = f.get('numbers', [])
+                            if not isinstance(ef_nums, list):
+                                ef_nums = []
+                            if not isinstance(f_nums, list):
+                                f_nums = []
+                            ef['numbers'] = _dedupe_str_list(ef_nums + f_nums)
+                            if len(str(f.get('source_quote', ''))) > len(str(ef_quote)):
+                                ef['source_quote'] = str(f.get('source_quote', '')).strip()
+                            break
+                else:
+                    item['key_facts'].append({
+                        'fact': fact_text,
+                        'numbers': _dedupe_str_list(f.get('numbers', [])),
+                        'source_quote': str(f.get('source_quote', '')).strip()
+                    })
+                    existing_fact_keys.add(fact_key)
+
+            # Merge examples deterministically
+            existing_example_keys = set()
+            for ex in item.get('examples', []):
+                existing_example_keys.add(normalize_concept_key(str(ex.get('text', ''))))
+            for ex in c.get('examples', []):
+                if not isinstance(ex, dict):
+                    continue
+                ex_text = str(ex.get('text', '')).strip()
+                ex_quote = str(ex.get('source_quote', '')).strip()
+                ex_key = normalize_concept_key(ex_text or ex_quote)
+                if not ex_key:
+                    continue
+                if ex_key in existing_example_keys:
+                    # enrich quote if longer
+                    for e0 in item['examples']:
+                        if normalize_concept_key(str(e0.get('text', '') or e0.get('source_quote', ''))) == ex_key:
+                            if len(ex_quote) > len(str(e0.get('source_quote', ''))):
+                                e0['source_quote'] = ex_quote
+                            break
+                else:
+                    item['examples'].append({'text': ex_text, 'source_quote': ex_quote})
+                    existing_example_keys.add(ex_key)
+    return list(merged.values())
+
+def classify_topics_levels_with_llm(concepts, file_name):
+    """
+    Stage 2b LLM only for topic/level classification (no merging).
+    """
+    if not concepts:
+        return {'subject': 'General Course', 'difficulty': 'medium', 'category': 'General', 'labels': []}
+    brief = []
+    for c in concepts[:300]:
+        brief.append({
+            'concept': c.get('concept', ''),
+            'definition': c.get('definition', {}).get('text', '')
+        })
+    prompt = f"""
+Classify concepts by topic and level.
+Do not rewrite definitions. Do not merge.
+
+Return JSON only:
+{{
+  "subject": "course subject",
+  "difficulty": "easy|medium|hard",
+  "category": "short category",
+  "labels": [
+    {{"concept": "exact concept name", "topic": "topic label", "level": "beginner|intermediate|advanced"}}
+  ]
+}}
+
+FILE: {file_name}
+CONCEPTS:
+{json.dumps(brief, ensure_ascii=False)}
+"""
+    try:
+        llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        parsed = extract_first_json_object(llm_text)
+        if not parsed:
+            return {'subject': 'General Course', 'difficulty': 'medium', 'category': 'General', 'labels': []}
+        labels = parsed.get('labels', [])
+        if not isinstance(labels, list):
+            labels = []
+        return {
+            'subject': parsed.get('subject', 'General Course'),
+            'difficulty': parsed.get('difficulty', 'medium'),
+            'category': parsed.get('category', 'General'),
+            'labels': labels
+        }
+    except Exception:
+        return {'subject': 'General Course', 'difficulty': 'medium', 'category': 'General', 'labels': []}
+
+def infer_relationships_with_llm(concepts):
+    """
+    Stage 3 LLM for relationships only.
+    """
+    if not concepts:
+        return []
+    brief = []
+    for c in concepts[:220]:
+        brief.append({
+            'concept': c.get('concept', ''),
+            'definition': c.get('definition', {}).get('text', '')
+        })
+    prompt = f"""
+Build relationships between concepts only.
+No classification, no rewriting definitions.
+
+Return JSON only:
+{{
+  "relationships": [
+    {{"source_concept": "A", "type": "depends-on|part-of|uses|causes|is-a|other", "target_concept": "B", "evidence": "short evidence phrase"}}
+  ]
+}}
+
+CONCEPTS:
+{json.dumps(brief, ensure_ascii=False)}
+"""
+    try:
+        llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        parsed = extract_first_json_object(llm_text)
+        if not parsed:
+            return []
+        rels = parsed.get('relationships', [])
+        return rels if isinstance(rels, list) else []
+    except Exception:
+        return []
+
+def build_topics_from_concepts(concepts):
+    topics_map = {}
+    for c in concepts:
+        topic = str(c.get('topic', 'General')).strip() or 'General'
+        level = str(c.get('level', 'intermediate')).strip().lower()
+        if level not in ['beginner', 'intermediate', 'advanced']:
+            level = 'intermediate'
+        if topic not in topics_map:
+            topics_map[topic] = {'beginner': [], 'intermediate': [], 'advanced': []}
+        topics_map[topic][level].append(c.get('concept', ''))
+    topics = []
+    for topic, levels in topics_map.items():
+        topics.append({
+            'topic': topic,
+            'levels': {
+                'beginner': _dedupe_str_list(levels.get('beginner', [])),
+                'intermediate': _dedupe_str_list(levels.get('intermediate', [])),
+                'advanced': _dedupe_str_list(levels.get('advanced', []))
+            }
+        })
+    return topics
+
+def build_structured_materials(concepts, max_items: int = 200):
+    materials = []
+    for c in concepts[:max_items]:
+        materials.append({
+            'id': c.get('id'),
+            'concept': c.get('concept'),
+            'topic': c.get('topic', 'General'),
+            'level': c.get('level', 'intermediate'),
+            'definition': c.get('definition', {}).get('text', ''),
+            'facts': c.get('key_facts', [])
+        })
+    return materials
+
+def _infer_course_code(subject: str, file_name: str) -> str:
+    candidates = [subject or '', file_name or '']
+    for text in candidates:
+        m = re.search(r'([A-Za-z]{4}\d{4})', text or '')
+        if m:
+            return m.group(1).upper()
+    cleaned = re.sub(r'[^A-Za-z0-9]+', '_', (subject or 'course').strip()).strip('_')
+    return cleaned.upper() or 'COURSE'
+
+def _area_position(index: int):
+    return {'x': 120 + index * 280, 'y': 300 + ((index % 2) * 120 - 60)}
+
+def build_course_path_json(subject, file_name, concepts, topics):
+    """
+    Build teacher-agent friendly course path JSON:
+    Course -> Area -> Concept Node
+    """
+    course_code = _infer_course_code(subject, file_name)
+    topic_to_concepts = {}
+    for c in concepts:
+        topic = str(c.get('topic', 'General')).strip() or 'General'
+        topic_to_concepts.setdefault(topic, []).append(c)
+
+    areas = []
+    concept_id_map = {}
+
+    # Stable per-topic ordering by level then concept title
+    level_rank = {'beginner': 1, 'intermediate': 2, 'advanced': 3}
+    sorted_topics = sorted(topic_to_concepts.keys(), key=lambda x: x.lower())
+
+    for i, topic in enumerate(sorted_topics, start=1):
+        concept_list = topic_to_concepts[topic]
+        concept_list = sorted(
+            concept_list,
+            key=lambda c: (level_rank.get(str(c.get('level', 'intermediate')).lower(), 2), str(c.get('concept', '')).lower())
+        )
+        area_id = f'area_{i}'
+        difficulty = 2
+        if concept_list:
+            avg = sum(level_rank.get(str(c.get('level', 'intermediate')).lower(), 2) for c in concept_list) / len(concept_list)
+            difficulty = 1 if avg < 1.7 else (3 if avg > 2.3 else 2)
+
+        area_obj = {
+            'id': area_id,
+            'name': topic,
+            'description': f'Concept cluster for {topic}',
+            'difficulty': difficulty,
+            'position': _area_position(i - 1),
+            'concept_nodes': []
+        }
+
+        for j, c in enumerate(concept_list, start=1):
+            cid = str(c.get('id', '')).strip() or f'{area_id}_concept_{j}'
+            title = str(c.get('concept', '')).strip() or f'Concept {j}'
+            definition = str((c.get('definition') or {}).get('text', '')).strip()
+            facts = c.get('key_facts', []) if isinstance(c.get('key_facts'), list) else []
+            rels = c.get('relationships', []) if isinstance(c.get('relationships'), list) else []
+            keywords = _dedupe_str_list(
+                [title] +
+                [str(f.get('fact', '')).strip() for f in facts if isinstance(f, dict)]
+            )[:8]
+
+            importance = 3
+            level = str(c.get('level', 'intermediate')).lower()
+            if level == 'beginner':
+                importance = 3
+            elif level == 'advanced':
+                importance = 5
+            else:
+                importance = 4
+            if len(facts) >= 3:
+                importance = min(5, importance + 1)
+
+            concept_node = {
+                'concept_id': cid,
+                'title': title,
+                'summary': definition[:240] if definition else '',
+                'importance': importance,
+                'prerequisites': [],
+                'keywords': keywords,
+                'quiz': [],
+                'npc': {
+                    'role': 'Tutor',
+                    'style': 'Socratic and concise'
+                },
+                'tasks': []
+            }
+
+            # Lightweight default quiz/task templates for teacher-agent refinement.
+            concept_node['quiz'].append({
+                'type': 'single_choice',
+                'prompt': f'Which statement best describes "{title}"?',
+                'options': [],
+                'answer': None
+            })
+            concept_node['tasks'].append({
+                'type': 'explain',
+                'prompt': f'Explain "{title}" with one concrete example.'
+            })
+
+            area_obj['concept_nodes'].append(concept_node)
+            concept_id_map[normalize_concept_key(title)] = cid
+
+        areas.append(area_obj)
+
+    # Fill prerequisites from relationships if possible.
+    title_to_node = {}
+    for area in areas:
+        for node in area.get('concept_nodes', []):
+            title_to_node[normalize_concept_key(node.get('title', ''))] = node
+
+    for c in concepts:
+        src_key = normalize_concept_key(c.get('concept', ''))
+        src_node = title_to_node.get(src_key)
+        if not src_node:
+            continue
+        rels = c.get('relationships', [])
+        if not isinstance(rels, list):
+            continue
+        prereq_ids = []
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            rel_type = str(r.get('type', '')).strip().lower()
+            target = str(r.get('target_concept', '')).strip()
+            if rel_type in ['depends-on', 'part-of', 'uses', 'is-a'] and target:
+                tid = concept_id_map.get(normalize_concept_key(target))
+                if tid:
+                    prereq_ids.append(tid)
+        src_node['prerequisites'] = _dedupe_str_list(prereq_ids)
+
+    return {
+        'course': course_code,
+        'areas': areas
+    }
+
+def build_course_path_schema_template():
+    """Schema template for teacher-side agent output contract."""
+    return {
+        'course': 'INFO4444',
+        'areas': [
+            {
+                'id': 'area_1',
+                'name': 'AI Strategy',
+                'description': 'How firms adopt AI',
+                'difficulty': 2,
+                'position': {'x': 120, 'y': 300},
+                'concept_nodes': [
+                    {
+                        'concept_id': 'concept_12',
+                        'title': 'Dominant Design',
+                        'summary': 'Core idea and practical significance.',
+                        'importance': 5,
+                        'prerequisites': ['concept_8'],
+                        'keywords': ['design', 'standard', 'adoption'],
+                        'quiz': [
+                            {
+                                'type': 'single_choice',
+                                'prompt': 'Which statement best captures Dominant Design?',
+                                'options': ['A', 'B', 'C', 'D'],
+                                'answer': 0
+                            }
+                        ],
+                        'npc': {
+                            'role': 'Tutor',
+                            'style': 'Socratic and concise'
+                        },
+                        'tasks': [
+                            {
+                                'type': 'explain',
+                                'prompt': 'Explain Dominant Design with a real case.'
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+def build_teacher_course_path_prompt(subject, file_name):
+    course_code = _infer_course_code(subject, file_name)
+    return (
+        "You are a teacher-side curriculum path planner.\n"
+        "Generate JSON only (no markdown, no explanation) using this exact hierarchy:\n"
+        "Course -> Area -> Concept Node.\n"
+        "Hard constraints:\n"
+        "1) Root fields: course, areas.\n"
+        "2) areas must be an array of objects with: id,name,description,difficulty,position,concept_nodes.\n"
+        "3) concept_nodes must include: concept_id,title,summary,importance,prerequisites,keywords,quiz,npc,tasks.\n"
+        "4) prerequisites must reference existing concept_id values.\n"
+        "5) difficulty in [1,2,3], importance in [1..5].\n"
+        "6) Keep content concrete and course-specific; avoid placeholders.\n"
+        f"Target course code: {course_code}\n"
+    )
+
+def validate_course_path_json(course_path):
+    errors = []
+    if not isinstance(course_path, dict):
+        return False, ['course_path must be an object']
+    if not isinstance(course_path.get('course'), str) or not course_path.get('course', '').strip():
+        errors.append('course must be a non-empty string')
+    areas = course_path.get('areas')
+    if not isinstance(areas, list):
+        errors.append('areas must be an array')
+        return False, errors
+
+    concept_ids = set()
+    prereq_refs = []
+    for ai, area in enumerate(areas):
+        if not isinstance(area, dict):
+            errors.append(f'areas[{ai}] must be an object')
+            continue
+        for key in ['id', 'name', 'description']:
+            if not isinstance(area.get(key), str) or not area.get(key, '').strip():
+                errors.append(f'areas[{ai}].{key} must be a non-empty string')
+        if not isinstance(area.get('difficulty'), int):
+            errors.append(f'areas[{ai}].difficulty must be integer')
+        pos = area.get('position')
+        if not isinstance(pos, dict) or not isinstance(pos.get('x'), int) or not isinstance(pos.get('y'), int):
+            errors.append(f'areas[{ai}].position must be {{x:int,y:int}}')
+        nodes = area.get('concept_nodes')
+        if not isinstance(nodes, list):
+            errors.append(f'areas[{ai}].concept_nodes must be an array')
+            continue
+        for ci, node in enumerate(nodes):
+            if not isinstance(node, dict):
+                errors.append(f'areas[{ai}].concept_nodes[{ci}] must be an object')
+                continue
+            cid = str(node.get('concept_id', '')).strip()
+            if not cid:
+                errors.append(f'areas[{ai}].concept_nodes[{ci}].concept_id must be non-empty')
+            else:
+                concept_ids.add(cid)
+            for key in ['title', 'summary']:
+                if not isinstance(node.get(key), str):
+                    errors.append(f'areas[{ai}].concept_nodes[{ci}].{key} must be string')
+            if not isinstance(node.get('importance'), int):
+                errors.append(f'areas[{ai}].concept_nodes[{ci}].importance must be integer')
+            if not isinstance(node.get('prerequisites'), list):
+                errors.append(f'areas[{ai}].concept_nodes[{ci}].prerequisites must be array')
+            else:
+                for pid in node.get('prerequisites', []):
+                    if isinstance(pid, str) and pid.strip():
+                        prereq_refs.append(pid.strip())
+            for key in ['keywords', 'quiz', 'tasks']:
+                if not isinstance(node.get(key), list):
+                    errors.append(f'areas[{ai}].concept_nodes[{ci}].{key} must be array')
+            if not isinstance(node.get('npc'), dict):
+                errors.append(f'areas[{ai}].concept_nodes[{ci}].npc must be object')
+
+    # Check prerequisite references after collecting all concept IDs.
+    for pid in prereq_refs:
+        if pid not in concept_ids:
+            errors.append(f'prerequisite reference not found: {pid}')
+
+    return len(errors) == 0, errors
+
+def ensure_valid_course_path(candidate, subject, file_name, concepts, topics):
+    fallback = build_course_path_json(subject, file_name, concepts, topics)
+    ok, errs = validate_course_path_json(candidate)
+    if ok:
+        return candidate, []
+    return fallback, errs
+
 # Use LLM to analyze PDF content and generate course
-def generate_course_from_text(text_content, file_name):
+def generate_course_from_text(text_content, file_name, progress_callback=None):
     """Use LLM to analyze PDF content and generate detailed course knowledge points"""
+    thinking_trace = []
+
+    def emit_progress(progress, stage, detail=None):
+        if progress_callback:
+            try:
+                progress_callback(progress, stage, detail)
+            except Exception:
+                pass
     
     print(f"\n{'='*60}")
     print(f"🔍 Starting file content analysis")
@@ -322,11 +1239,14 @@ def generate_course_from_text(text_content, file_name):
     print(f"📏 Total characters: {len(text_content)}")
     print(f"📝 Content preview:\n{text_content[:300]}")
     print(f"{'='*60}\n")
+    emit_progress(5, "Preparing content", "Initialized extraction pipeline.")
     
     # Check if it's structured TXT format (supports English markers)
     if (
         ('# Course Meta Information' in text_content and '# Course Content' in text_content)
     ):
+        emit_progress(15, "Parsing structured content", "Detected structured TXT format.")
+        thinking_trace.append("Detected structured course text format; using deterministic parser.")
         print("✨ Detected structured TXT format, using dedicated parser...")
         metadata, materials_titles = parse_structured_txt(text_content)
         
@@ -373,94 +1293,265 @@ def generate_course_from_text(text_content, file_name):
                     detailed_materials.append(current_point)
             
             print(f"\n📚 Number of detailed knowledge points extracted: {len(detailed_materials)}")
+            structured_concepts = []
+            for title in (detailed_materials if detailed_materials else materials_titles):
+                concept_name = title.split(':', 1)[0].strip()
+                definition_text = title.split(':', 1)[1].strip() if ':' in title else ''
+                if concept_name:
+                    lv_raw = str(metadata.get('difficulty', 'medium')).strip().lower()
+                    lv_map = {'easy': 'beginner', 'medium': 'intermediate', 'hard': 'advanced'}
+                    structured_concepts.append({
+                        'concept': concept_name,
+                        'topic': metadata.get('category', 'General'),
+                        'level': lv_map.get(lv_raw, 'intermediate'),
+                        'definition': {
+                            'text': definition_text,
+                            'source_quotes': [definition_text] if definition_text else []
+                        },
+                        'examples': [],
+                        'key_facts': [],
+                        'relationships': []
+                    })
             
+            structured_topics = [
+                {
+                    'topic': metadata.get('category', 'General'),
+                    'levels': {
+                        'beginner': [c['concept'] for c in structured_concepts if c.get('level') == 'beginner'],
+                        'intermediate': [c['concept'] for c in structured_concepts if c.get('level') == 'intermediate'],
+                        'advanced': [c['concept'] for c in structured_concepts if c.get('level') == 'advanced']
+                    }
+                }
+            ]
+            course_path_candidate = build_course_path_json(
+                metadata.get('subject', 'General Course'),
+                file_name,
+                structured_concepts,
+                structured_topics
+            )
+            course_path, course_path_errors = ensure_valid_course_path(
+                course_path_candidate,
+                metadata.get('subject', 'General Course'),
+                file_name,
+                structured_concepts,
+                structured_topics
+            )
+            if course_path_errors:
+                thinking_trace.append(
+                    f"Course path validation fallback applied ({len(course_path_errors)} issues fixed)."
+                )
+
             return {
                 'subject': metadata.get('subject', 'General Course'),
-                'materials': detailed_materials if detailed_materials else materials_titles,
+                'materials': build_structured_materials(structured_concepts, max_items=200),
                 'difficulty': metadata.get('difficulty', 'medium'),
-                'category': metadata.get('category', 'General')
+                'category': metadata.get('category', 'General'),
+                'topics': structured_topics,
+                'knowledge_structure': {
+                    'pipeline': ['chunk', 'concept_extraction', 'merge', 'structuring'],
+                    'concept_index': structured_concepts,
+                    'topics': structured_topics
+                },
+                'course_path': course_path,
+                'course_path_agent': {
+                    'prompt_template': build_teacher_course_path_prompt(metadata.get('subject', 'General Course'), file_name),
+                    'schema': build_course_path_schema_template(),
+                    'validation_errors': course_path_errors
+                },
+                'thinking_trace': thinking_trace
             }
     
-    print("📋 Using general text analysis...")
-    
-    # Extract first 8000 characters for analysis (increased sample size)
-    text_sample = text_content[:8000] if len(text_content) > 8000 else text_content
-    
-    prompt = f"""You are a senior professor at the Computer Magic Academy. Carefully read and analyze this course material PDF, then generate detailed course knowledge points.
-
-【Important】You must base your summary of knowledge points on the actual PDF content below. Do not fabricate!
-
-【PDF File Name】: {file_name}
-
-【Complete PDF Content】:
-{text_sample}
-
-【Task】:
-1. Carefully read the PDF content above
-2. Identify the course topic and core concepts
-3. Extract 10-15 key knowledge points from the PDF content
-4. Each knowledge point must come from the actual PDF content, summarize in your own words
-
-【Output Requirements】:
-Strictly output in JSON format, do not include any other text:
-
-{{
-  "subject": "Course name determined from PDF content",
-  "materials": [
-    "Knowledge Point 1: Summary based on PDF content",
-    "Knowledge Point 2: Summary based on PDF content",
-    "Knowledge Point 3: Summary based on PDF content",
-    ...at least 10
-  ],
-  "difficulty": "easy/medium/hard",
-  "category": "Course category"
-}}
-
-Only output JSON, no additional text!"""
-
-    # Try calling LLM (using Ollama)
+    print("📋 Using chunked LLM extraction flow...")
+    emit_progress(20, "Chunking content", "Splitting content into model-friendly chunks.")
+    thinking_trace.append("Starting chunk-based extraction flow for local model.")
     try:
-        import requests
-        
-        print("🤖 Attempting to call Ollama LLM...")
-        
-        # Try using Ollama API
-        ollama_response = requests.post(
-            'http://ollama:11434/api/generate',
-            json={
-                'model': 'qwen2.5',
-                'prompt': prompt,
-                'stream': False
-            },
-            timeout=90
-        )
-        
-        if ollama_response.status_code == 200:
-            response_text = ollama_response.json().get('response', '')
-            print(f"✅ LLM response successful, length: {len(response_text)}")
-            print(f"📝 LLM response preview:\n{response_text[:500]}")
-            
-            # Extract JSON
-            json_match = re.search(r'\{[\s\S]*\}', response_text)
-            if json_match:
-                course_data = json.loads(json_match.group())
-                
-                # Verify required fields
-                if 'subject' in course_data and 'materials' in course_data:
-                    print(f"✅ LLM successfully generated course: {course_data['subject']}")
-                    print(f"📚 Number of knowledge points: {len(course_data['materials'])}")
-                    return course_data
+        chunks = split_text_into_chunks(text_content, max_chars=1000, overlap_chars=120)
+        thinking_trace.append(f"Split material into {len(chunks)} chunks.")
+        emit_progress(30, "Chunking content", f"Generated {len(chunks)} chunks.")
+        print(f"🧩 Generated {len(chunks)} chunks for local model understanding")
+
+        if not chunks:
+            print("⚠️ No chunks generated, falling back")
+            return generate_course_fallback(text_content, file_name)
+
+        chunk_summaries = []
+        total_chunks = max(len(chunks), 1)
+        for idx, chunk in enumerate(chunks, start=1):
+            chunk_progress = 30 + int((idx - 1) / total_chunks * 50)
+            emit_progress(chunk_progress, "Extracting concepts", f"Processing chunk {idx}/{total_chunks}.")
+            thinking_trace.append(f"Analyzing chunk {idx}/{len(chunks)}.")
+            print(f"🔍 Summarizing chunk {idx}/{len(chunks)} (chars={len(chunk)})")
+            summary = extract_atomic_concepts_from_chunk_llm(chunk, idx, len(chunks))
+            if summary and summary.get('concepts'):
+                chunk_summaries.append(summary)
+                thinking_trace.append(
+                    f"Chunk {idx}: extracted {len(summary.get('concepts', []))} atomic concepts."
+                )
+                print(f"✅ Chunk {idx}: extracted {len(summary.get('concepts', []))} concepts")
             else:
-                print("⚠️ No valid JSON found in LLM response")
-        else:
-            print(f"⚠️ LLM response status code: {ollama_response.status_code}")
-    except requests.exceptions.ConnectionError:
-        print("⚠️ Ollama service not running, using intelligent extraction algorithm")
+                thinking_trace.append(f"Chunk {idx}: no stable extraction, skipped.")
+                print(f"⚠️ Chunk {idx}: no valid points extracted")
+            emit_progress(
+                30 + int(idx / total_chunks * 50),
+                "Extracting concepts",
+                f"Completed chunk {idx}/{total_chunks}."
+            )
+
+        if not chunk_summaries:
+            print("⚠️ No chunk summaries extracted, falling back")
+            return generate_course_fallback(text_content, file_name)
+
+        print(f"🧠 Merging {len(chunk_summaries)} chunk summaries (deterministic)...")
+        emit_progress(82, "Merging concepts", "Deterministic merge and deduplication.")
+        thinking_trace.append("Merged chunk outputs with deterministic deduplication (code-based).")
+
+        merged_concepts = deterministic_merge_concepts(chunk_summaries)
+        if merged_concepts:
+            thinking_trace.append(f"Deterministic merge retained {len(merged_concepts)} unique concepts.")
+
+        emit_progress(88, "Classifying concepts", "Classifying topic and level for each concept.")
+        cls = classify_topics_levels_with_llm(merged_concepts, file_name)
+        labels_map = {}
+        for lb in cls.get('labels', []):
+            if not isinstance(lb, dict):
+                continue
+            labels_map[normalize_concept_key(str(lb.get('concept', '')))] = {
+                'topic': str(lb.get('topic', 'General')).strip() or 'General',
+                'level': str(lb.get('level', 'intermediate')).strip().lower()
+            }
+        for c in merged_concepts:
+            k = normalize_concept_key(c.get('concept', ''))
+            label = labels_map.get(k)
+            if label:
+                c['topic'] = label.get('topic', 'General')
+                lv = label.get('level', 'intermediate')
+                c['level'] = lv if lv in ['beginner', 'intermediate', 'advanced'] else 'intermediate'
+
+        emit_progress(93, "Building relationships", "Inferring concept relationships.")
+        rels = infer_relationships_with_llm(merged_concepts)
+        by_source = {}
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            source = normalize_concept_key(str(r.get('source_concept', '')))
+            if not source:
+                continue
+            by_source.setdefault(source, []).append({
+                'type': str(r.get('type', 'other')).strip() or 'other',
+                'target_concept': str(r.get('target_concept', '')).strip(),
+                'evidence_quote': str(r.get('evidence', '')).strip()
+            })
+        for c in merged_concepts:
+            c['relationships'] = by_source.get(normalize_concept_key(c.get('concept', '')), [])
+
+        topics = build_topics_from_concepts(merged_concepts)
+        materials = build_structured_materials(merged_concepts, max_items=200)
+
+        if merged_concepts:
+            thinking_trace.append(
+                f"Structured output ready: {len(merged_concepts)} concepts, {len(topics)} topics."
+            )
+            print(f"✅ Structured extraction successful: {cls.get('subject', 'General Course')}")
+            print(f"📚 Final concept count: {len(merged_concepts)}")
+            course_path_candidate = build_course_path_json(
+                cls.get('subject', 'General Course'),
+                file_name,
+                merged_concepts,
+                topics
+            )
+            course_path, course_path_errors = ensure_valid_course_path(
+                course_path_candidate,
+                cls.get('subject', 'General Course'),
+                file_name,
+                merged_concepts,
+                topics
+            )
+            if course_path_errors:
+                thinking_trace.append(
+                    f"Course path validation fallback applied ({len(course_path_errors)} issues fixed)."
+                )
+
+            return {
+                'subject': cls.get('subject', 'General Course'),
+                'materials': materials,
+                'difficulty': cls.get('difficulty', 'medium'),
+                'category': cls.get('category', 'General'),
+                'topics': topics,
+                'knowledge_structure': {
+                    'pipeline': ['chunk', 'concept_extraction', 'merge', 'structuring'],
+                    'concept_index': merged_concepts,
+                    'topics': topics
+                },
+                'course_path': course_path,
+                'course_path_agent': {
+                    'prompt_template': build_teacher_course_path_prompt(cls.get('subject', 'General Course'), file_name),
+                    'schema': build_course_path_schema_template(),
+                    'validation_errors': course_path_errors
+                },
+                'thinking_trace': thinking_trace
+            }
+
+        print("⚠️ Merge step failed, switching to heuristic merge fallback")
+        # Heuristic merge fallback without second LLM pass
+        seen = set()
+        flattened = []
+        for c in chunk_summaries:
+            for p in c.get('concepts', []):
+                concept = str(p.get('concept', '')).strip()
+                topic = str(p.get('topic_guess', 'General')).strip() or 'General'
+                level = str(p.get('level_guess', 'intermediate')).strip().lower()
+                definition_obj = p.get('definition', {})
+                definition = ''
+                if isinstance(definition_obj, dict):
+                    definition = str(definition_obj.get('text', '')).strip()
+                key = concept.lower()
+                if concept and key not in seen:
+                    seen.add(key)
+                    if definition:
+                        flattened.append(f"{topic} - {level.title()}: {concept} ({definition})")
+                    else:
+                        flattened.append(f"{topic} - {level.title()}: {concept}")
+
+        if flattened:
+            thinking_trace.append(
+                f"Used heuristic merge fallback with {len(flattened[:30])} consolidated points."
+            )
+            course_path, course_path_errors = ensure_valid_course_path(
+                {
+                    'course': _infer_course_code("General Course", file_name),
+                    'areas': []
+                },
+                "General Course",
+                file_name,
+                [],
+                []
+            )
+            return {
+                'subject': "General Course",
+                'materials': [{'id': f'fallback_{i+1}', 'concept': x, 'topic': 'General', 'level': 'intermediate', 'definition': '', 'facts': []} for i, x in enumerate(flattened[:30])],
+                'difficulty': 'medium',
+                'category': 'General',
+                'topics': [],
+                'knowledge_structure': {
+                    'pipeline': ['chunk', 'concept_extraction', 'merge', 'structuring'],
+                    'concept_index': [],
+                    'topics': []
+                },
+                'course_path': course_path,
+                'course_path_agent': {
+                    'prompt_template': build_teacher_course_path_prompt("General Course", file_name),
+                    'schema': build_course_path_schema_template(),
+                    'validation_errors': course_path_errors
+                },
+                'thinking_trace': thinking_trace
+            }
     except Exception as e:
-        print(f"⚠️ LLM call failed: {e}")
+        thinking_trace.append(f"Chunk flow failed: {e}")
+        print(f"⚠️ Chunked flow failed: {e}")
     
     # If LLM fails, use intelligent extraction based on PDF content
     print("\n🔄 Using intelligent extraction algorithm to analyze PDF content...")
+    emit_progress(92, "Fallback extraction", "LLM flow unavailable; using heuristic extraction.")
     return generate_course_fallback(text_content, file_name)
 
 def generate_course_fallback(text_content, file_name):
@@ -510,6 +1601,10 @@ def generate_course_fallback(text_content, file_name):
             category = cat
             break
     
+    # Pre-clean: strip multi-file separator banners before any extraction
+    text_content = re.sub(r'={3,}[^\n]*={3,}', '', text_content)
+    text_content = re.sub(r'-{3,}[^\n]*-{3,}', '', text_content)
+
     # Intelligently extract knowledge points
     materials = []
     
@@ -523,10 +1618,12 @@ def generate_course_fallback(text_content, file_name):
         if (re.match(r'^\d+[\.\)、]', line) or 
             re.match(r'^[•·►▪■□]', line) or
             re.match(r'^(Chapter|chapter|第)[\s一二三四五六七八九十\d]+[章节:]', line, re.IGNORECASE) or
-            any(kw in line.lower() for kw in ['definition', 'concept', 'principle', 'method', 'technique', 'algorithm', 'protocol', 'model', 'feature', 'advantage', 'introduction', 'overview'])):
+            any(kw in line.lower() for kw in ['definition', 'concept', 'principle', 'technique', 'algorithm', 'protocol', 'feature', 'advantage', 'introduction', 'overview'])):
             if 15 < len(line) < 150:  # Appropriate length
                 clean_line = re.sub(r'^[\d\.\)、•·►▪■□\s]+', '', line)  # Remove prefix
-                if clean_line and not clean_line.lower().startswith('chapter') and not re.match(r'^第', clean_line):
+                if (clean_line and not clean_line.lower().startswith('chapter')
+                        and not re.match(r'^第', clean_line)
+                        and not _is_fallback_noise(clean_line)):
                     materials.append(clean_line)
     
     print(f"   ✓ Extracted {len(materials)} structured content items")
@@ -539,7 +1636,8 @@ def generate_course_fallback(text_content, file_name):
             sent = sent.strip()
             # Filter sentences containing key terms
             if (30 < len(sent) < 200 and 
-                any(kw in sent.lower() for kw in ['is', 'are', 'refers', 'includes', 'consists', 'mainly', 'can', 'able', 'used', 'implement', 'through', 'define', 'definition', 'concept', 'principle'])):
+                any(kw in sent.lower() for kw in ['is', 'are', 'refers', 'includes', 'consists', 'mainly', 'can', 'able', 'used', 'implement', 'through', 'define', 'definition', 'concept', 'principle'])
+                    and not _is_fallback_noise(sent)):
                 materials.append(sent)
                 if len(materials) >= 15:
                     break
@@ -554,7 +1652,7 @@ def generate_course_fallback(text_content, file_name):
             para = para.strip()
             if para:
                 first_sent = re.split(r'[。！？]', para)[0].strip()
-                if 20 < len(first_sent) < 150:
+                if 20 < len(first_sent) < 150 and not _is_fallback_noise(first_sent):
                     materials.append(first_sent)
                     if len(materials) >= 15:
                         break
@@ -568,7 +1666,7 @@ def generate_course_fallback(text_content, file_name):
     for m in materials:
         # Remove special characters and extra spaces
         m_clean = re.sub(r'\s+', ' ', m).strip()
-        if m_clean and m_clean not in seen and len(m_clean) > 10:
+        if m_clean and m_clean not in seen and len(m_clean) > 10 and not _is_fallback_noise(m_clean):
             seen.add(m_clean)
             unique_materials.append(m_clean)
     
@@ -579,11 +1677,14 @@ def generate_course_fallback(text_content, file_name):
         print("🔍 Step 5: Search keyword patterns...")
         # Extract keywords to generate knowledge points
         key_terms = []
-        for keyword in ['definition', 'concept', 'principle', 'method', 'algorithm', 'protocol', 'model', 'architecture', 'feature', 'application']:
-            pattern = f'{keyword}[：:,]?([^.!?\n]{{10,80}})'
+        # Only use safe keywords that don't produce fragment titles
+        for keyword in ['definition', 'concept', 'principle', 'algorithm', 'protocol', 'architecture', 'feature', 'application']:
+            pattern = rf'\b{keyword}\b\s*(?:of|for|in|is|:)?\s*([A-Z][^.!?\n]{{15,80}})'
             matches = re.findall(pattern, text_content, re.IGNORECASE)
             for match in matches[:2]:
-                key_terms.append(f"{keyword.capitalize()}: {match.strip()}")
+                candidate = match.strip()
+                if not _is_fallback_noise(candidate):
+                    key_terms.append(candidate)
         
         unique_materials.extend(key_terms[:10 - len(unique_materials)])
         print(f"   ✓ Added {len(key_terms)} keyword matches")
@@ -596,8 +1697,8 @@ def generate_course_fallback(text_content, file_name):
         scored_sentences = []
         for sent in all_sentences:
             sent = sent.strip()
-            if 30 < len(sent) < 200:
-                score = sum(1 for kw in ['technique', 'method', 'system', 'algorithm', 'model', 'architecture', 'protocol', 'mechanism'] if kw in sent.lower())
+            if 30 < len(sent) < 200 and not _is_fallback_noise(sent):
+                score = sum(1 for kw in ['technique', 'system', 'algorithm', 'architecture', 'protocol', 'mechanism'] if kw in sent.lower())
                 if score > 0:
                     scored_sentences.append((score, sent))
         
@@ -646,11 +1747,56 @@ def generate_course_fallback(text_content, file_name):
         print(f"   {i}. {point[:80]}{'...' if len(point) > 80 else ''}")
     print()
     
+    fallback_concepts = []
+    for i, point in enumerate(final_materials[:15], start=1):
+        fallback_concepts.append({
+            'id': f'fallback_{i}',
+            'concept': point,
+            'topic': category,
+            'level': 'intermediate',
+            'definition': {'text': '', 'source_quotes': []},
+            'examples': [],
+            'key_facts': [],
+            'relationships': []
+        })
+    fallback_topics = build_topics_from_concepts(fallback_concepts)
+
+    course_path_candidate = build_course_path_json(subject, file_name, fallback_concepts, fallback_topics)
+    course_path, course_path_errors = ensure_valid_course_path(
+        course_path_candidate,
+        subject,
+        file_name,
+        fallback_concepts,
+        fallback_topics
+    )
+
     return {
         'subject': subject,
-        'materials': final_materials[:15],
+        'materials': [
+            {
+                'id': f'fallback_{i+1}',
+                'concept': point,
+                'topic': category,
+                'level': 'intermediate',
+                'definition': '',
+                'facts': []
+            }
+            for i, point in enumerate(final_materials[:15])
+        ],
         'difficulty': difficulty,
-        'category': category
+        'category': category,
+        'topics': fallback_topics,
+        'knowledge_structure': {
+            'pipeline': ['chunk', 'concept_extraction', 'merge', 'structuring'],
+            'concept_index': fallback_concepts,
+            'topics': fallback_topics
+        },
+        'course_path': course_path,
+        'course_path_agent': {
+            'prompt_template': build_teacher_course_path_prompt(subject, file_name),
+            'schema': build_course_path_schema_template(),
+            'validation_errors': course_path_errors
+        }
     }
 
 # Teacher Portal API - Upload PDF
@@ -745,6 +1891,7 @@ def generate_course():
         
         # Use LLM to generate course
         course_data = generate_course_from_text(text_content, file_name)
+        thinking_trace = course_data.pop('thinking_trace', [])
         
         print(f"✅ Course generation successful: {course_data.get('subject')}")
         print(f"📚 Number of knowledge points: {len(course_data.get('materials', []))}")
@@ -757,11 +1904,133 @@ def generate_course():
         
         # 💾 Save course to file
         save_course_to_file(course_data)
+        if thinking_trace:
+            course_data['thinking_trace'] = thinking_trace
         
         return jsonify(course_data)
     
     except Exception as e:
         return jsonify({'error': f'Failed to generate course: {str(e)}'}), 500
+
+def _init_generation_job(job_id):
+    with generation_jobs_lock:
+        generation_jobs[job_id] = {
+            'job_id': job_id,
+            'status': 'queued',  # queued | processing | completed | failed
+            'progress': 0,
+            'stage': 'queued',
+            'detail': 'Waiting for worker',
+            'thinking_trace': [],
+            'result': None,
+            'error': None,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+
+def _update_generation_job(job_id, **kwargs):
+    with generation_jobs_lock:
+        job = generation_jobs.get(job_id)
+        if not job:
+            return
+        for k, v in kwargs.items():
+            if k == 'thinking_append' and isinstance(v, str) and v.strip():
+                trace = job.setdefault('thinking_trace', [])
+                trace.append(v.strip())
+            elif k in ['thinking_append']:
+                continue
+            else:
+                job[k] = v
+        job['updated_at'] = datetime.now().isoformat()
+
+def _run_generation_job(job_id, text_content, file_name):
+    try:
+        _update_generation_job(
+            job_id,
+            status='processing',
+            progress=1,
+            stage='processing',
+            detail='Started course generation worker.',
+            thinking_append='Worker started for asynchronous extraction.'
+        )
+
+        def progress_cb(progress, stage, detail=None):
+            _update_generation_job(
+                job_id,
+                status='processing',
+                progress=max(1, min(99, int(progress))),
+                stage=stage,
+                detail=detail or stage,
+                thinking_append=detail if detail else stage
+            )
+
+        course_data = generate_course_from_text(text_content, file_name, progress_callback=progress_cb)
+        thinking_trace = course_data.pop('thinking_trace', [])
+
+        course_data['id'] = f"course_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        course_data['fileName'] = file_name
+        course_data['generatedAt'] = datetime.now().isoformat()
+        course_data['knowledgePointCount'] = len(course_data.get('materials', []))
+
+        save_course_to_file(course_data)
+        if thinking_trace:
+            course_data['thinking_trace'] = thinking_trace
+
+        _update_generation_job(
+            job_id,
+            status='completed',
+            progress=100,
+            stage='completed',
+            detail='Course generation finished.',
+            result=course_data,
+            thinking_append='Course generation completed and saved.'
+        )
+    except Exception as e:
+        _update_generation_job(
+            job_id,
+            status='failed',
+            progress=100,
+            stage='failed',
+            detail='Course generation failed.',
+            error=str(e),
+            thinking_append=f"Generation failed: {e}"
+        )
+
+@app.route('/api/generate-course-async', methods=['POST'])
+def generate_course_async():
+    """Start async course generation and return a job ID for realtime polling."""
+    try:
+        data = request.get_json()
+        text_content = data.get('text_content', '')
+        file_name = data.get('file_name', 'unknown.pdf')
+
+        if not text_content:
+            return jsonify({'error': 'PDF text content is empty'}), 400
+
+        job_id = f"job_{uuid4().hex}"
+        _init_generation_job(job_id)
+
+        worker = threading.Thread(
+            target=_run_generation_job,
+            args=(job_id, text_content, file_name),
+            daemon=True
+        )
+        worker.start()
+
+        return jsonify({
+            'job_id': job_id,
+            'status': 'queued'
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to start generation: {str(e)}'}), 500
+
+@app.route('/api/generate-course-progress/<job_id>', methods=['GET'])
+def generate_course_progress(job_id):
+    """Poll async generation progress."""
+    with generation_jobs_lock:
+        job = generation_jobs.get(job_id)
+        if not job:
+            return jsonify({'error': 'Job not found'}), 404
+        return jsonify(job)
 
 # Store course data (should use database in production)
 course_library = {}
@@ -774,15 +2043,132 @@ battle_records = {}
 # Structure: { student_id: [ { report_id, type, area_id, area_name, generated_at, analysis, ai_summary, title, subtitle }, ... ] }
 student_reports = {}
 
+# Async generation jobs for realtime progress in teacher portal
+generation_jobs = {}
+generation_jobs_lock = threading.Lock()
+
 # Course persistence function
+def _is_strict_course_path_payload(data):
+    return isinstance(data, dict) and isinstance(data.get('course'), str) and isinstance(data.get('areas'), list)
+
+def _convert_strict_course_to_runtime(strict_data, course_id, generated_at=None):
+    """
+    Convert strict 3-layer payload (course->areas->concept_nodes) into
+    runtime-compatible shape for existing frontend/game logic.
+    """
+    course_code = str(strict_data.get('course', 'COURSE')).strip() or 'COURSE'
+    areas = strict_data.get('areas', []) if isinstance(strict_data.get('areas'), list) else []
+
+    materials = []
+    concept_index = []
+    topics_map = {}
+    total_difficulty = 0
+    diff_count = 0
+
+    for area in areas:
+        if not isinstance(area, dict):
+            continue
+        topic = str(area.get('name', 'General')).strip() or 'General'
+        d = area.get('difficulty')
+        if isinstance(d, int):
+            total_difficulty += d
+            diff_count += 1
+        nodes = area.get('concept_nodes', [])
+        if not isinstance(nodes, list):
+            continue
+        topics_map.setdefault(topic, {'beginner': [], 'intermediate': [], 'advanced': []})
+
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            title = str(node.get('title', '')).strip()
+            if not title:
+                continue
+            cid = str(node.get('concept_id', '')).strip() or f'concept_{uuid4().hex[:8]}'
+            summary = str(node.get('summary', '')).strip()
+            importance = node.get('importance', 3)
+            if not isinstance(importance, int):
+                importance = 3
+            level = 'intermediate'
+            if importance <= 2:
+                level = 'beginner'
+            elif importance >= 5:
+                level = 'advanced'
+
+            materials.append({
+                'id': cid,
+                'concept': title,
+                'topic': topic,
+                'level': level,
+                'definition': summary,
+                'facts': []
+            })
+
+            concept_index.append({
+                'id': cid,
+                'concept': title,
+                'topic': topic,
+                'level': level,
+                'definition': {'text': summary, 'source_quotes': []},
+                'examples': [],
+                'key_facts': [],
+                'relationships': []
+            })
+
+            topics_map[topic][level].append(title)
+
+    topics = []
+    for topic, lv in topics_map.items():
+        topics.append({
+            'topic': topic,
+            'levels': {
+                'beginner': _dedupe_str_list(lv.get('beginner', [])),
+                'intermediate': _dedupe_str_list(lv.get('intermediate', [])),
+                'advanced': _dedupe_str_list(lv.get('advanced', []))
+            }
+        })
+
+    avg_difficulty = (total_difficulty / diff_count) if diff_count else 2
+    if avg_difficulty < 1.7:
+        difficulty = 'easy'
+    elif avg_difficulty > 2.3:
+        difficulty = 'hard'
+    else:
+        difficulty = 'medium'
+
+    return {
+        'id': course_id,
+        'subject': course_code,
+        'materials': materials,
+        'difficulty': difficulty,
+        'category': topics[0]['topic'] if topics else 'General',
+        'topics': topics,
+        'knowledge_structure': {
+            'pipeline': ['strict_course_path_import'],
+            'concept_index': concept_index,
+            'topics': topics
+        },
+        'course_path': strict_data,
+        'generatedAt': generated_at or datetime.now().isoformat(),
+        'knowledgePointCount': len(materials)
+    }
+
 def save_course_to_file(course_data):
     """Save course to file"""
     try:
         course_id = course_data['id']
         file_path = os.path.join(COURSES_FOLDER, f"{course_id}.json")
-        
+
+        # Strict mode persistence: only keep 3-layer path in file.
+        strict_payload = course_data.get('course_path')
+        if not _is_strict_course_path_payload(strict_payload):
+            strict_payload = {
+                'course': _infer_course_code(course_data.get('subject', ''), course_data.get('fileName', '')),
+                'areas': []
+            }
+
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(course_data, f, ensure_ascii=False, indent=2)
+            json.dump(strict_payload, f, ensure_ascii=False, indent=2)
         
         print(f"💾 Course saved: {file_path}")
         return True
@@ -794,16 +2180,38 @@ def load_all_courses():
     """Load all courses from files"""
     courses = []
     try:
-        if not os.path.exists(COURSES_FOLDER):
-            return courses
-        
-        for filename in os.listdir(COURSES_FOLDER):
-            if filename.endswith('.json'):
-                file_path = os.path.join(COURSES_FOLDER, filename)
+        # Read from current canonical folder + legacy relative folder (if service used old cwd-based path).
+        candidate_folders = [COURSES_FOLDER]
+        legacy_courses_folder = os.path.join(os.getcwd(), 'courses')
+        if legacy_courses_folder not in candidate_folders:
+            candidate_folders.append(legacy_courses_folder)
+
+        seen_ids = set()
+        for folder in candidate_folders:
+            if not os.path.exists(folder):
+                continue
+            for filename in os.listdir(folder):
+                if not filename.endswith('.json'):
+                    continue
+                file_path = os.path.join(folder, filename)
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
-                        course_data = json.load(f)
-                        courses.append(course_data)
+                        loaded_data = json.load(f)
+                        course_id = loaded_data.get('id') if isinstance(loaded_data, dict) else None
+                        course_id = course_id or filename.replace('.json', '')
+                        if course_id in seen_ids:
+                            continue
+                        seen_ids.add(course_id)
+                        if _is_strict_course_path_payload(loaded_data) and not loaded_data.get('subject'):
+                            generated_at = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                            runtime_course = _convert_strict_course_to_runtime(
+                                loaded_data,
+                                course_id=course_id,
+                                generated_at=generated_at
+                            )
+                            courses.append(runtime_course)
+                        else:
+                            courses.append(loaded_data)
                 except Exception as e:
                     print(f"⚠️  Failed to load course file: {filename}, {str(e)}")
         
@@ -939,7 +2347,36 @@ def apply_course_to_game():
             print(f"✅ Map cleared, starting to add new course\n")
         
         # Parse course structure, group knowledge points by chapter
-        materials = course_data.get('materials', [])
+        raw_materials = course_data.get('materials', [])
+        materials = []
+        for item in raw_materials:
+            # Ensure every material is a plain string so that regex
+            # and chapter parsing logic below will not crash.
+            if isinstance(item, str):
+                materials.append(item)
+            elif isinstance(item, dict):
+                # Structured material object from knowledge extractor
+                if 'concept' in item:
+                    concept = str(item.get('concept', '')).strip()
+                    definition = str(item.get('definition', '')).strip()
+                    topic = str(item.get('topic', 'General')).strip() or 'General'
+                    if concept and definition:
+                        materials.append(f"{topic}: {concept}: {definition}")
+                    elif concept:
+                        materials.append(f"{topic}: {concept}")
+                    else:
+                        materials.append(str(item))
+                # Common pattern from LLM: {"Section Title": "..."}
+                elif 'Section Title' in item:
+                    materials.append(str(item['Section Title']))
+                else:
+                    parts = []
+                    for k, v in item.items():
+                        parts.append(f"{k}: {v}")
+                    if parts:
+                        materials.append(" | ".join(parts))
+            else:
+                materials.append(str(item))
         subject = course_data.get('subject', 'Course')
         category = course_data.get('category', 'General')
         difficulty = course_data.get('difficulty', 'medium')
@@ -1051,7 +2488,7 @@ def apply_course_to_game():
             else:
                 new_areas[previous_area_id]['connections'] = [area_id]
             
-            # Store course materials
+            # Store course materials and cognitive architecture (if present on course)
             course_library[area_id] = {
                 'subject': area_name,
                 'materials': chapter_materials,
@@ -1059,7 +2496,10 @@ def apply_course_to_game():
                 'category': category,
                 'knowledgePointCount': len(chapter_materials),
                 'chapter': chapter_name,
-                'parent_course': subject
+                'parent_course': subject,
+                # Attach the full course-level cognitive architecture so the
+                # student dialog can configure a dedicated agent for this course.
+                'cognitive_architecture': course_data.get('cognitive_architecture')
             }
             
             print(f"✅ Created area: {area_id} - {area_name}")
@@ -1510,27 +2950,16 @@ Instructions:
 
         print("🤖 Generating AI report via Ollama...")
 
-        ollama_response = requests.post(
-            'http://ollama:11434/api/generate',
-            json={
-                'model': 'qwen2.5',
-                'prompt': prompt,
-                'stream': False,
-                'options': {
-                    'temperature': 0.7,
-                    'top_p': 0.9
-                }
-            },
-            timeout=30
-        )
-
-        if ollama_response.status_code == 200:
-            ai_report = ollama_response.json().get('response', '').strip()
+        ai_report = call_ollama_text(
+            prompt=prompt,
+            model='qwen2.5',
+            timeout=30,
+            options={'temperature': 0.7, 'top_p': 0.9}
+        ).strip()
+        if ai_report:
             print(f"✅ AI report generated successfully, length {len(ai_report)} characters")
             return ai_report
-        else:
-            print(f"⚠️ Ollama returned status {ollama_response.status_code}, using fallback report")
-            return generate_fallback_report(analysis_data, report_type=report_type, area_name=area_name)
+        return generate_fallback_report(analysis_data, report_type=report_type, area_name=area_name)
 
     except Exception as e:
         print(f"⚠️ AI report generation failed: {str(e)}. Using fallback text.")
