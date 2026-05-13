@@ -1,5 +1,9 @@
 # AI Driven eLearning System
 
+**Current release: Ver.Teach** — teacher-centric course generation, ontology refinement, and layered course graph (curriculum + concept tree + learning regions). Student map and gameplay consume this graph as the progression backbone.
+
+---
+
 AI Driven eLearning System is a full-stack learning platform that combines:
 - AI-assisted course understanding from uploaded materials (PDF/TXT/MD)
 - Structured knowledge modeling (concepts, facts, examples, topics, levels, relationships)
@@ -28,14 +32,20 @@ The current implementation uses a React + TypeScript frontend and a Flask backen
 - Complete battle/test flows and unlock subsequent areas.
 - Generate area/final reports through backend report APIs.
 
-### Knowledge Modeling Pipeline (Backend)
+### Knowledge Modeling Pipeline (Backend) — Ver.Teach
 Course generation follows a staged pipeline:
-1. **Chunking**: split source text into small chunks suitable for local 7B models.
-2. **Atomic extraction**: per chunk, extract concepts/definitions/facts/examples.
-3. **Deterministic merge**: code-based deduplication and merge (not LLM rewrite).
-4. **Classification**: LLM assigns topic and level.
-5. **Relationship inference**: LLM infers concept relationships.
-6. **Structured output**: `materials` (object array), `knowledge_structure`, topic hierarchy.
+1. **Chunking**: split source text into small chunks suitable for local 7B models (section-aware headers).
+2. **Atomic extraction**: per chunk, strategy-aware extraction (theory, application, case, recap, reference).
+3. **Deterministic merge**: merge chunk outputs with provenance (`source_section_id`).
+4. **Ontology refinement (deterministic)**:
+   - Quality filter (syllabus noise, placeholders, low pedagogical signal).
+   - Dedup / canonical titles (plural, acronym, overlap, optional embeddings).
+   - **Learning tree**: `parent_concept_id` from topic hubs + lexical/definition cues (acyclic).
+   - **Learning graph edges only**: `prerequisite`, `example_of`, `extends`, `application_of` (narrow vocabulary; weak types dropped).
+   - Section-aligned clusters (“learning regions”) for map generation.
+5. **Classification**: LLM assigns topic and level (feeds hierarchy and clustering).
+6. **Relationship inference (LLM, optional)**: constrained to the same four edge types; merged then re-normalized.
+7. **Structured output**: layered v2 `course_path` with `curriculum`, `graph` (concepts, relationships, clusters), plus runtime `materials` / `knowledge_structure` for the app.
 
 ---
 

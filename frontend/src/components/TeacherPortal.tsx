@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import styled from '@emotion/styled'
 import { motion } from 'framer-motion'
 import axios from 'axios'
@@ -248,6 +248,70 @@ interface ReportInfo {
   pdf_filename: string | null
 }
 
+const SECTION_TYPE_OPTIONS = ['MAIN_SECTION', 'SUBSECTION'] as const
+
+const SEMANTIC_ROLE_OPTIONS = [
+  'theory_domain',
+  'application_domain',
+  'case_study',
+  'reference_material',
+  'recap_reinforcement',
+  'general'
+] as const
+
+/** Mirrors backend ROLE_TO_STRATEGY — derived; not edited in UI. */
+const ROLE_TO_STRATEGY: Record<string, string> = {
+  theory_domain: 'concept_dense',
+  application_domain: 'application_mapping',
+  case_study: 'case_analysis',
+  recap_reinforcement: 'recap_linking',
+  reference_material: 'reference_light',
+  general: 'concept_dense'
+}
+
+function strategyForSemanticRole(role: string): string {
+  const r = String(role ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+  const key = r || 'theory_domain'
+  return ROLE_TO_STRATEGY[key] ?? 'concept_dense'
+}
+
+function ontologyDefaultsForSectionType(type: string): {
+  semantic_role: string
+  knowledge_weight: number
+} {
+  switch (type) {
+    case 'SUBSECTION':
+      return { semantic_role: 'theory_domain', knowledge_weight: 0.8 }
+    default:
+      return { semantic_role: 'theory_domain', knowledge_weight: 1 }
+  }
+}
+
+interface EditableCourseSection {
+  id: string
+  title: string
+  page_start: number
+  page_end: number
+  type: string
+  parent: string | null
+  semantic_role: string
+  knowledge_weight: number
+  ignored_pages: number[]
+  case_study_pages: number[]
+  recap_pages: number[]
+}
+
+interface SectionReviewState {
+  combinedTextContent: string
+  pdfPages: Array<{ page: number; text: string; source_name?: string }>
+  sections: EditableCourseSection[]
+  fileName: string
+  maxPage: number
+}
+
 const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCourseApplied, onLogout }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -262,6 +326,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
   const [replaceExisting, setReplaceExisting] = useState(true) // Default: replace existing courses
   const [isDragging, setIsDragging] = useState(false)
   const [previewMode, setPreviewMode] = useState<'summary' | 'structure'>('structure')
+  const [sectionReview, setSectionReview] = useState<SectionReviewState | null>(null)
   // History is always shown now, removed toggle
   
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -472,6 +537,197 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
     }
   }
 
+  const pollGenerationJob = async (jobId: string) => {
+    let courseResult: any = null
+    let consumedThinkingCount = 0
+    const maxPollRounds = 600
+    for (let round = 0; round < maxPollRounds; round++) {
+      const progressResponse = await axios.get(`${API_BASE_URL}/generate-course-progress/${jobId}`)
+      const job = progressResponse.data
+
+      const backendProgress = typeof job?.progress === 'number' ? Math.max(0, Math.min(100, job.progress)) : 0
+      const mappedProgress = 50 + Math.round((backendProgress / 100) * 50)
+      const stage = job?.stage || 'processing'
+      const detail = job?.detail || 'Processing...'
+      updateProcessing(mappedProgress, `🤖 ${stage}`, detail)
+
+      if (Array.isArray(job?.thinking_trace) && job.thinking_trace.length > consumedThinkingCount) {
+        const newSteps = job.thinking_trace.slice(consumedThinkingCount)
+        consumedThinkingCount = job.thinking_trace.length
+        setThinkingSteps(prev => [...prev, ...newSteps])
+      }
+
+      if (job?.status === 'completed') {
+        courseResult = job?.result
+        break
+      }
+      if (job?.status === 'failed') {
+        throw new Error(job?.error || 'Async generation failed')
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+    if (!courseResult) {
+      throw new Error('Generation timeout: no completed result returned')
+    }
+    return courseResult
+  }
+
+  const finishGenerationSuccess = async (courseResult: any) => {
+    const courseData = normalizeCourseData(courseResult)
+    if (Array.isArray(courseData?.thinking_trace) && courseData.thinking_trace.length > 0) {
+      setThinkingSteps(prev => [...prev, ...(courseData.thinking_trace || [])])
+    }
+    setGeneratedCourse(courseData)
+    await loadCourses()
+    updateProcessing(100, '✅ Course generated successfully!', 'Processing completed and result materialized.')
+    setSelectedFiles([])
+    setSectionReview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleCancelSectionReview = () => {
+    setSectionReview(null)
+    setStatusMessage('Section review cancelled')
+  }
+
+  const updateSectionField = (
+    id: string,
+    field:
+      | 'title'
+      | 'page_start'
+      | 'page_end'
+      | 'type'
+      | 'parent'
+      | 'semantic_role'
+      | 'knowledge_weight',
+    raw: string
+  ) => {
+    setSectionReview(prev => {
+      if (!prev) return prev
+      const maxP = prev.maxPage
+      const next = (s: EditableCourseSection): EditableCourseSection => {
+        if (s.id !== id) return s
+        if (field === 'title') {
+          return { ...s, title: raw }
+        }
+        if (field === 'type') {
+          const o = ontologyDefaultsForSectionType(raw)
+          return {
+            ...s,
+            type: raw,
+            ...o,
+            parent: raw === 'MAIN_SECTION' ? null : s.parent
+          }
+        }
+        if (field === 'parent') {
+          const v = raw.trim()
+          return { ...s, parent: v.length > 0 ? v : null }
+        }
+        if (field === 'semantic_role') {
+          return { ...s, semantic_role: raw }
+        }
+        if (field === 'knowledge_weight') {
+          const x = parseFloat(raw)
+          if (Number.isNaN(x)) return s
+          const clamped = Math.max(0, Math.min(2, x))
+          return { ...s, knowledge_weight: clamped }
+        }
+        const n = parseInt(raw, 10)
+        if (Number.isNaN(n)) return { ...s }
+        const clamped = Math.max(1, Math.min(maxP, n))
+        return { ...s, [field]: clamped }
+      }
+      return { ...prev, sections: prev.sections.map(next) }
+    })
+  }
+
+  const removeSectionRow = (id: string) => {
+    setSectionReview(prev => {
+      if (!prev || prev.sections.length <= 1) return prev
+      return { ...prev, sections: prev.sections.filter(s => s.id !== id) }
+    })
+  }
+
+  const addSectionRow = () => {
+    setSectionReview(prev => {
+      if (!prev) return prev
+      const last = prev.sections[prev.sections.length - 1]
+      const start = last ? Math.min(last.page_end + 1, prev.maxPage) : 1
+      const end = Math.max(start, prev.maxPage)
+      return {
+        ...prev,
+        sections: [
+          ...prev.sections,
+          {
+            id: `sec-${Date.now()}`,
+            title: 'New section',
+            page_start: start,
+            page_end: end,
+            type: 'MAIN_SECTION',
+            parent: null,
+            ...ontologyDefaultsForSectionType('MAIN_SECTION'),
+            ignored_pages: [],
+            case_study_pages: [],
+            recap_pages: []
+          }
+        ]
+      }
+    })
+  }
+
+  const handleConfirmSectionGeneration = async () => {
+    if (!sectionReview) return
+    if (sectionReview.sections.length === 0) {
+      setStatusMessage('⚠️ Add at least one section')
+      return
+    }
+    setIsProcessing(true)
+    setThinkingSteps([])
+    updateProcessing(50, '🤖 Starting realtime extraction job...', 'Dispatching async generation with your sections.')
+
+    try {
+      const course_sections = sectionReview.sections.map(s => ({
+        title: s.title.trim() || 'Untitled section',
+        page_start: Math.min(s.page_start, s.page_end),
+        page_end: Math.max(s.page_start, s.page_end),
+        type: s.type || 'MAIN_SECTION',
+        parent: s.parent ?? null,
+        semantic_role: s.semantic_role || 'theory_domain',
+        knowledge_weight: s.knowledge_weight ?? 1,
+        ignored_pages: s.ignored_pages || [],
+        case_study_pages: s.case_study_pages || [],
+        recap_pages: s.recap_pages || []
+      }))
+
+      const startResponse = await axios.post(`${API_BASE_URL}/generate-course-async`, {
+        text_content: sectionReview.combinedTextContent,
+        file_name: sectionReview.fileName,
+        pdf_pages: sectionReview.pdfPages,
+        course_sections
+      })
+
+      const jobId = startResponse.data?.job_id
+      if (!jobId) {
+        throw new Error('No job_id returned from async generation API')
+      }
+
+      const courseResult = await pollGenerationJob(jobId)
+      await finishGenerationSuccess(courseResult)
+    } catch (error: any) {
+      console.error('Error processing PDF:', error)
+      updateProcessing(
+        progress || 0,
+        `❌ Processing failed: ${error.response?.data?.error || error.message}`,
+        `Error: ${error.response?.data?.error || error.message}`
+      )
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const handleUploadAndGenerate = async () => {
     if (selectedFiles.length === 0) {
       setStatusMessage('⚠️ Please select at least one file first')
@@ -480,12 +736,15 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
 
     setIsProcessing(true)
     setThinkingSteps([])
+    setSectionReview(null)
     updateProcessing(5, '📄 Preparing uploaded files...', 'Input files validated and waiting for upload.')
 
     try {
-      // 1. Upload all selected files and combine their text content
       let combinedTextContent = ''
+      let combinedPdfPages: Array<{ page: number; text: string; source_name?: string }> | null = null
       const sourceNames: string[] = []
+      let lastProposedSections: Array<Record<string, unknown>> | null = null
+      let lastMaxPage = 1
 
       for (let index = 0; index < selectedFiles.length; index++) {
         const file = selectedFiles[index]
@@ -505,83 +764,127 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
           }
         })
 
-        const { text_content } = uploadResponse.data
+        const { text_content, pdf_pages, proposed_sections, max_page } = uploadResponse.data
         sourceNames.push(file.name)
+        if (typeof max_page === 'number' && max_page > 0) {
+          lastMaxPage = max_page
+        }
         setThinkingSteps(prev => [
           ...prev,
           `Extracted text from ${file.name} (${text_content?.length || 0} chars).`
         ])
 
-        // Mark boundaries between different source files to give LLM more context
+        if (
+          selectedFiles.length === 1 &&
+          Array.isArray(pdf_pages) &&
+          pdf_pages.length > 0
+        ) {
+          combinedPdfPages = pdf_pages.map(
+            (p: { page?: number; text?: string; layout?: Record<string, unknown> }, i: number) => ({
+              page: typeof p.page === 'number' ? p.page : i + 1,
+              text: String(p.text ?? ''),
+              source_name: file.name,
+              ...(p.layout && typeof p.layout === 'object' ? { layout: p.layout } : {})
+            })
+          )
+        }
+
+        if (
+          selectedFiles.length === 1 &&
+          Array.isArray(proposed_sections) &&
+          proposed_sections.length > 0
+        ) {
+          lastProposedSections = proposed_sections
+        }
+
         combinedTextContent += `\n\n===== SOURCE FILE ${index + 1}: ${file.name} =====\n\n${text_content}`
       }
-      
+
+      const singlePdf =
+        selectedFiles.length === 1 &&
+        selectedFiles[0].name.toLowerCase().endsWith('.pdf')
+
+      if (
+        singlePdf &&
+        combinedPdfPages &&
+        lastProposedSections &&
+        lastProposedSections.length > 0
+      ) {
+        const editable: EditableCourseSection[] = lastProposedSections.map((row, i) => {
+          const parseNumArr = (v: unknown): number[] =>
+            Array.isArray(v) ? v.map(x => Number(x)).filter(n => !Number.isNaN(n)) : []
+          const rawT = String(row.type ?? 'MAIN_SECTION').trim().toUpperCase()
+          const legacyMap: Record<string, { type: string; semantic?: string }> = {
+            CASE_STUDY: { type: 'SUBSECTION', semantic: 'case_study' },
+            RECAP: { type: 'SUBSECTION', semantic: 'recap_reinforcement' },
+            REFERENCE: { type: 'SUBSECTION', semantic: 'reference_material' }
+          }
+          const migrated = legacyMap[rawT]
+          const coercedType = migrated?.type ?? rawT
+          const rowType = (SECTION_TYPE_OPTIONS as readonly string[]).includes(coercedType)
+            ? coercedType
+            : 'MAIN_SECTION'
+          const defaults = ontologyDefaultsForSectionType(rowType)
+          const srRaw = String(row.semantic_role ?? '').trim()
+          const sr =
+            srRaw.length > 0 ? srRaw : migrated?.semantic && migrated.semantic.length > 0 ? migrated.semantic : defaults.semantic_role
+          let kw = Number(row.knowledge_weight)
+          if (Number.isNaN(kw)) kw = defaults.knowledge_weight
+          kw = Math.max(0, Math.min(2, kw))
+          return {
+            id: `sec-${Date.now()}-${i}`,
+            title: String(row.title || '').trim() || `Section ${i + 1}`,
+            page_start: Math.max(1, Number(row.page_start) || 1),
+            page_end: Math.max(1, Number(row.page_end) || 1),
+            type: rowType,
+            parent: typeof row.parent === 'string' && row.parent.trim().length > 0 ? row.parent.trim() : null,
+            semantic_role: sr,
+            knowledge_weight: kw,
+            ignored_pages: parseNumArr(row.ignored_pages),
+            case_study_pages: parseNumArr(row.case_study_pages),
+            recap_pages: parseNumArr(row.recap_pages)
+          }
+        })
+        if (combinedPdfPages.length > 0) {
+          const mp = Math.max(...combinedPdfPages.map(p => p.page), 1)
+          lastMaxPage = Math.max(lastMaxPage, mp)
+        }
+        setSectionReview({
+          combinedTextContent,
+          pdfPages: combinedPdfPages,
+          sections: editable,
+          fileName: sourceNames.join(' + '),
+          maxPage: lastMaxPage
+        })
+        updateProcessing(40, '📑 Review sections', 'Edit section titles and page ranges, then run AI generation.')
+        setStatusMessage('Review sections below, then click Run AI generation')
+        setIsProcessing(false)
+        return
+      }
+
       updateProcessing(50, '🤖 Starting realtime extraction job...', 'Dispatching async generation task.')
 
-      // 2. Start async generation job
-      const startResponse = await axios.post(`${API_BASE_URL}/generate-course-async`, {
+      const asyncPayload: {
+        text_content: string
+        file_name: string
+        pdf_pages?: Array<{ page: number; text: string; source_name?: string }>
+      } = {
         text_content: combinedTextContent,
         file_name: sourceNames.join(' + ')
-      })
+      }
+      if (combinedPdfPages) {
+        asyncPayload.pdf_pages = combinedPdfPages
+      }
+
+      const startResponse = await axios.post(`${API_BASE_URL}/generate-course-async`, asyncPayload)
 
       const jobId = startResponse.data?.job_id
       if (!jobId) {
         throw new Error('No job_id returned from async generation API')
       }
 
-      // 3. Poll realtime progress from backend
-      let courseResult: any = null
-      let consumedThinkingCount = 0
-      const maxPollRounds = 600 // ~10 minutes if interval is 1s
-
-      for (let round = 0; round < maxPollRounds; round++) {
-        const progressResponse = await axios.get(`${API_BASE_URL}/generate-course-progress/${jobId}`)
-        const job = progressResponse.data
-
-        const backendProgress = typeof job?.progress === 'number' ? Math.max(0, Math.min(100, job.progress)) : 0
-        const mappedProgress = 50 + Math.round((backendProgress / 100) * 50)
-        const stage = job?.stage || 'processing'
-        const detail = job?.detail || 'Processing...'
-        updateProcessing(mappedProgress, `🤖 ${stage}`, detail)
-
-        if (Array.isArray(job?.thinking_trace) && job.thinking_trace.length > consumedThinkingCount) {
-          const newSteps = job.thinking_trace.slice(consumedThinkingCount)
-          consumedThinkingCount = job.thinking_trace.length
-          setThinkingSteps(prev => [...prev, ...newSteps])
-        }
-
-        if (job?.status === 'completed') {
-          courseResult = job?.result
-          break
-        }
-        if (job?.status === 'failed') {
-          throw new Error(job?.error || 'Async generation failed')
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      }
-
-      if (!courseResult) {
-        throw new Error('Generation timeout: no completed result returned')
-      }
-
-      const courseData = normalizeCourseData(courseResult)
-      if (Array.isArray(courseData?.thinking_trace) && courseData.thinking_trace.length > 0) {
-        setThinkingSteps(prev => [...prev, ...(courseData.thinking_trace || [])])
-      }
-      setGeneratedCourse(courseData)
-      
-      // Refresh course list (course saved to file)
-      await loadCourses()
-      
-      updateProcessing(100, '✅ Course generated successfully!', 'Processing completed and result materialized.')
-      
-      // Reset selected files
-      setSelectedFiles([])
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-      
+      const courseResult = await pollGenerationJob(jobId)
+      await finishGenerationSuccess(courseResult)
     } catch (error: any) {
       console.error('Error processing PDF:', error)
       updateProcessing(
@@ -753,15 +1056,240 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
             onChange={handleFileInputChange}
           />
           
-          {selectedFiles.length > 0 && (
+          {selectedFiles.length > 0 && !sectionReview && (
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
               <Button
                 variant="primary"
                 onClick={handleUploadAndGenerate}
                 disabled={isProcessing}
               >
-                {isProcessing ? '🔄 Processing...' : '✨ Generate Course'}
+                {isProcessing
+                  ? '🔄 Processing...'
+                  : selectedFiles.length === 1 &&
+                      selectedFiles[0].name.toLowerCase().endsWith('.pdf')
+                    ? '📑 Upload & review sections'
+                    : '✨ Generate course'}
               </Button>
+            </div>
+          )}
+
+          {sectionReview && (
+            <div
+              style={{
+                marginTop: '24px',
+                padding: '20px',
+                background: 'rgba(102, 126, 234, 0.08)',
+                borderRadius: '16px',
+                border: '1px solid rgba(102, 126, 234, 0.35)'
+              }}
+            >
+              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>
+                Course sections
+              </h3>
+              <p style={{ margin: '0 0 16px 0', color: '#555', fontSize: '14px', lineHeight: 1.5 }}>
+                Proposed section boundaries use a deterministic rule engine: hierarchy type is only MAIN or SUB;
+                pedagogical role is semantic_role (case study, recap, references, etc.). Reference sections are skipped
+                in concept-graph chunks; case/recap slides can be split as child chunks under the parent section. You can
+                override roles and weights below. Extraction pipeline is derived from semantic_role on the server.
+                Pages are 1–{sectionReview.maxPage}.
+              </p>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ textAlign: 'left', borderBottom: '2px solid #ddd' }}>
+                      <th style={{ padding: '8px 6px' }}>Section title</th>
+                      <th style={{ padding: '8px 6px', minWidth: '150px' }}>Type</th>
+                      <th style={{ padding: '8px 6px', minWidth: '170px' }}>Parent (optional)</th>
+                      <th style={{ padding: '8px 6px', minWidth: '130px' }}>Semantic role</th>
+                      <th style={{ padding: '8px 6px', width: '72px' }}>Weight</th>
+                      <th style={{ padding: '8px 6px', width: '100px' }}>From page</th>
+                      <th style={{ padding: '8px 6px', width: '100px' }}>To page</th>
+                      <th style={{ padding: '8px 6px', width: '88px' }} />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sectionReview.sections.map(row => {
+                      const roleOpts = Array.from(new Set([...SEMANTIC_ROLE_OPTIONS, row.semantic_role]))
+                      return (
+                      <Fragment key={row.id}>
+                        <tr style={{ borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '8px 6px' }}>
+                            <input
+                              type="text"
+                              value={row.title}
+                              onChange={e => updateSectionField(row.id, 'title', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111'
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <select
+                              value={row.type}
+                              onChange={e => updateSectionField(row.id, 'type', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111',
+                                background: '#fff'
+                              }}
+                            >
+                              {SECTION_TYPE_OPTIONS.map(opt => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <input
+                              type="text"
+                              value={row.parent ?? ''}
+                              onChange={e => updateSectionField(row.id, 'parent', e.target.value)}
+                              placeholder={row.type === 'MAIN_SECTION' ? 'None' : 'Parent MAIN section'}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111'
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <select
+                              value={row.semantic_role}
+                              onChange={e => updateSectionField(row.id, 'semantic_role', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111',
+                                background: '#fff'
+                              }}
+                            >
+                              {roleOpts.map(opt => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <input
+                              type="number"
+                              min={0}
+                              max={2}
+                              step={0.1}
+                              value={row.knowledge_weight}
+                              onChange={e => updateSectionField(row.id, 'knowledge_weight', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111'
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <input
+                              type="number"
+                              min={1}
+                              max={sectionReview.maxPage}
+                              value={row.page_start}
+                              onChange={e =>
+                                updateSectionField(row.id, 'page_start', e.target.value)
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111'
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <input
+                              type="number"
+                              min={1}
+                              max={sectionReview.maxPage}
+                              value={row.page_end}
+                              onChange={e => updateSectionField(row.id, 'page_end', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #ccc',
+                                color: '#111'
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 6px' }}>
+                            <Button
+                              type="button"
+                              variant="danger"
+                              onClick={() => removeSectionRow(row.id)}
+                              disabled={sectionReview.sections.length <= 1}
+                            >
+                              Remove
+                            </Button>
+                          </td>
+                        </tr>
+                        <tr key={`${row.id}-meta`}>
+                          <td
+                            colSpan={8}
+                            style={{
+                              fontSize: '12px',
+                              color: '#666',
+                              padding: '0 8px 10px 8px',
+                              lineHeight: 1.4
+                            }}
+                          >
+                            Auto: pipeline {strategyForSemanticRole(row.semantic_role)} (from role) • skip pages [{row.ignored_pages?.length ? row.ignored_pages.join(', ') : '—'}] • case
+                            slides [{row.case_study_pages?.length ? row.case_study_pages.join(', ') : '—'}] • recap
+                            slides [{row.recap_pages?.length ? row.recap_pages.join(', ') : '—'}]
+                          </td>
+                        </tr>
+                      </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div
+                style={{
+                  marginTop: '16px',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Button type="button" variant="secondary" onClick={addSectionRow}>
+                  + Add section
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleConfirmSectionGeneration}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? '🔄 Generating...' : '▶ Run AI generation'}
+                </Button>
+                <Button type="button" variant="secondary" onClick={handleCancelSectionReview}>
+                  Cancel review
+                </Button>
+              </div>
             </div>
           )}
           
