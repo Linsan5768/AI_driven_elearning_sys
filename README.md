@@ -2,6 +2,12 @@
 
 **Current release: Ver.Teach** — teacher-centric course generation, ontology refinement, and layered course graph (curriculum + concept tree + learning regions). Student map and gameplay consume this graph as the progression backbone.
 
+### Ver.Teach at a glance
+
+From documents to a playable learning world: upload → AI extraction → ontology refinement → learning-world graph (hierarchy, four relationship types, regional clusters / biomes) → gamified exploration.
+
+![Ver.Teach: AI-powered learning world — workflow, graph, hierarchy, relationships, clusters](docs/ver-teach-overview.png)
+
 ---
 
 AI Driven eLearning System is a full-stack learning platform that combines:
@@ -63,6 +69,8 @@ Course generation follows a staged pipeline:
 
 ```text
 AI_driven_elearning_sys/
+├── docs/
+│   └── ver-teach-overview.png   # Ver.Teach architecture infographic
 ├── backend/
 │   ├── app.py
 │   ├── requirements.txt
