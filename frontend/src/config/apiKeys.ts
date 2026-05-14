@@ -29,7 +29,11 @@ export const MODEL_CONFIG = {
   CLOUD_MODELS: {
     'claude-3.5': 'claude-3-5-sonnet-20241022',
     'gpt-4o': 'gpt-4o',
-    'gemini-1.5': 'gemini-1.5-pro'
+    // Backend reads GEMINI_MODEL; these are typical generativelanguage v1beta ids (Gemini 3 era).
+    'gemini-3': 'gemini-3.1-flash-lite',
+    'gemini-3-flash': 'gemini-3-flash-preview',
+    'gemini-3.1-pro': 'gemini-3.1-pro-preview',
+    'gemini-1.5': 'gemini-3.1-flash-lite'
   }
 }
 
@@ -40,6 +44,9 @@ export const checkAPIKey = (model: string): boolean => {
       return API_KEYS.CLAUDE_API_KEY !== 'your_claude_api_key_here'
     case 'gpt-4o':
       return API_KEYS.OPENAI_API_KEY !== 'your_openai_api_key_here'
+    case 'gemini-3':
+    case 'gemini-3-flash':
+    case 'gemini-3.1-pro':
     case 'gemini-1.5':
       return API_KEYS.GOOGLE_AI_API_KEY !== 'your_google_ai_api_key_here'
     default:

@@ -252,20 +252,30 @@ def claude_chat():
 
 @app.route('/api/google-chat', methods=['POST'])
 def google_chat():
-    """Compatibility endpoint: route frontend Gemini calls to local Ollama."""
+    """Proxy Gemini-style chat: uses Gemini when LLM_PROVIDER / key allow, else Ollama."""
     try:
         data = request.get_json(silent=True) or {}
         prompt = (data.get('prompt') or '').strip()
         if not prompt:
             return jsonify({'error': 'prompt is required'}), 400
 
-        # Ignore requested cloud model and always use local model.
-        text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        req_model = (data.get('model') or '').strip()
+        text = call_llm_text(
+            prompt=prompt,
+            model=req_model or 'qwen2.5',
+            timeout=90,
+        )
+        prov = _llm_provider_resolved()
+        if prov == 'gemini':
+            used = _normalize_gemini_model_id(os.getenv('GEMINI_MODEL', _DEFAULT_GEMINI_REST_MODEL) or _DEFAULT_GEMINI_REST_MODEL)
+            if req_model and req_model.startswith('gemini-'):
+                used = _normalize_gemini_model_id(req_model)
+            return jsonify({'response': text, 'provider': 'gemini', 'model': used})
         return jsonify({'response': text, 'provider': 'ollama', 'model': 'qwen2.5'})
     except requests.Timeout:
         return jsonify({'error': 'Local model timeout'}), 504
     except Exception as e:
-        return jsonify({'error': f'Local model request failed: {str(e)}'}), 502
+        return jsonify({'error': f'LLM request failed: {str(e)}'}), 502
 
 def _pymupdf_page_layout_stats(page) -> dict:
     """
@@ -961,7 +971,9 @@ CHUNK:
 {chunk_text}
 \"\"\"
 """
-    llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+    llm_text = call_llm_text(
+        prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+    )
     parsed = extract_first_json_object(llm_text)
     if not parsed:
         return None
@@ -1085,7 +1097,9 @@ CHUNK:
 {chunk_text}
 \"\"\"
 """
-    llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+    llm_text = call_llm_text(
+        prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+    )
     parsed = extract_first_json_object(llm_text)
     if not parsed:
         return None
@@ -1201,7 +1215,9 @@ CHUNK:
 {chunk_text}
 \"\"\"
 """
-    llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+    llm_text = call_llm_text(
+        prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+    )
     parsed = extract_first_json_object(llm_text)
     if not parsed:
         return None
@@ -1279,7 +1295,9 @@ CHUNK:
 {chunk_text}
 \"\"\"
 """
-    llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+    llm_text = call_llm_text(
+        prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+    )
     parsed = extract_first_json_object(llm_text)
     if not parsed:
         return None
@@ -1377,7 +1395,9 @@ CHUNK:
 {chunk_text}
 \"\"\"
 """
-    llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+    llm_text = call_llm_text(
+        prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+    )
     parsed = extract_first_json_object(llm_text)
     if not parsed:
         return None
@@ -1450,7 +1470,9 @@ CHUNK:
 {chunk_text}
 \"\"\"
 """
-    llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+    llm_text = call_llm_text(
+        prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+    )
     parsed = extract_first_json_object(llm_text)
     if not parsed:
         return None
@@ -2985,11 +3007,78 @@ def split_text_into_chunks(text: str, max_chars: int = 2200, overlap_chars: int 
 
     return chunks
 
+def _extract_balanced_json_slice(s: str, start: int):
+    """Return substring from start (index of '{') through matching '}' using JSON-ish string rules."""
+    depth = 0
+    in_str = False
+    esc = False
+    i = start
+    while i < len(s):
+        ch = s[i]
+        if esc:
+            esc = False
+            i += 1
+            continue
+        if in_str:
+            if ch == '\\':
+                esc = True
+            elif ch == '"':
+                in_str = False
+            i += 1
+            continue
+        if ch == '"':
+            in_str = True
+            i += 1
+            continue
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                return s[start : i + 1]
+        i += 1
+    return None
+
+
+def _parse_first_json_object_from_string(s: str):
+    """Try json.loads on first balanced {...} object in s."""
+    if not s:
+        return None
+    pos = 0
+    while True:
+        start = s.find('{', pos)
+        if start < 0:
+            break
+        chunk = _extract_balanced_json_slice(s, start)
+        if chunk:
+            try:
+                return json.loads(chunk)
+            except Exception:
+                pass
+        pos = start + 1
+    return None
+
+
 def extract_first_json_object(text: str):
-    """Best-effort JSON extraction from LLM responses."""
+    """Best-effort JSON extraction from LLM responses (markdown fences, Gemini prose wrappers)."""
     if not text:
         return None
-    match = re.search(r'\{[\s\S]*\}', text)
+    s = str(text).strip()
+    if not s:
+        return None
+
+    m_fence = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', s, re.IGNORECASE)
+    if m_fence:
+        inner = m_fence.group(1).strip()
+        got = _parse_first_json_object_from_string(inner)
+        if got is not None:
+            return got
+
+    got = _parse_first_json_object_from_string(s)
+    if got is not None:
+        return got
+
+    match = re.search(r'\{[\s\S]*\}', s)
     if not match:
         return None
     try:
@@ -3546,6 +3635,201 @@ def _ontology_quality_filtered_chunk_output(out: dict):
     return out
 
 
+def _google_ai_api_key() -> str:
+    return (os.getenv('GOOGLE_AI_API_KEY') or os.getenv('GEMINI_API_KEY') or '').strip()
+
+
+# Default REST id when GEMINI_MODEL is unset: Gemini 3.1 Flash‑Lite (stable, cost‑efficient for many chunk calls).
+# Override with GEMINI_MODEL or bulk fallback with GEMINI_FALLBACK_MODEL.
+_DEFAULT_GEMINI_REST_MODEL = (os.getenv('GEMINI_FALLBACK_MODEL') or 'gemini-3.1-flash-lite').strip() or 'gemini-3.1-flash-lite'
+
+# Studio / marketing labels and discontinued 1.x–2.x slugs → v1beta :generateContent ids
+# Ref: https://ai.google.dev/gemini-api/docs/models/gemini
+_GEMINI_MODEL_API_ALIASES = {
+    'gemini-1.5-pro': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-1.5-pro-latest': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-1.5-flash': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-1.5-flash-latest': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-2.0-flash': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-2.0-flash-lite': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-pro': _DEFAULT_GEMINI_REST_MODEL,
+    'gemini-pro-vision': _DEFAULT_GEMINI_REST_MODEL,
+    # Gemini 3 names as shown in Google AI Studio (no API suffix)
+    'gemini-3.1-pro': 'gemini-3.1-pro-preview',
+    'gemini-3-pro': 'gemini-3.1-pro-preview',
+    'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
+    'gemini-3-flash': 'gemini-3-flash-preview',
+    'gemini-3.1-flash': 'gemini-3-flash-preview',
+    'gemini-3-flash-lite': 'gemini-3.1-flash-lite-preview',
+}
+_GEMINI_MODEL_REMAP_LOGGED = set()
+
+
+def _normalize_gemini_model_id(model_id: str) -> str:
+    """Map legacy or UI model labels to REST ids for generativelanguage v1beta :generateContent."""
+    mid = (model_id or '').strip()
+    mid = mid.replace('models/', '', 1).strip()
+    if not mid:
+        return _DEFAULT_GEMINI_REST_MODEL
+    key = mid.lower()
+    mapped = _GEMINI_MODEL_API_ALIASES.get(key)
+    if mapped:
+        if key not in _GEMINI_MODEL_REMAP_LOGGED and mapped.lower() != key:
+            _GEMINI_MODEL_REMAP_LOGGED.add(key)
+            print(
+                f"ℹ️ Gemini model id '{mid}' → '{mapped}' for REST API. "
+                f"Set GEMINI_MODEL explicitly to silence this hint."
+            )
+        return mapped
+    return mid
+
+
+_teacher_llm_lock = threading.Lock()
+# None = follow process env (LLM_PROVIDER). Set to 'gemini' | 'ollama' | 'auto' from teacher UI without restart.
+_teacher_llm_provider_override = None
+
+
+def _get_teacher_llm_provider_override():
+    with _teacher_llm_lock:
+        return _teacher_llm_provider_override
+
+
+def _set_teacher_llm_provider_override(mode):
+    """mode: None to clear (use env), or 'gemini'|'ollama'|'auto'."""
+    global _teacher_llm_provider_override
+    with _teacher_llm_lock:
+        if mode is None or (
+            isinstance(mode, str) and mode.strip().lower() in ('', 'inherit', 'env', 'reset', 'default', 'clear')
+        ):
+            _teacher_llm_provider_override = None
+        else:
+            _teacher_llm_provider_override = str(mode).strip().lower()
+
+
+def _llm_provider_resolved() -> str:
+    """
+    ollama — local Ollama only (default).
+    gemini — Google Generative Language API when a key is set; otherwise falls back to ollama.
+    auto — gemini if GOOGLE_AI_API_KEY / GEMINI_API_KEY is set, else ollama.
+
+    Teacher portal can override via POST /api/teacher/llm-settings (no server restart).
+    """
+    ovr = _get_teacher_llm_provider_override()
+    if ovr in ('gemini', 'ollama', 'auto'):
+        raw = ovr
+    else:
+        raw = (os.getenv('LLM_PROVIDER') or 'ollama').strip().lower()
+    if raw == 'auto':
+        return 'gemini' if _google_ai_api_key() else 'ollama'
+    if raw == 'gemini':
+        if not _google_ai_api_key():
+            print('⚠️ LLM_PROVIDER=gemini but no GOOGLE_AI_API_KEY/GEMINI_API_KEY; using Ollama.')
+            return 'ollama'
+        return 'gemini'
+    return 'ollama'
+
+
+@app.route('/api/teacher/llm-settings', methods=['GET', 'POST'])
+def teacher_llm_settings():
+    """Runtime LLM routing for course generation (Gemini vs local Ollama)."""
+    if request.method == 'GET':
+        env_raw = (os.getenv('LLM_PROVIDER') or 'ollama').strip().lower()
+        ovr = _get_teacher_llm_provider_override()
+        eff = _llm_provider_resolved()
+        return jsonify({
+            'env_llm_provider': env_raw,
+            'override': ovr,
+            'effective_provider': eff,
+            'has_gemini_key': bool(_google_ai_api_key()),
+            'ollama_default_model': 'qwen2.5',
+            'gemini_model': _normalize_gemini_model_id(
+                os.getenv('GEMINI_MODEL', _DEFAULT_GEMINI_REST_MODEL) or _DEFAULT_GEMINI_REST_MODEL
+            ),
+        })
+    try:
+        data = request.get_json(silent=True) or {}
+        mode = str(data.get('llm_provider') or data.get('provider') or '').strip().lower()
+        if mode in ('inherit', 'env', 'reset', 'default', 'clear', ''):
+            _set_teacher_llm_provider_override(None)
+            return jsonify({
+                'ok': True,
+                'override': None,
+                'effective_provider': _llm_provider_resolved(),
+            })
+        if mode not in ('gemini', 'ollama', 'auto'):
+            return jsonify({'error': 'llm_provider must be gemini, ollama, auto, or inherit/env to clear'}), 400
+        _set_teacher_llm_provider_override(mode)
+        print(f"🧠 Teacher LLM override set to: {mode} (effective={_llm_provider_resolved()})")
+        return jsonify({
+            'ok': True,
+            'override': mode,
+            'effective_provider': _llm_provider_resolved(),
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def call_gemini_text(
+    prompt: str,
+    model: str = None,
+    timeout: int = 90,
+    options: dict = None,
+) -> str:
+    """Single-turn text via Gemini REST (no extra Python deps)."""
+    options = options or {}
+    key = _google_ai_api_key()
+    if not key:
+        raise RuntimeError('Missing GOOGLE_AI_API_KEY or GEMINI_API_KEY for Gemini.')
+    model_id = _normalize_gemini_model_id(model or os.getenv('GEMINI_MODEL', _DEFAULT_GEMINI_REST_MODEL) or _DEFAULT_GEMINI_REST_MODEL)
+    try:
+        temperature = float(options.get('temperature', 0.3))
+    except (TypeError, ValueError):
+        temperature = 0.3
+    try:
+        top_p = float(options.get('top_p', 0.95))
+    except (TypeError, ValueError):
+        top_p = 0.95
+
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent'
+    gen_cfg = {
+        'temperature': min(max(temperature, 0.0), 2.0),
+        'topP': min(max(top_p, 0.0), 1.0),
+    }
+    if options.get('response_mime_json'):
+        gen_cfg['responseMimeType'] = 'application/json'
+    body = {
+        'contents': [{'parts': [{'text': prompt}]}],
+        'generationConfig': gen_cfg,
+    }
+    resp = requests.post(url, params={'key': key}, json=body, timeout=timeout)
+    if resp.status_code != 200:
+        raise RuntimeError(f'Gemini HTTP {resp.status_code}: {resp.text[:1200]}')
+    data = resp.json()
+    cands = data.get('candidates') or []
+    if not cands:
+        fb = data.get('promptFeedback') or data.get('error') or data
+        raise RuntimeError(f'Gemini returned no candidates: {str(fb)[:800]}')
+    parts = ((cands[0].get('content') or {}).get('parts')) or []
+    out_chunks = []
+    for p in parts:
+        if isinstance(p, dict) and p.get('text'):
+            out_chunks.append(str(p['text']))
+    return ''.join(out_chunks).strip()
+
+
+def call_llm_text(prompt: str, model: str = 'qwen2.5', timeout: int = 90, options: dict = None) -> str:
+    """Route text generation to Gemini or Ollama based on LLM_PROVIDER and API keys."""
+    opts = dict(options or {})
+    if _llm_provider_resolved() == 'gemini':
+        gem_default = _normalize_gemini_model_id(os.getenv('GEMINI_MODEL', _DEFAULT_GEMINI_REST_MODEL) or _DEFAULT_GEMINI_REST_MODEL)
+        gem_model = gem_default
+        if model and (model.startswith('gemini-') or model.startswith('models/')):
+            gem_model = _normalize_gemini_model_id(model.replace('models/', '', 1))
+        return call_gemini_text(prompt=prompt, model=gem_model, timeout=timeout, options=opts)
+    opts.pop('response_mime_json', None)
+    return call_ollama_text(prompt=prompt, model=model, timeout=timeout, options=opts)
+
+
 def call_ollama_text(prompt: str, model: str = 'qwen2.5', timeout: int = 90, options: dict = None):
     """
     Call Ollama with endpoint compatibility:
@@ -4051,6 +4335,205 @@ def _ontology_assign_primary_source_section(concepts, section_order):
         c['source_section_ids'] = _dedupe_str_list(ids)
 
 
+def _parent_tree_would_cycle(by_id: dict, child_id: str, parent_id: str) -> bool:
+    """True if assigning parent_id as parent of child_id would create a parent pointer cycle."""
+    if not child_id or not parent_id or child_id == parent_id:
+        return True
+    cur, seen = parent_id, set()
+    for _ in range(len(by_id) + 4):
+        if not cur:
+            return False
+        if cur == child_id:
+            return True
+        if cur in seen:
+            return True
+        seen.add(cur)
+        node = by_id.get(cur)
+        if not node:
+            return False
+        cur = str(node.get('parent_concept_id') or '').strip()
+    return True
+
+
+def _prune_mutual_prerequisites_on_concepts(concepts):
+    """
+    Anti-symmetric rule for prerequisite: forbid A→B and B→A simultaneously (graph contradiction).
+    Keeps the first prerequisite direction encountered in stable concept/relationship order.
+    """
+    if not concepts:
+        return
+    ordered_edges = []
+    for c in concepts:
+        sk = normalize_concept_key(str(c.get('concept', '')))
+        for r in (c.get('relationships') or []):
+            if not isinstance(r, dict):
+                continue
+            if _map_raw_rel_to_pedagogical(str(r.get('type', ''))) != 'prerequisite':
+                continue
+            tk = normalize_concept_key(str(r.get('target_concept', '')).strip())
+            if sk and tk and sk != tk:
+                ordered_edges.append((sk, tk))
+    first_kept = {}
+    for sk, tk in ordered_edges:
+        a, b = tuple(sorted((sk, tk)))
+        if (a, b) not in first_kept:
+            first_kept[(a, b)] = (sk, tk)
+    all_dir = set(ordered_edges)
+    drop_pairs = set()
+    for sk, tk in ordered_edges:
+        a, b = tuple(sorted((sk, tk)))
+        if (tk, sk) in all_dir and (sk, tk) in all_dir:
+            if first_kept.get((a, b)) != (sk, tk):
+                drop_pairs.add((sk, tk))
+    for c in concepts:
+        sk = normalize_concept_key(str(c.get('concept', '')))
+        rels = c.get('relationships')
+        if not isinstance(rels, list) or not rels:
+            continue
+        new_rels = []
+        for r in rels:
+            if not isinstance(r, dict):
+                new_rels.append(r)
+                continue
+            if _map_raw_rel_to_pedagogical(str(r.get('type', ''))) != 'prerequisite':
+                new_rels.append(r)
+                continue
+            tk = normalize_concept_key(str(r.get('target_concept', '')).strip())
+            if (sk, tk) in drop_pairs:
+                continue
+            new_rels.append(r)
+        c['relationships'] = _dedupe_graph_relationships(new_rels, implicit_source=c.get('concept'))
+
+
+def _ontology_stage_parent_from_prerequisites(concepts):
+    """Fill parent_concept_id from a single primary prerequisite target when still unset."""
+    if not concepts:
+        return
+    by_id = {str(c.get('id', '')).strip(): c for c in concepts if str(c.get('id', '')).strip()}
+    key_to_id = {}
+    for c in concepts:
+        ck = normalize_concept_key(str(c.get('concept', '')))
+        cid = str(c.get('id', '')).strip()
+        if ck and cid:
+            key_to_id[ck] = cid
+    for c in concepts:
+        if c.get('parent_concept_id'):
+            continue
+        cid = str(c.get('id', '')).strip()
+        if not cid:
+            continue
+        cands = []
+        sk = normalize_concept_key(str(c.get('concept', '')))
+        for r in (c.get('relationships') or []):
+            if not isinstance(r, dict):
+                continue
+            if _map_raw_rel_to_pedagogical(str(r.get('type', ''))) != 'prerequisite':
+                continue
+            tk = normalize_concept_key(str(r.get('target_concept', '')).strip())
+            tid = key_to_id.get(tk)
+            if not tid or tid == cid or tid not in by_id:
+                continue
+            tw = float(by_id[tid].get('knowledge_weight', 0) or 0)
+            cands.append((tw, tid, tk))
+        if not cands:
+            continue
+        cands.sort(key=lambda x: (-x[0], x[1]))
+        for tw, tid, tk in cands:
+            if sk == tk:
+                continue
+            par = by_id.get(tid)
+            if par and not _semantic_hierarchy_allows_parent_child(par, c):
+                continue
+            if not _parent_tree_would_cycle(by_id, cid, tid):
+                c['parent_concept_id'] = tid
+                break
+
+
+def _ontology_stage_fallback_parent_chain_by_section(concepts):
+    """Last-resort tree edges: within each source_section_id, chain by level then name (no new cycles)."""
+    if not concepts:
+        return
+    by_id = {str(c.get('id', '')).strip(): c for c in concepts if str(c.get('id', '')).strip()}
+    level_rank = {'beginner': 0, 'intermediate': 1, 'advanced': 2}
+    from collections import defaultdict
+
+    sec_map = defaultdict(list)
+    for c in concepts:
+        sid = str(c.get('source_section_id', 'sec_root')).strip() or 'sec_root'
+        sec_map[sid].append(c)
+    for sid, group in sec_map.items():
+        group.sort(
+            key=lambda c: (
+                level_rank.get(str(c.get('level', 'intermediate')).strip().lower(), 1),
+                len(normalize_concept_key(str(c.get('concept', '')))),
+                str(c.get('concept', '')).lower(),
+            )
+        )
+        for i in range(1, len(group)):
+            child = group[i]
+            if child.get('parent_concept_id'):
+                continue
+            prev = group[i - 1]
+            cid = str(child.get('id', '')).strip()
+            pid = str(prev.get('id', '')).strip()
+            if not cid or not pid or cid == pid:
+                continue
+            if not _parent_tree_would_cycle(by_id, cid, pid):
+                if _semantic_hierarchy_allows_parent_child(prev, child):
+                    child['parent_concept_id'] = pid
+
+
+def _ontology_stage_semantic_hierarchy_enforce(concepts):
+    """
+    Strip parent edges that violate semantic ontology rules (Rules 1–3).
+    Rule 4: non-theory_domain roots prefer a theory_domain parent in the same section when legal.
+    """
+    if not concepts:
+        return
+    from collections import defaultdict
+
+    by_id = {str(c.get('id', '')).strip(): c for c in concepts if str(c.get('id', '')).strip()}
+    for c in concepts:
+        pid = str(c.get('parent_concept_id') or '').strip()
+        if not pid:
+            continue
+        p = by_id.get(pid)
+        if not p or not _semantic_hierarchy_allows_parent_child(p, c):
+            c.pop('parent_concept_id', None)
+
+    sec_map = defaultdict(list)
+    for c in concepts:
+        sid = str(c.get('source_section_id', 'sec_root')).strip() or 'sec_root'
+        sec_map[sid].append(c)
+    for _sid, group in sec_map.items():
+        theory_anchors = [x for x in group if _concept_effective_semantic_role(x) == 'theory_domain']
+        theory_anchors.sort(
+            key=lambda x: (
+                -float(x.get('knowledge_weight', 0) or 0),
+                str(x.get('concept', '')).lower(),
+            )
+        )
+        for c in group:
+            if c.get('parent_concept_id'):
+                continue
+            if _concept_effective_semantic_role(c) == 'theory_domain':
+                continue
+            cid = str(c.get('id', '')).strip()
+            if not cid:
+                continue
+            for t in theory_anchors:
+                if t is c:
+                    continue
+                tid = str(t.get('id', '')).strip()
+                if not tid:
+                    continue
+                if not _semantic_hierarchy_allows_parent_child(t, c):
+                    continue
+                if not _parent_tree_would_cycle(by_id, cid, tid):
+                    c['parent_concept_id'] = tid
+                    break
+
+
 def _ontology_stage_infer_hierarchy(concepts):
     """
     Stage B: build a learning-tree parent for map progression (not a semantic web).
@@ -4091,22 +4574,6 @@ def _ontology_stage_infer_hierarchy(concepts):
                 return c
         return None
 
-    def _would_cycle(child_id, parent_id):
-        cur, seen = parent_id, set()
-        for _ in range(len(by_id) + 3):
-            if not cur:
-                return False
-            if cur == child_id:
-                return True
-            if cur in seen:
-                return True
-            seen.add(cur)
-            node = by_id.get(cur)
-            if not node:
-                return False
-            cur = str(node.get('parent_concept_id') or '').strip()
-        return False
-
     def score_parent_edge(child, parent):
         if child is parent:
             return 0
@@ -4143,6 +4610,8 @@ def _ontology_stage_infer_hierarchy(concepts):
         best_p, best_s = None, 0
         for pool in pools:
             for p in pool:
+                if not _semantic_hierarchy_allows_parent_child(p, child):
+                    continue
                 sc = score_parent_edge(child, p)
                 if sc > best_s:
                     best_p, best_s = p, sc
@@ -4150,8 +4619,10 @@ def _ontology_stage_infer_hierarchy(concepts):
                 break
         if not best_p:
             return None
+        if not _semantic_hierarchy_allows_parent_child(best_p, child):
+            return None
         pid = str(best_p.get('id', '')).strip()
-        if not pid or _would_cycle(cid, pid):
+        if not pid or _parent_tree_would_cycle(by_id, cid, pid):
             return None
         return best_p
 
@@ -4170,12 +4641,20 @@ def _ontology_stage_infer_hierarchy(concepts):
         par = best_parent(child, [pool_ts, pool_t, pool_sec])
         if par is None and hub is not None and hub is not child:
             hid = str(hub.get('id', '')).strip()
-            if hid and not _would_cycle(cid, hid):
+            if (
+                hid
+                and not _parent_tree_would_cycle(by_id, cid, hid)
+                and _semantic_hierarchy_allows_parent_child(hub, child)
+            ):
                 par = hub
         if par is None or par is child:
             continue
         pid = str(par.get('id', '')).strip()
-        if pid and not _would_cycle(cid, pid):
+        if (
+            pid
+            and not _parent_tree_would_cycle(by_id, cid, pid)
+            and _semantic_hierarchy_allows_parent_child(par, child)
+        ):
             child['parent_concept_id'] = pid
 
 
@@ -4342,6 +4821,42 @@ def _export_graph_relation_type(raw: str) -> str:
     return ''
 
 
+def _prune_bidirectional_prerequisite_edges(graph_edges):
+    """
+    Exported graph: drop reverse prerequisite so A→B and B→A cannot both exist.
+    First prerequisite edge per unordered pair wins (stable list order).
+    """
+    if not graph_edges:
+        return graph_edges
+    prereq = []
+    other = []
+    for e in graph_edges:
+        if not isinstance(e, dict):
+            continue
+        if str(e.get('relation', '')).strip() == 'prerequisite':
+            prereq.append(e)
+        else:
+            other.append(e)
+    first_dir = {}
+    kept = []
+    for e in prereq:
+        a = str(e.get('source_concept_id', '')).strip()
+        b = str(e.get('target_concept_id', '')).strip()
+        if not a or not b or a == b:
+            continue
+        key = tuple(sorted((a, b)))
+        if key not in first_dir:
+            first_dir[key] = (a, b)
+            kept.append(e)
+            continue
+        ka, kb = first_dir[key]
+        if (a, b) == (ka, kb):
+            continue
+        if (a, b) == (kb, ka):
+            continue
+    return other + kept
+
+
 def refine_ontology_deterministic(
     concepts,
     sections_normalized=None,
@@ -4377,6 +4892,10 @@ def refine_ontology_deterministic(
         _ontology_assign_primary_source_section(concepts, section_order)
         _ontology_stage_infer_hierarchy(concepts)
         _ontology_stage_pedagogical_relationships(concepts)
+        _prune_mutual_prerequisites_on_concepts(concepts)
+        _ontology_stage_parent_from_prerequisites(concepts)
+        _ontology_stage_fallback_parent_chain_by_section(concepts)
+        _ontology_stage_semantic_hierarchy_enforce(concepts)
         _ontology_assign_primary_source_section(concepts, section_order)
         concepts = _ontology_filter_concept_nodes(concepts)
         n_par = sum(1 for c in concepts if c.get('parent_concept_id'))
@@ -4471,7 +4990,9 @@ CONCEPTS:
 {json.dumps(brief, ensure_ascii=False)}
 """
     try:
-        llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        llm_text = call_llm_text(
+            prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+        )
         parsed = extract_first_json_object(llm_text)
         if not parsed:
             return {'subject': 'General Course', 'difficulty': 'medium', 'category': 'General', 'labels': []}
@@ -4528,7 +5049,9 @@ CONCEPTS:
 {json.dumps(brief, ensure_ascii=False)}
 """
     try:
-        llm_text = call_ollama_text(prompt=prompt, model='qwen2.5', timeout=90)
+        llm_text = call_llm_text(
+            prompt=prompt, model='qwen2.5', timeout=90, options={'response_mime_json': True}
+        )
         parsed = extract_first_json_object(llm_text)
         if not parsed:
             return []
@@ -4602,6 +5125,51 @@ def _normalize_graph_relation_type(raw: str) -> str:
 def _semantic_role_from_merged_concept(c: dict) -> str:
     strat = str(c.get('extraction_strategy') or 'concept_dense').strip().lower()
     return STRATEGY_TO_SEMANTIC_ROLE.get(strat, 'theory_domain')
+
+
+def _concept_effective_semantic_role(c: dict) -> str:
+    """Pedagogical semantic_role for ontology rules (explicit field wins, else strategy/nodeType)."""
+    r = c.get('semantic_role')
+    if isinstance(r, str) and r.strip():
+        t = _sanitize_ontology_token(r.strip())
+        if t:
+            return t
+    strat = str(c.get('extraction_strategy') or '').strip().lower()
+    if strat in STRATEGY_TO_SEMANTIC_ROLE:
+        return STRATEGY_TO_SEMANTIC_ROLE[strat]
+    nt = str(c.get('nodeType') or 'core_concept').strip().lower()
+    return {
+        'core_concept': 'theory_domain',
+        'applied_exploration': 'application_domain',
+        'side_quest': 'case_study',
+        'review': 'recap_reinforcement',
+        'library': 'reference_material',
+    }.get(nt, 'theory_domain')
+
+
+def _semantic_hierarchy_allows_parent_child(parent_c: dict, child_c: dict) -> bool:
+    """
+    Ontology legality for learning-tree ownership (parent owns child in map progression).
+    Rule 1: case_study cannot own theory_domain.
+    Rule 2: application_domain cannot own theory_domain.
+    Rule 3: theory_domain may own theory_domain, case_study, application_domain (plus recap/reference for slides).
+    """
+    pr = _concept_effective_semantic_role(parent_c)
+    cr = _concept_effective_semantic_role(child_c)
+    if pr == 'case_study' and cr == 'theory_domain':
+        return False
+    if pr == 'application_domain' and cr == 'theory_domain':
+        return False
+    if pr == 'theory_domain':
+        return cr in (
+            'theory_domain',
+            'case_study',
+            'application_domain',
+            'recap_reinforcement',
+            'reference_material',
+            'general',
+        )
+    return True
 
 
 def _importance_float_from_merged_concept(c: dict) -> float:
@@ -4781,6 +5349,8 @@ def build_layered_course_document(subject, file_name, concepts, topics, sections
                 'relation': relation,
             })
 
+    graph_relationships = _prune_bidirectional_prerequisite_edges(graph_relationships)
+
     known_section_ids = {str(s.get('section_id') or '').strip() for s in curriculum_sections if str(s.get('section_id') or '').strip()}
     sid_to_cids = {}
     for gc in graph_concepts:
@@ -4828,6 +5398,23 @@ def build_layered_course_document(subject, file_name, concepts, topics, sections
                 clusters[0]['concept_ids'].append(oid)
         for cl in clusters:
             cl['concept_ids'] = _dedupe_str_list(cl['concept_ids'])
+
+    clusters = [cl for cl in clusters if cl.get('concept_ids')]
+    for i, cl in enumerate(clusters):
+        cl['learning_order'] = i
+    if not clusters and graph_concepts:
+        sec0 = curriculum_sections[0] if curriculum_sections and isinstance(curriculum_sections[0], dict) else {}
+        root_sid = str(sec0.get('section_id') or 'sec_root').strip() or 'sec_root'
+        root_title = str(sec0.get('title') or subject or 'Course').strip() or 'Course'
+        role0 = str(sec0.get('semantic_role') or 'theory_domain')
+        clusters = [{
+            'cluster_id': f'cl_{root_sid}',
+            'title': root_title[:240],
+            'section_id': root_sid,
+            'biome': _learning_biome_for_semantic_role(role0),
+            'learning_order': 0,
+            'concept_ids': _dedupe_str_list([gc['concept_id'] for gc in graph_concepts]),
+        }]
 
     return {
         'schema_version': 2,
@@ -5423,6 +6010,14 @@ def generate_course_from_text(
 
         if not merged_concepts and not merged_resources:
             print("⚠️ No concepts or resources after merge, falling back")
+            return generate_course_fallback(text_content, file_name)
+
+        if not merged_concepts and chunk_summaries:
+            print(
+                "⚠️ No concept nodes after merge despite chunk summaries "
+                "(e.g. Gemini markdown / JSON drift or resources-only extraction). "
+                "Using heuristic extraction fallback instead of an empty graph."
+            )
             return generate_course_fallback(text_content, file_name)
 
         cls = {'subject': 'General Course', 'difficulty': 'medium', 'category': 'General', 'labels': []}
@@ -6602,36 +7197,51 @@ def apply_course_to_game():
         
         # Parse course structure, group knowledge points by chapter
         raw_materials = course_data.get('materials', [])
+        subject = course_data.get('subject', 'Course')
+
+        def _flatten_material_item(item):
+            """
+            One display line per knowledge point. Prefer 'Concept: Definition' without repeating
+            the same topic prefix on every line (topic is often a coarse bucket like 'Innovation Models').
+            """
+            if isinstance(item, str):
+                return (item or '').strip()
+            if not isinstance(item, dict):
+                return str(item).strip()
+            concept = str(item.get('concept', '')).strip()
+            definition = str(item.get('definition', '')).strip()
+            topic = str(item.get('topic', 'General')).strip() or 'General'
+            if 'concept' in item:
+                if concept and definition:
+                    return f'{concept}: {definition}'
+                if concept:
+                    if topic and topic != 'General' and topic.lower() not in concept.lower():
+                        return f'{topic}: {concept}'
+                    return concept
+            if 'Section Title' in item:
+                return str(item.get('Section Title') or '').strip()
+            parts = []
+            for k, v in item.items():
+                parts.append(f'{k}: {v}')
+            return ' | '.join(parts).strip() if parts else ''
+
         materials = []
         for item in raw_materials:
-            # Ensure every material is a plain string so that regex
-            # and chapter parsing logic below will not crash.
-            if isinstance(item, str):
-                materials.append(item)
-            elif isinstance(item, dict):
-                # Structured material object from knowledge extractor
-                if 'concept' in item:
-                    concept = str(item.get('concept', '')).strip()
-                    definition = str(item.get('definition', '')).strip()
-                    topic = str(item.get('topic', 'General')).strip() or 'General'
-                    if concept and definition:
-                        materials.append(f"{topic}: {concept}: {definition}")
-                    elif concept:
-                        materials.append(f"{topic}: {concept}")
-                    else:
-                        materials.append(str(item))
-                # Common pattern from LLM: {"Section Title": "..."}
-                elif 'Section Title' in item:
-                    materials.append(str(item['Section Title']))
-                else:
-                    parts = []
-                    for k, v in item.items():
-                        parts.append(f"{k}: {v}")
-                    if parts:
-                        materials.append(" | ".join(parts))
-            else:
-                materials.append(str(item))
-        subject = course_data.get('subject', 'Course')
+            line = _flatten_material_item(item)
+            if line:
+                materials.append(line)
+
+        # Drop exact duplicates (can happen when course merges overlap concepts).
+        _seen_mat = set()
+        _deduped = []
+        for m in materials:
+            key = m.strip().lower()
+            if key in _seen_mat:
+                continue
+            _seen_mat.add(key)
+            _deduped.append(m)
+        materials = _deduped
+
         category = course_data.get('category', 'General')
         difficulty = course_data.get('difficulty', 'medium')
         
@@ -7204,7 +7814,7 @@ Instructions:
 
         print("🤖 Generating AI report via Ollama...")
 
-        ai_report = call_ollama_text(
+        ai_report = call_llm_text(
             prompt=prompt,
             model='qwen2.5',
             timeout=30,

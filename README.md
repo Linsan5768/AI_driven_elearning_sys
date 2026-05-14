@@ -24,6 +24,7 @@ The current implementation uses a React + TypeScript frontend and a Flask backen
 
 ### Teacher Portal
 - Upload learning materials and generate courses asynchronously.
+- **Runtime LLM routing**: switch between **Ollama (local Qwen)** and **Google Gemini** (and **Auto**) from the header without restarting the backend; optional **Env default** clears the override and follows `LLM_PROVIDER` again (`GET`/`POST /api/teacher/llm-settings`).
 - Real-time generation progress with percentage and stage updates.
 - Optional "thinking trace" display while processing.
 - Structured preview mode for generated knowledge (`concept_index`, topics, levels, relationships).
@@ -39,6 +40,11 @@ The current implementation uses a React + TypeScript frontend and a Flask backen
 - Generate area/final reports through backend report APIs.
 
 ### Knowledge Modeling Pipeline (Backend) — Ver.Teach
+
+The layered course artifact ties **curriculum (section tree)** → **concept tree** → **relationship graph** → **map clusters / biomes**. The diagram below matches the JSON shape under `knowledge_structure` / `course_path` (sections, concepts with `semantic_role` and `parent_concept_id`, typed edges, clusters).
+
+![AI Curriculum Knowledge Structure: from course materials to structured JSON and the interactive learning world](docs/ai-curriculum-knowledge-structure.png)
+
 Course generation follows a staged pipeline:
 1. **Chunking**: split source text into small chunks suitable for local 7B models (section-aware headers).
 2. **Atomic extraction**: per chunk, strategy-aware extraction (theory, application, case, recap, reference).
@@ -59,7 +65,7 @@ Course generation follows a staged pipeline:
 
 - **Frontend**: React 19, TypeScript, Vite, Emotion, Framer Motion, Axios
 - **Backend**: Flask 3.1, Flask-CORS, PyPDF2, Requests, ReportLab
-- **LLM**: Ollama (local), optional cloud fallback models
+- **LLM**: Ollama (local, default `qwen2.5`), optional **Google Gemini** via REST (`GOOGLE_AI_API_KEY` / `GEMINI_API_KEY`, `GEMINI_MODEL`, `LLM_PROVIDER`)
 - **Infra**: Docker, Docker Compose, Nginx, Jenkins pipeline files
 - **Persistence (current)**: JSON files for courses, uploads, reports, and game state
 
@@ -70,7 +76,8 @@ Course generation follows a staged pipeline:
 ```text
 AI_driven_elearning_sys/
 ├── docs/
-│   └── ver-teach-overview.png   # Ver.Teach architecture infographic
+│   ├── ver-teach-overview.png              # Ver.Teach workflow / map overview
+│   └── ai-curriculum-knowledge-structure.png  # Layered curriculum → concept → graph → clusters
 ├── backend/
 │   ├── app.py
 │   ├── requirements.txt
@@ -135,7 +142,17 @@ VITE_API_BASE_URL=http://127.0.0.1:8001/api
 VITE_OLLAMA_URL=http://127.0.0.1:11434
 ```
 
-Note: Cloud model keys are currently configured in `frontend/src/config/apiKeys.ts`. For production, migrate keys to environment variables/secrets management.
+### Backend LLM (course generation and chat proxies)
+
+| Variable | Meaning |
+|----------|---------|
+| `LLM_PROVIDER` | `ollama` (default), `gemini`, or `auto` (Gemini when a key is present, else Ollama). |
+| `GOOGLE_AI_API_KEY` or `GEMINI_API_KEY` | Enables Gemini for generation when provider allows it. |
+| `GEMINI_MODEL` | REST model id (legacy ids are normalized to a supported default). |
+
+The teacher UI can override `LLM_PROVIDER` for the running process via `/api/teacher/llm-settings` without editing the shell environment.
+
+Note: Cloud model keys are also referenced in `frontend/src/config/apiKeys.ts` for client-side chat UIs. For production, migrate keys to environment variables or a secrets manager.
 
 ---
 
@@ -162,6 +179,8 @@ The backend exposes REST APIs under `/api`:
 - `POST /api/complete-area/<area_id>`
 - `POST /api/update-learning-progress/<area_id>`
 - `POST /api/upload-pdf`
+- `GET|POST /api/teacher/llm-settings` — runtime course-generation provider (Ollama / Gemini / Auto / clear to env)
+- `POST /api/google-chat` — chat proxy (Gemini or Ollama per provider rules)
 - `POST /api/generate-course`
 - `POST /api/generate-course-async`
 - `GET /api/generate-course-progress/<job_id>`
@@ -202,6 +221,17 @@ This structure is designed for richer downstream rendering and logic (student tu
 - Course generation has both synchronous and asynchronous endpoints; frontend prefers async for progress visualization.
 - Student and teacher UIs include backward-compatibility handling for older course formats.
 - If API behavior appears outdated after code changes, restart backend to ensure newest routes are loaded.
+- Switching **Gemini vs Ollama** for course generation does **not** require a restart when done through the Teacher Portal or `POST /api/teacher/llm-settings`.
+
+---
+
+## Changelog (recent)
+
+### 2026-05-14
+- **Docs**: Added `docs/ai-curriculum-knowledge-structure.png` and embedded it in the Ver.Teach knowledge pipeline section (section tree → concept tree → relationships → map clusters).
+- **Teacher Portal**: English UI strip for **Course generation** — active provider, buttons **Ollama (qwen)**, **Gemini**, **Auto**, **Env default**; calls `GET`/`POST /api/teacher/llm-settings`.
+- **Backend**: Thread-safe in-memory override for `_llm_provider_resolved()` so course generation can use Gemini or Ollama without process restart.
+- **Backend (ongoing Ver.Teach)**: Layered course JSON, ontology refinement, prerequisite/graph semantics, Gemini REST integration with model id normalization, async generation and progress APIs (see pipeline list above).
 
 ---
 

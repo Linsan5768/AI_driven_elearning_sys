@@ -259,6 +259,8 @@ const SEMANTIC_ROLE_OPTIONS = [
   'general'
 ] as const
 
+type LlmUiChoice = 'inherit' | 'gemini' | 'ollama' | 'auto'
+
 /** Mirrors backend ROLE_TO_STRATEGY — derived; not edited in UI. */
 const ROLE_TO_STRATEGY: Record<string, string> = {
   theory_domain: 'concept_dense',
@@ -328,7 +330,11 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
   const [previewMode, setPreviewMode] = useState<'summary' | 'structure'>('structure')
   const [sectionReview, setSectionReview] = useState<SectionReviewState | null>(null)
   // History is always shown now, removed toggle
-  
+  const [llmUiChoice, setLlmUiChoice] = useState<LlmUiChoice>('inherit')
+  const [llmEffective, setLlmEffective] = useState<string>('')
+  const [llmEnvProvider, setLlmEnvProvider] = useState<string>('ollama')
+  const [llmSaving, setLlmSaving] = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const normalizeCourseData = (raw: any): CourseData => {
@@ -394,6 +400,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
   useEffect(() => {
     loadCourses()
     loadReports()
+    loadLlmSettings()
   }, [])
 
   const loadReports = async () => {
@@ -460,6 +467,47 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
       }
     } catch (error) {
       console.error('Failed to load course list:', error)
+    }
+  }
+
+  const loadLlmSettings = async () => {
+    try {
+      const r = await axios.get(`${API_BASE_URL}/teacher/llm-settings`)
+      const d = r.data || {}
+      const ovr = d.override
+      if (ovr === null || ovr === undefined) setLlmUiChoice('inherit')
+      else if (ovr === 'gemini' || ovr === 'ollama' || ovr === 'auto') setLlmUiChoice(ovr)
+      else setLlmUiChoice('inherit')
+      setLlmEffective(String(d.effective_provider || ''))
+      setLlmEnvProvider(String(d.env_llm_provider || 'ollama'))
+    } catch (err) {
+      console.error('Failed to load LLM settings:', err)
+    }
+  }
+
+  const handleLlmChoice = async (choice: LlmUiChoice) => {
+    if (llmSaving) return
+    setLlmSaving(true)
+    try {
+      const body =
+        choice === 'inherit' ? { llm_provider: 'inherit' } : { llm_provider: choice }
+      const r = await axios.post(`${API_BASE_URL}/teacher/llm-settings`, body)
+      const eff = String(r.data?.effective_provider || '')
+      setLlmEffective(eff)
+      if (r.data?.override == null) setLlmUiChoice('inherit')
+      else if (r.data.override === 'gemini' || r.data.override === 'ollama' || r.data.override === 'auto') {
+        setLlmUiChoice(r.data.override)
+      }
+      const label = eff === 'gemini' ? 'Gemini' : 'Ollama (local)'
+      const fallback =
+        choice === 'gemini' && eff === 'ollama' ? ' — no API key on server, fell back to Ollama' : ''
+      setStatusMessage(`Course AI: ${label}${fallback}`)
+      setTimeout(() => setStatusMessage(''), 5000)
+      await loadLlmSettings()
+    } catch (err: any) {
+      setStatusMessage(err.response?.data?.error || err.message || 'Failed to update LLM settings')
+    } finally {
+      setLlmSaving(false)
     }
   }
 
@@ -963,6 +1011,72 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({ onSwitchToStudent, onCour
         <Title>
           Teacher Portal
         </Title>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            padding: '0 12px'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '6px',
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              border: '1px solid rgba(255,255,255,0.25)'
+            }}
+          >
+            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)' }}>
+              Course generation · Active:{' '}
+              <strong>{llmEffective === 'gemini' ? 'Gemini' : 'Ollama'}</strong>
+              {llmUiChoice === 'inherit' ? ` · Inherits LLM_PROVIDER=${llmEnvProvider}` : ''}
+              {llmUiChoice === 'gemini' && llmEffective !== 'gemini'
+                ? ' · No API key on server — using Ollama'
+                : ''}
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+              {(
+                [
+                  { key: 'ollama' as const, label: 'Ollama (qwen)' },
+                  { key: 'gemini' as const, label: 'Gemini' },
+                  { key: 'auto' as const, label: 'Auto' },
+                  { key: 'inherit' as const, label: 'Env default' }
+                ] as const
+              ).map(({ key, label }) => {
+                const selected = llmUiChoice === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={llmSaving}
+                    onClick={() => handleLlmChoice(key)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      border: selected ? '2px solid #fff' : '1px solid rgba(255,255,255,0.35)',
+                      background: selected ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)',
+                      color: 'white',
+                      fontSize: '13px',
+                      fontWeight: selected ? 700 : 500,
+                      cursor: llmSaving ? 'wait' : 'pointer',
+                      opacity: llmSaving ? 0.6 : 1
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <div
             style={{
